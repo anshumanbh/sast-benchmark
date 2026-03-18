@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -91,6 +92,7 @@ CWE_TO_VULN_CLASS: dict[str, str] = {
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES_DIR = ROOT / "cases"
+CWE_ID_RE = re.compile(r"(?i)\bCWE-(\d+)\b")
 
 
 # ── Path normalization ─────────────────────────────────────────────────────────
@@ -128,6 +130,32 @@ def _security_severity_to_level(score: float) -> str:
     if score >= 4.0:
         return "medium"
     return "low"
+
+
+def extract_cwe_ids(values: Any) -> list[str]:
+    """Extract normalized CWE IDs from scanner metadata."""
+    if values is None:
+        return []
+
+    if isinstance(values, str):
+        raw_values = [values]
+    else:
+        try:
+            raw_values = list(values)
+        except TypeError:
+            return []
+
+    cwe_ids: list[str] = []
+    seen: set[str] = set()
+    for value in raw_values:
+        if not isinstance(value, str):
+            continue
+        for match in CWE_ID_RE.finditer(value):
+            normalized = f"CWE-{match.group(1)}"
+            if normalized not in seen:
+                seen.add(normalized)
+                cwe_ids.append(normalized)
+    return cwe_ids
 
 
 # ── Path overlap ──────────────────────────────────────────────────────────────
@@ -223,10 +251,10 @@ def parse_sarif(data: dict[str, Any]) -> list[Finding]:
                 severity = SARIF_LEVEL_TO_SEVERITY.get(level, "medium")
 
             # CWE IDs: from result properties, then rule tags
-            cwe_ids = list((result.get("properties") or {}).get("cweIds", []))
+            cwe_ids = extract_cwe_ids((result.get("properties") or {}).get("cweIds", []))
             if not cwe_ids:
                 tags = (rule_def.get("properties") or {}).get("tags", [])
-                cwe_ids = [t for t in tags if t.startswith("CWE-")]
+                cwe_ids = extract_cwe_ids(tags)
 
             for loc in locations:
                 phys = loc.get("physicalLocation", {})
@@ -259,7 +287,7 @@ def parse_simple(data: dict[str, Any]) -> list[Finding]:
                 path=normalize_path(item.get("path", "")),
                 severity=item.get("severity", "medium").lower(),
                 rule_id=item.get("ruleId", ""),
-                cwe_ids=item.get("cweIds", []),
+                cwe_ids=extract_cwe_ids(item.get("cweIds", [])),
                 message=item.get("message", ""),
             )
         )
@@ -315,7 +343,7 @@ def parse_findings_checked(
 
 def _vuln_class_from_cwes(cwe_ids: list[str]) -> str:
     """Map CWE IDs to a vulnerability class. Returns empty string if no match."""
-    for cwe in cwe_ids:
+    for cwe in extract_cwe_ids(cwe_ids):
         if cwe in CWE_TO_VULN_CLASS:
             return CWE_TO_VULN_CLASS[cwe]
     return ""

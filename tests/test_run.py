@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from run import (
     Finding,
+    extract_cwe_ids,
     normalize_path,
     detect_format,
     parse_sarif,
@@ -210,10 +211,19 @@ class TestParseSarif:
         data = _sarif([_sarif_result(cwe_ids=["CWE-78"])])
         assert parse_sarif(data)[0].cwe_ids == ["CWE-78"]
 
+    def test_cwe_from_descriptive_result_properties(self):
+        data = _sarif([_sarif_result(cwe_ids=["CWE-78: OS Command Injection"])])
+        assert parse_sarif(data)[0].cwe_ids == ["CWE-78"]
+
     def test_cwe_from_rule_tags(self):
         rules = [{"id": "rule-1", "properties": {"tags": ["security", "CWE-22", "owasp"]}}]
         data = _sarif([_sarif_result(rule_id="rule-1")], rules=rules)
         assert "CWE-22" in parse_sarif(data)[0].cwe_ids
+
+    def test_cwe_from_prefixed_rule_tags(self):
+        rules = [{"id": "rule-1", "properties": {"tags": ["external/cwe/cwe-78"]}}]
+        data = _sarif([_sarif_result(rule_id="rule-1")], rules=rules)
+        assert parse_sarif(data)[0].cwe_ids == ["CWE-78"]
 
     def test_empty_results(self):
         data = _sarif([])
@@ -269,6 +279,18 @@ class TestParseSimple:
         assert findings[0].cwe_ids == []
         assert findings[0].rule_id == ""
 
+    def test_normalizes_descriptive_cwe_ids(self):
+        data = {
+            "findings": [
+                {
+                    "path": "src/foo.ts",
+                    "severity": "high",
+                    "cweIds": ["CWE-78: OS Command Injection"],
+                }
+            ]
+        }
+        assert parse_simple(data)[0].cwe_ids == ["CWE-78"]
+
     def test_empty_findings(self):
         assert parse_simple({"findings": []}) == []
 
@@ -323,6 +345,13 @@ class TestParseFindings:
             == "output is not valid SARIF: invalid security-severity for rule "
             "rule-1: 'not-a-number'"
         )
+
+
+class TestExtractCweIds:
+    def test_extracts_common_sarif_cwe_formats(self):
+        assert extract_cwe_ids(
+            ["CWE-78: OS Command Injection", "external/cwe/cwe-22", "owasp"]
+        ) == ["CWE-78", "CWE-22"]
 
 
 # ── Severity comparison ───────────────────────────────────────────────────────
@@ -443,6 +472,18 @@ class TestEvaluateCase:
         result = evaluate_case("GHSA-test-test-test", findings, self._expected())
         assert result["detected"] is False
         assert result["classMatch"] is False
+
+    def test_descriptive_cwe_ids_still_satisfy_class_match(self):
+        findings = [
+            _finding(
+                path="src/foo.ts",
+                severity="high",
+                cwe_ids=["CWE-78: OS Command Injection"],
+            )
+        ]
+        result = evaluate_case("GHSA-test-test-test", findings, self._expected())
+        assert result["detected"] is True
+        assert result["classMatch"] is True
 
     def test_multiple_findings_one_matches(self):
         findings = [

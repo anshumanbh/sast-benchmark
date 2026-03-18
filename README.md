@@ -130,14 +130,15 @@ The runner writes a JSON results file (default: `results.json`) and prints a con
 ## Validation
 
 ```bash
-# Structural validation (schema conformance, manifest consistency)
-# Requires: pip install jsonschema
+# Structural validation (full schema conformance requires: pip install jsonschema)
 python3 scripts/validate.py
 
 # Semantic validation (commit SHAs resolve, ancestry checks pass)
+# If jsonschema is missing, schema checks are skipped with a warning.
 python3 scripts/validate.py --openclaw-repo ../openclaw
 
 # Strict mode (all cases must pass verification with high confidence)
+# If jsonschema is missing, schema checks are skipped with a warning.
 python3 scripts/validate.py --openclaw-repo ../openclaw --strict
 ```
 
@@ -160,12 +161,3 @@ A scanner "detects" a case when scanning `vulnerableHead` if:
    - For SARIF/simple JSON inputs, this is derived from the finding's CWE metadata.
 2. **Path overlap** — at least one finding path overlaps with `expectedOutcome.expectedPaths`
 3. **Severity floor** — reported severity >= `expectedOutcome.minimumSeverity`
-
-## Data Sources
-
-| Source | Cases | Data |
-|--------|-------|------|
-| securevibes batch-1 | 10 | Full timeline (baseline, introducing), advisory metadata, verification |
-| securevibes-agent ground truth | 17 | Vulnerability class, expected paths, severity, vulnerable/fixed refs |
-| **Overlap** | 3 | Timeline from securevibes, vuln class/paths from agent |
-| **Total unique** | **24** | |

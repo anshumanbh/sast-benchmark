@@ -247,7 +247,6 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
     all_errors: list[ValidationError] = []
     cases_dir = Path(args.output_dir) / "cases" if args.output_dir else CASES_DIR
     manifest_path = Path(args.output_dir) / "manifest.json" if args.output_dir else MANIFEST_PATH
-    schema = load_schema()
 
     # Load manifest
     if not manifest_path.exists():
@@ -265,11 +264,19 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         )
         return all_errors
 
+    schema = load_schema()
+    schema_validation_enabled = True
     try:
         _get_jsonschema_validator()
     except RuntimeError as exc:
-        all_errors.append(ValidationError("schema", "dependency", str(exc)))
-        return all_errors
+        schema_validation_enabled = False
+        if args.openclaw_repo or args.strict:
+            print(
+                f"WARNING: {exc}. Skipping schema validation.",
+                file=sys.stderr,
+            )
+        else:
+            all_errors.append(ValidationError("schema", "dependency", str(exc)))
 
     case_dir_names = [
         d.name for d in sorted(cases_dir.iterdir()) if d.is_dir() and d.name.startswith("GHSA-")
@@ -292,7 +299,8 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         loaded_cases.append(case)
 
         # Schema validation
-        all_errors.extend(validate_case_against_schema(case, schema))
+        if schema_validation_enabled:
+            all_errors.extend(validate_case_against_schema(case, schema))
 
         # Semantic validation
         if args.openclaw_repo:

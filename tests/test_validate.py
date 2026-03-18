@@ -263,7 +263,7 @@ class TestStrictValidation:
         errors = validate_case_strict(case)
         assert any("expected 'high'" in str(error) for error in errors)
 
-    def test_run_validation_fails_when_jsonschema_missing(
+    def test_run_validation_reports_dependency_when_jsonschema_missing_for_structural_only(
         self, monkeypatch, tmp_path: Path
     ):
         case = _minimal_case()
@@ -287,6 +287,67 @@ class TestStrictValidation:
         )
         assert len(errors) == 1
         assert errors[0].check == "dependency"
+
+    def test_run_validation_skips_schema_when_jsonschema_missing_for_semantic_mode(
+        self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("introducing change\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "introduce vuln"],
+            check=True,
+        )
+        intro = _git(repo, "rev-parse", "HEAD")
+
+        case = _minimal_case(
+            {
+                "timeline": {
+                    "baselineCommit": baseline,
+                    "introducingCommits": [
+                        {
+                            "sha": intro,
+                            "authoredAt": "2026-01-12T01:16:39Z",
+                            "subject": "feat: introduce vulnerability",
+                        }
+                    ],
+                    "vulnerableHead": intro,
+                }
+            }
+        )
+        case_dir = tmp_path / "cases" / case["id"]
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(
+            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
+            encoding="utf-8",
+        )
+
+        def _raise() -> None:
+            raise RuntimeError(
+                "jsonschema is required for schema validation. "
+                "Install with: pip install jsonschema"
+            )
+
+        monkeypatch.setattr(validate_module, "_get_jsonschema_validator", _raise)
+        errors = run_validation(
+            Namespace(openclaw_repo=str(repo), strict=False, output_dir=str(tmp_path))
+        )
+        captured = capsys.readouterr()
+
+        assert errors == []
+        assert "Skipping schema validation" in captured.err
 
 
 class TestSemanticValidation:
