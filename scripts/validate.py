@@ -67,6 +67,17 @@ def _non_empty_string(value: Any) -> str | None:
     return None
 
 
+def _full_sha_string(value: Any) -> str | None:
+    """Return a full lowercase 40-character SHA string if present."""
+    if not isinstance(value, str):
+        return None
+    if len(value) != 40:
+        return None
+    if any(ch not in "0123456789abcdef" for ch in value):
+        return None
+    return value
+
+
 def _get_jsonschema_validator() -> Any:
     """Return the Draft 7 validator class or raise if the dependency is missing."""
     try:
@@ -157,7 +168,7 @@ def validate_manifest_consistency(
 
     declared_count = manifest_obj.get("caseCount", len(manifest_cases))
     actual_count = len(manifest_cases)
-    if not isinstance(declared_count, int):
+    if isinstance(declared_count, bool) or not isinstance(declared_count, int):
         errors.append(
             ValidationError(
                 "manifest", "caseCount", "Declared caseCount must be an integer"
@@ -243,23 +254,23 @@ def validate_case_semantic(case: Any, repo: Path) -> list[ValidationError]:
     if timeline is None:
         return [ValidationError(case_id, "semantic", "timeline must be an object")]
 
-    baseline = _non_empty_string(timeline.get("baselineCommit"))
+    baseline = _full_sha_string(timeline.get("baselineCommit"))
     if baseline is None:
         errors.append(
             ValidationError(
                 case_id,
                 "semantic",
-                "timeline.baselineCommit must be a non-empty string",
+                "timeline.baselineCommit must be a 40-character lowercase hex SHA",
             )
         )
 
-    vulnerable_head = _non_empty_string(timeline.get("vulnerableHead"))
+    vulnerable_head = _full_sha_string(timeline.get("vulnerableHead"))
     if vulnerable_head is None:
         errors.append(
             ValidationError(
                 case_id,
                 "semantic",
-                "timeline.vulnerableHead must be a non-empty string",
+                "timeline.vulnerableHead must be a 40-character lowercase hex SHA",
             )
         )
 
@@ -273,6 +284,14 @@ def validate_case_semantic(case: Any, repo: Path) -> list[ValidationError]:
             )
         )
         introducing_commits = []
+    elif not introducing_commits:
+        errors.append(
+            ValidationError(
+                case_id,
+                "semantic",
+                "timeline.introducingCommits must contain at least one commit",
+            )
+        )
 
     introducing_shas: list[str] = []
     for index, commit in enumerate(introducing_commits):
@@ -287,17 +306,38 @@ def validate_case_semantic(case: Any, repo: Path) -> list[ValidationError]:
             )
             continue
 
-        sha = _non_empty_string(commit_obj.get("sha"))
+        sha = _full_sha_string(commit_obj.get("sha"))
         if sha is None:
             errors.append(
                 ValidationError(
                     case_id,
                     "semantic",
-                    f"timeline.introducingCommits[{index}].sha must be a non-empty string",
+                    f"timeline.introducingCommits[{index}].sha must be a 40-character lowercase hex SHA",
                 )
             )
-            continue
-        introducing_shas.append(sha)
+
+        authored_at = commit_obj.get("authoredAt")
+        if not isinstance(authored_at, str):
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "semantic",
+                    f"timeline.introducingCommits[{index}].authoredAt must be a string",
+                )
+            )
+
+        subject = commit_obj.get("subject")
+        if not isinstance(subject, str):
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "semantic",
+                    f"timeline.introducingCommits[{index}].subject must be a string",
+                )
+            )
+
+        if sha is not None:
+            introducing_shas.append(sha)
 
     # Check all commits exist
     if baseline is not None:
@@ -394,12 +434,47 @@ def validate_case_strict(case: Any) -> list[ValidationError]:
             )
             continue
 
-        if not check_obj.get("pass"):
+        check_name = check_obj.get("name")
+        if not isinstance(check_name, str):
             errors.append(
                 ValidationError(
                     case_id,
                     "strict",
-                    f"verification check '{check_obj.get('name')}' failed: {check_obj.get('details')}",
+                    f"verification.checks[{index}].name must be a string",
+                )
+            )
+
+        check_pass = check_obj.get("pass")
+        if type(check_pass) is not bool:
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"verification.checks[{index}].pass must be a boolean",
+                )
+            )
+
+        check_details = check_obj.get("details")
+        if not isinstance(check_details, str):
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"verification.checks[{index}].details must be a string",
+                )
+            )
+
+        if (
+            isinstance(check_name, str)
+            and type(check_pass) is bool
+            and isinstance(check_details, str)
+            and not check_pass
+        ):
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"verification check '{check_name}' failed: {check_details}",
                 )
             )
 
