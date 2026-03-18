@@ -37,6 +37,36 @@ CASES_DIR = ROOT / "cases"
 MANIFEST_PATH = ROOT / "manifest.json"
 
 
+def _case_id(case: Any, fallback: str = "unknown") -> str:
+    """Return a stable case ID for error reporting."""
+    if isinstance(case, dict):
+        case_id = case.get("id")
+        if isinstance(case_id, str) and case_id:
+            return case_id
+    return fallback
+
+
+def _json_object(value: Any) -> dict[str, Any] | None:
+    """Return a JSON object value if present."""
+    if isinstance(value, dict):
+        return value
+    return None
+
+
+def _json_array(value: Any) -> list[Any] | None:
+    """Return a JSON array value if present."""
+    if isinstance(value, list):
+        return value
+    return None
+
+
+def _non_empty_string(value: Any) -> str | None:
+    """Return a non-empty string if present."""
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
 def _get_jsonschema_validator() -> Any:
     """Return the Draft 7 validator class or raise if the dependency is missing."""
     try:
@@ -55,18 +85,17 @@ def load_schema(path: Path | None = None) -> dict:
     return json.loads(schema_path.read_text(encoding="utf-8"))
 
 
-def validate_case_against_schema(case: dict, schema: dict) -> list[ValidationError]:
+def validate_case_against_schema(case: Any, schema: dict) -> list[ValidationError]:
     """Validate a case dict against the JSON Schema."""
+    case_id = _case_id(case)
     try:
         validator_cls = _get_jsonschema_validator()
     except RuntimeError as exc:
-        case_id = case.get("id", "unknown")
         return [ValidationError(case_id, "schema_dependency", str(exc))]
 
     validator = validator_cls(schema)
     errors = []
     for error in validator.iter_errors(case):
-        case_id = case.get("id", "unknown")
         errors.append(
             ValidationError(case_id, "schema", f"{error.json_path}: {error.message}")
         )
@@ -74,11 +103,47 @@ def validate_case_against_schema(case: dict, schema: dict) -> list[ValidationErr
 
 
 def validate_manifest_consistency(
-    manifest: dict, case_dirs: list[str]
+    manifest: Any, case_dirs: list[str]
 ) -> list[ValidationError]:
     """Check manifest matches case directories."""
-    errors = []
-    manifest_ids = {c["id"] for c in manifest.get("cases", [])}
+    manifest_obj = _json_object(manifest)
+    if manifest_obj is None:
+        return [
+            ValidationError(
+                "manifest", "manifest", "manifest.json must contain a JSON object"
+            )
+        ]
+
+    errors: list[ValidationError] = []
+    manifest_cases = _json_array(manifest_obj.get("cases"))
+    if manifest_cases is None:
+        return [
+            ValidationError("manifest", "manifest", "manifest.cases must be a list")
+        ]
+
+    manifest_ids: set[str] = set()
+    for index, case in enumerate(manifest_cases):
+        case_obj = _json_object(case)
+        if case_obj is None:
+            errors.append(
+                ValidationError(
+                    "manifest", "manifest", f"cases[{index}] must be an object"
+                )
+            )
+            continue
+
+        case_id = _non_empty_string(case_obj.get("id"))
+        if case_id is None:
+            errors.append(
+                ValidationError(
+                    "manifest",
+                    "manifest",
+                    f"cases[{index}].id must be a non-empty string",
+                )
+            )
+            continue
+        manifest_ids.add(case_id)
+
     dir_ids = set(case_dirs)
 
     for mid in manifest_ids - dir_ids:
@@ -90,9 +155,15 @@ def validate_manifest_consistency(
             ValidationError(did, "manifest", f"Case directory exists but not in manifest")
         )
 
-    declared_count = manifest.get("caseCount", len(manifest.get("cases", [])))
-    actual_count = len(manifest.get("cases", []))
-    if declared_count != actual_count:
+    declared_count = manifest_obj.get("caseCount", len(manifest_cases))
+    actual_count = len(manifest_cases)
+    if not isinstance(declared_count, int):
+        errors.append(
+            ValidationError(
+                "manifest", "caseCount", "Declared caseCount must be an integer"
+            )
+        )
+    elif declared_count != actual_count:
         errors.append(
             ValidationError(
                 "manifest",
@@ -104,16 +175,16 @@ def validate_manifest_consistency(
     return errors
 
 
-def validate_no_duplicate_ids(cases: list[dict]) -> list[ValidationError]:
+def validate_no_duplicate_ids(cases: list[Any]) -> list[ValidationError]:
     """Check for duplicate GHSA IDs."""
     seen: dict[str, int] = {}
     errors = []
     for case in cases:
-        cid = case.get("id", "unknown")
+        cid = _case_id(case)
         seen[cid] = seen.get(cid, 0) + 1
 
     for cid, count in seen.items():
-        if count > 1:
+        if cid != "unknown" and count > 1:
             errors.append(
                 ValidationError(cid, "duplicate", f"Appears {count} times")
             )
@@ -157,26 +228,94 @@ def validate_ancestry(
     return []
 
 
-def validate_case_semantic(case: dict, repo: Path) -> list[ValidationError]:
+def validate_case_semantic(case: Any, repo: Path) -> list[ValidationError]:
     """Run semantic validation requiring the openclaw repo."""
-    errors = []
-    case_id = case.get("id", "unknown")
-    timeline = case.get("timeline", {})
+    if not isinstance(case, dict):
+        return [
+            ValidationError(
+                "unknown", "semantic", "case.json must contain a JSON object"
+            )
+        ]
 
-    baseline = timeline.get("baselineCommit", "")
-    vulnerable_head = timeline.get("vulnerableHead", "")
+    errors: list[ValidationError] = []
+    case_id = _case_id(case)
+    timeline = _json_object(case.get("timeline"))
+    if timeline is None:
+        return [ValidationError(case_id, "semantic", "timeline must be an object")]
+
+    baseline = _non_empty_string(timeline.get("baselineCommit"))
+    if baseline is None:
+        errors.append(
+            ValidationError(
+                case_id,
+                "semantic",
+                "timeline.baselineCommit must be a non-empty string",
+            )
+        )
+
+    vulnerable_head = _non_empty_string(timeline.get("vulnerableHead"))
+    if vulnerable_head is None:
+        errors.append(
+            ValidationError(
+                case_id,
+                "semantic",
+                "timeline.vulnerableHead must be a non-empty string",
+            )
+        )
+
+    introducing_commits = _json_array(timeline.get("introducingCommits"))
+    if introducing_commits is None:
+        errors.append(
+            ValidationError(
+                case_id,
+                "semantic",
+                "timeline.introducingCommits must be a list",
+            )
+        )
+        introducing_commits = []
+
+    introducing_shas: list[str] = []
+    for index, commit in enumerate(introducing_commits):
+        commit_obj = _json_object(commit)
+        if commit_obj is None:
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "semantic",
+                    f"timeline.introducingCommits[{index}] must be an object",
+                )
+            )
+            continue
+
+        sha = _non_empty_string(commit_obj.get("sha"))
+        if sha is None:
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "semantic",
+                    f"timeline.introducingCommits[{index}].sha must be a non-empty string",
+                )
+            )
+            continue
+        introducing_shas.append(sha)
 
     # Check all commits exist
-    errors.extend(validate_commit_exists(case_id, repo, baseline, "baselineCommit"))
-    errors.extend(validate_commit_exists(case_id, repo, vulnerable_head, "vulnerableHead"))
-
-    for ic in timeline.get("introducingCommits", []):
+    if baseline is not None:
+        errors.extend(validate_commit_exists(case_id, repo, baseline, "baselineCommit"))
+    if vulnerable_head is not None:
         errors.extend(
-            validate_commit_exists(case_id, repo, ic["sha"], "introducingCommit")
+            validate_commit_exists(case_id, repo, vulnerable_head, "vulnerableHead")
+        )
+
+    for sha in introducing_shas:
+        errors.extend(
+            validate_commit_exists(case_id, repo, sha, "introducingCommit")
         )
 
     # Ancestry checks (only if commits exist)
     if not errors:
+        assert baseline is not None
+        assert vulnerable_head is not None
         errors.extend(
             validate_ancestry(
                 case_id,
@@ -186,17 +325,17 @@ def validate_case_semantic(case: dict, repo: Path) -> list[ValidationError]:
                 "baseline → vulnerableHead",
             )
         )
-        for ic in timeline.get("introducingCommits", []):
+        for sha in introducing_shas:
             errors.extend(
                 validate_ancestry(
-                    case_id, repo, baseline, ic["sha"], "baseline → intro"
+                    case_id, repo, baseline, sha, "baseline → intro"
                 )
             )
             errors.extend(
                 validate_ancestry(
                     case_id,
                     repo,
-                    ic["sha"],
+                    sha,
                     vulnerable_head,
                     "intro → vulnerableHead",
                 )
@@ -205,11 +344,18 @@ def validate_case_semantic(case: dict, repo: Path) -> list[ValidationError]:
     return errors
 
 
-def validate_case_strict(case: dict) -> list[ValidationError]:
+def validate_case_strict(case: Any) -> list[ValidationError]:
     """Strict mode: all cases must pass verification with high confidence."""
-    errors = []
-    case_id = case.get("id", "unknown")
-    verification = case.get("verification", {})
+    if not isinstance(case, dict):
+        return [
+            ValidationError("unknown", "strict", "case.json must contain a JSON object")
+        ]
+
+    errors: list[ValidationError] = []
+    case_id = _case_id(case)
+    verification = _json_object(case.get("verification"))
+    if verification is None:
+        return [ValidationError(case_id, "strict", "verification must be an object")]
 
     if verification.get("status") != "pass":
         errors.append(
@@ -229,13 +375,31 @@ def validate_case_strict(case: dict) -> list[ValidationError]:
             )
         )
 
-    for check in verification.get("checks", []):
-        if not check.get("pass"):
+    checks = _json_array(verification.get("checks"))
+    if checks is None:
+        errors.append(
+            ValidationError(case_id, "strict", "verification.checks must be a list")
+        )
+        return errors
+
+    for index, check in enumerate(checks):
+        check_obj = _json_object(check)
+        if check_obj is None:
             errors.append(
                 ValidationError(
                     case_id,
                     "strict",
-                    f"verification check '{check.get('name')}' failed: {check.get('details')}",
+                    f"verification.checks[{index}] must be an object",
+                )
+            )
+            continue
+
+        if not check_obj.get("pass"):
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"verification check '{check_obj.get('name')}' failed: {check_obj.get('details')}",
                 )
             )
 
@@ -255,7 +419,17 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         )
         return all_errors
 
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        all_errors.append(
+            ValidationError(
+                "manifest",
+                "json",
+                f"manifest.json is not valid JSON: {exc.msg}",
+            )
+        )
+        return all_errors
 
     # Find case directories
     if not cases_dir.exists():
@@ -286,7 +460,7 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
     all_errors.extend(validate_manifest_consistency(manifest, case_dir_names))
 
     # Load and validate each case
-    loaded_cases: list[dict] = []
+    loaded_cases: list[Any] = []
     for dir_name in case_dir_names:
         case_path = cases_dir / dir_name / "case.json"
         if not case_path.exists():
@@ -295,7 +469,18 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
             )
             continue
 
-        case = json.loads(case_path.read_text(encoding="utf-8"))
+        try:
+            case = json.loads(case_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            all_errors.append(
+                ValidationError(
+                    dir_name,
+                    "case_file",
+                    f"case.json is not valid JSON: {exc.msg}",
+                )
+            )
+            continue
+
         loaded_cases.append(case)
 
         # Schema validation

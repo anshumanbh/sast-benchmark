@@ -349,6 +349,83 @@ class TestStrictValidation:
         assert errors == []
         assert "Skipping schema validation" in captured.err
 
+    def test_run_validation_reports_semantic_shape_error_when_schema_missing(
+        self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        case = _minimal_case({"timeline": None})
+        case_dir = tmp_path / "cases" / case["id"]
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(
+            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
+            encoding="utf-8",
+        )
+        repo = tmp_path / "repo"
+        repo.mkdir()
+
+        def _raise() -> None:
+            raise RuntimeError(
+                "jsonschema is required for schema validation. "
+                "Install with: pip install jsonschema"
+            )
+
+        monkeypatch.setattr(validate_module, "_get_jsonschema_validator", _raise)
+        errors = run_validation(
+            Namespace(openclaw_repo=str(repo), strict=False, output_dir=str(tmp_path))
+        )
+        captured = capsys.readouterr()
+
+        assert len(errors) == 1
+        assert errors[0].check == "semantic"
+        assert "timeline must be an object" in errors[0].message
+        assert "Skipping schema validation" in captured.err
+
+    def test_run_validation_reports_strict_shape_error_when_schema_missing(
+        self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        case = _minimal_case({"verification": None})
+        case_dir = tmp_path / "cases" / case["id"]
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(
+            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
+            encoding="utf-8",
+        )
+
+        def _raise() -> None:
+            raise RuntimeError(
+                "jsonschema is required for schema validation. "
+                "Install with: pip install jsonschema"
+            )
+
+        monkeypatch.setattr(validate_module, "_get_jsonschema_validator", _raise)
+        errors = run_validation(
+            Namespace(openclaw_repo=None, strict=True, output_dir=str(tmp_path))
+        )
+        captured = capsys.readouterr()
+
+        assert len(errors) == 1
+        assert errors[0].check == "strict"
+        assert "verification must be an object" in errors[0].message
+        assert "Skipping schema validation" in captured.err
+
+    def test_run_validation_reports_invalid_case_json(self, tmp_path: Path):
+        case_dir = tmp_path / "cases" / "GHSA-test-test-test"
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text("{not json", encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(
+            json.dumps({"caseCount": 1, "cases": [{"id": "GHSA-test-test-test"}]}),
+            encoding="utf-8",
+        )
+
+        errors = run_validation(
+            Namespace(openclaw_repo=None, strict=False, output_dir=str(tmp_path))
+        )
+
+        assert len(errors) == 1
+        assert errors[0].check == "case_file"
+        assert "not valid JSON" in errors[0].message
+
 
 class TestSemanticValidation:
     def test_intro_commit_must_reach_vulnerable_head(self):
