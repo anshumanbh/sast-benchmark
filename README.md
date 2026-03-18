@@ -64,6 +64,8 @@ See `schema/case.schema.json` for the full JSON Schema (draft-07).
 
 The runner automates the full loop: checkout each vulnerable commit, run your scanner, parse results, and produce a scorecard.
 
+If the scanner emits parseable SARIF/simple JSON, the benchmark evaluates that output even when the scanner exits non-zero. This accommodates tools that use exit status to signal findings.
+
 ```bash
 # Run with a SARIF-producing scanner
 python3 scripts/run.py \
@@ -152,6 +154,8 @@ python3 scripts/migrate.py \
   --advisories-file /tmp/openclaw_all_advisories.json \
   --output-dir .
 ```
+
+`--advisories-file` is required to populate complete advisory metadata for agent-only cases.
 
 ## Outcome Matching Criteria
 

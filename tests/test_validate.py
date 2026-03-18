@@ -149,6 +149,20 @@ class TestSchemaValidation:
         errors = validate_case_against_schema(case, schema)
         assert len(errors) > 0
 
+    def test_invalid_uri_and_datetime_formats(self, schema):
+        case = _minimal_case(
+            {
+                "advisoryUrl": "not-a-uri",
+                "advisory": {"publishedAt": "not-a-date"},
+            }
+        )
+        errors = validate_case_against_schema(case, schema)
+        assert any("advisoryUrl" in error.message and "uri" in error.message for error in errors)
+        assert any(
+            "publishedAt" in error.message and "date-time" in error.message
+            for error in errors
+        )
+
     def test_optional_cvss_allowed(self, schema):
         case = _minimal_case()
         case["advisory"]["cvss"] = {
@@ -237,6 +251,18 @@ class TestManifestConsistency:
         case_dirs = ["GHSA-aaaa-aaaa-aaaa"]
         errors = validate_manifest_consistency(manifest, case_dirs)
         assert len(errors) > 0
+
+    def test_duplicate_manifest_case_ids_rejected(self):
+        manifest = {
+            "caseCount": 2,
+            "cases": [
+                {"id": "GHSA-aaaa-aaaa-aaaa"},
+                {"id": "GHSA-aaaa-aaaa-aaaa"},
+            ],
+        }
+        case_dirs = ["GHSA-aaaa-aaaa-aaaa"]
+        errors = validate_manifest_consistency(manifest, case_dirs)
+        assert any("Duplicate manifest entry" in error.message for error in errors)
 
     def test_boolean_case_count_rejected(self):
         manifest = {

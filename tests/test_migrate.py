@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from migrate import (
     SECUREVIBES_CASE_IDS,
     AGENT_CASE_IDS,
     OVERLAP_IDS,
+    _build_verification,
     load_securevibes_case,
     load_agent_scenarios,
     build_unified_case,
@@ -254,6 +256,109 @@ class TestBuildUnifiedCase:
         assert any(
             check["name"] == "public_fix_train_reaches_patched_tag"
             for check in case["verification"]["checks"]
+        )
+
+    def test_missing_published_at_raises(self):
+        advisory_data = self._make_advisory_data()
+        advisory_data["published_at"] = ""
+
+        with pytest.raises(ValueError, match="published_at"):
+            build_unified_case(
+                ghsa_id="GHSA-test-test-test",
+                advisory_data=advisory_data,
+                agent_scenario={
+                    "id": "GHSA-test-test-test",
+                    "expectedVulnerabilityClass": "sandboxescape",
+                    "expectedPathContains": ["src/sandbox.ts"],
+                    "minimumSeverity": "high",
+                },
+                timeline_block={
+                    "baselineCommit": "a" * 40,
+                    "introducingCommits": [
+                        {
+                            "sha": "b" * 40,
+                            "authoredAt": "2026-01-12T01:16:39Z",
+                            "subject": "feat: introduce vulnerability",
+                        }
+                    ],
+                    "vulnerableHead": "b" * 40,
+                },
+                verification_block={
+                    "status": "unverified",
+                    "confidence": "high",
+                    "checks": [],
+                },
+            )
+
+
+class TestBuildVerification:
+    def _git(self, repo: Path, *args: str) -> str:
+        return subprocess.check_output(
+            ["git", "-C", str(repo), *args],
+            text=True,
+        ).strip()
+
+    def _init_git_repo(self, repo: Path) -> None:
+        subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "config", "user.email", "test@example.com"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(repo), "config", "user.name", "Test User"],
+            check=True,
+        )
+
+    def test_requires_intros_to_reach_vulnerable_head(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        self._init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = self._git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("introducing change\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "introduce vuln"],
+            check=True,
+        )
+        intro = self._git(repo, "rev-parse", "HEAD")
+
+        subprocess.run(["git", "-C", str(repo), "checkout", "-q", baseline], check=True)
+        (repo / "other.txt").write_text("different branch\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "other.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "other branch"],
+            check=True,
+        )
+        vulnerable_head = self._git(repo, "rev-parse", "HEAD")
+
+        verification = _build_verification(
+            {
+                "baselineCommit": baseline,
+                "introducingCommits": [
+                    {
+                        "sha": intro,
+                        "authoredAt": "2026-01-12T01:16:39Z",
+                        "subject": "feat: introduce vulnerability",
+                    }
+                ],
+                "vulnerableHead": vulnerable_head,
+            },
+            "high",
+            repo=repo,
+        )
+
+        assert verification["status"] == "unverified"
+        assert any(
+            check["name"] == "intro_ancestor_of_vulnerable_head" and not check["pass"]
+            for check in verification["checks"]
         )
 
 

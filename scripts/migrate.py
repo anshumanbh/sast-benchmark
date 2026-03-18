@@ -308,10 +308,18 @@ def _derive_vuln_class(ghsa_id: str, cwe_ids: list[str]) -> str:
 
 def _build_advisory_block(advisory_data: dict[str, Any]) -> dict[str, Any]:
     """Build the advisory block from raw advisory API data."""
+    published_at = advisory_data.get("published_at")
+    if not isinstance(published_at, str) or not published_at:
+        ghsa_id = advisory_data.get("ghsa_id", "<unknown>")
+        raise ValueError(
+            f"Missing advisory published_at for {ghsa_id}. "
+            "Provide advisory metadata via --advisories-file."
+        )
+
     block: dict[str, Any] = {
         "title": advisory_data.get("summary", ""),
         "severity": advisory_data.get("severity", "high"),
-        "publishedAt": advisory_data.get("published_at", ""),
+        "publishedAt": published_at,
         "description": advisory_data.get("description", ""),
         "cweIds": advisory_data.get("cwe_ids", []),
     }
@@ -424,17 +432,42 @@ def _build_verification(
 
     # Run live ancestry checks
     baseline = timeline["baselineCommit"]
+    vulnerable_head = timeline["vulnerableHead"]
     live_checks = []
 
     for ic in timeline["introducingCommits"]:
-        ok = is_ancestor(repo, baseline, ic["sha"])
+        intro_sha = ic["sha"]
+        ok = is_ancestor(repo, baseline, intro_sha)
         live_checks.append(
             {
                 "name": "baseline_ancestor_of_intro",
                 "pass": ok,
-                "details": f"baseline={baseline[:12]} intro={ic['sha'][:12]}",
+                "details": f"baseline={baseline[:12]} intro={intro_sha[:12]}",
             }
         )
+
+        ok = is_ancestor(repo, intro_sha, vulnerable_head)
+        live_checks.append(
+            {
+                "name": "intro_ancestor_of_vulnerable_head",
+                "pass": ok,
+                "details": (
+                    f"intro={intro_sha[:12]} "
+                    f"vulnerable_head={vulnerable_head[:12]}"
+                ),
+            }
+        )
+
+    live_checks.append(
+        {
+            "name": "baseline_ancestor_of_vulnerable_head",
+            "pass": is_ancestor(repo, baseline, vulnerable_head),
+            "details": (
+                f"baseline={baseline[:12]} "
+                f"vulnerable_head={vulnerable_head[:12]}"
+            ),
+        }
+    )
 
     all_pass = all(c["pass"] for c in live_checks)
     return {
@@ -773,7 +806,7 @@ def main() -> None:
         "--advisories-file",
         type=str,
         default=None,
-        help="Path to cached GitHub API advisories JSON",
+        help="Path to cached GitHub API advisories JSON. Required for complete agent-only advisory metadata.",
     )
     parser.add_argument(
         "--output-dir",
@@ -782,7 +815,11 @@ def main() -> None:
         help="Output directory for benchmark artifacts",
     )
     args = parser.parse_args()
-    run_migration(args)
+    try:
+        run_migration(args)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

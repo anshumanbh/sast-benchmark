@@ -634,6 +634,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
 
             error = None
             findings: list[Finding] = []
+            scanner_exit_code: int | None = None
             t0 = time.monotonic()
 
             try:
@@ -642,17 +643,17 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                 error = f"checkout failed: {e}"
 
             if not error:
-                stdout, stderr, rc = run_scanner(scanner_cmd, worktree.path, timeout)
-                if rc == -1:
+                stdout, stderr, scanner_exit_code = run_scanner(
+                    scanner_cmd, worktree.path, timeout
+                )
+                if scanner_exit_code == -1:
                     error = "timeout"
                 elif not stdout.strip():
-                    error = f"no output (exit code {rc})"
+                    error = f"no output (exit code {scanner_exit_code})"
                 else:
                     findings, parse_error = parse_findings_checked(stdout, fmt)
                     if parse_error:
-                        error = f"{parse_error} (exit code {rc})"
-                    elif rc != 0:
-                        error = f"scanner exited with code {rc}"
+                        error = f"{parse_error} (exit code {scanner_exit_code})"
 
                 if error and stderr.strip():
                     error = f"{error}: {stderr.strip()}"
@@ -661,6 +662,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             result = evaluate_case(case_id, findings, expected, error=error)
             result["vulnerabilityClass"] = expected["vulnerabilityClass"]
             result["minimumSeverity"] = expected["minimumSeverity"]
+            result["scannerExitCode"] = scanner_exit_code
             result["elapsed"] = round(elapsed, 1)
             case_results.append(result)
     finally:

@@ -12,8 +12,10 @@ import argparse
 import json
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 
 class ValidationError:
@@ -90,6 +92,32 @@ def _get_jsonschema_validator() -> Any:
     return jsonschema.Draft7Validator
 
 
+def _get_jsonschema_format_checker() -> Any:
+    """Return a format checker with validators for the schema formats we use."""
+    import jsonschema
+
+    checker = jsonschema.FormatChecker()
+
+    @checker.checks("uri")
+    def _is_uri(value: object) -> bool:
+        if not isinstance(value, str):
+            return False
+        parsed = urlparse(value)
+        return bool(parsed.scheme and (parsed.netloc or parsed.path))
+
+    @checker.checks("date-time")
+    def _is_datetime(value: object) -> bool:
+        if not isinstance(value, str):
+            return False
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return False
+        return parsed.tzinfo is not None
+
+    return checker
+
+
 def load_schema(path: Path | None = None) -> dict:
     """Load the JSON Schema for case.json."""
     schema_path = path or SCHEMA_PATH
@@ -104,7 +132,7 @@ def validate_case_against_schema(case: Any, schema: dict) -> list[ValidationErro
     except RuntimeError as exc:
         return [ValidationError(case_id, "schema_dependency", str(exc))]
 
-    validator = validator_cls(schema)
+    validator = validator_cls(schema, format_checker=_get_jsonschema_format_checker())
     errors = []
     for error in validator.iter_errors(case):
         errors.append(
@@ -133,6 +161,7 @@ def validate_manifest_consistency(
         ]
 
     manifest_ids: set[str] = set()
+    seen_manifest_ids: dict[str, int] = {}
     for index, case in enumerate(manifest_cases):
         case_obj = _json_object(case)
         if case_obj is None:
@@ -153,6 +182,18 @@ def validate_manifest_consistency(
                 )
             )
             continue
+
+        first_index = seen_manifest_ids.get(case_id)
+        if first_index is not None:
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "manifest",
+                    f"Duplicate manifest entry at cases[{index}] (already listed at cases[{first_index}])",
+                )
+            )
+        else:
+            seen_manifest_ids[case_id] = index
         manifest_ids.add(case_id)
 
     dir_ids = set(case_dirs)

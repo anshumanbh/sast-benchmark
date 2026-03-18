@@ -606,7 +606,9 @@ class TestRunBenchmark:
         assert results["results"][0]["error"] == "output is not valid JSON (exit code 2)"
         assert results["results"][0]["detected"] is False
 
-    def test_nonzero_exit_code_is_reported_as_error(self, tmp_path: Path):
+    def test_nonzero_exit_code_with_parseable_output_is_evaluated(
+        self, tmp_path: Path
+    ):
         repo = tmp_path / "repo"
         repo.mkdir()
         _init_git_repo(repo)
@@ -628,7 +630,8 @@ class TestRunBenchmark:
                 scanner_cmd=(
                     "python3 -c "
                     "\"import json, sys; print(json.dumps({'findings': "
-                    "[{'path': 'src/foo.ts', 'severity': 'high'}]})); sys.exit(2)\""
+                    "[{'path': 'src/foo.ts', 'severity': 'high', "
+                    "'cweIds': ['CWE-22']}]})); sys.exit(2)\""
                 ),
                 output=str(tmp_path / "results.json"),
                 cases_dir=str(cases_dir),
@@ -638,5 +641,6 @@ class TestRunBenchmark:
             )
         )
 
-        assert results["results"][0]["error"] == "scanner exited with code 2"
-        assert results["results"][0]["detected"] is False
+        assert results["results"][0]["error"] is None
+        assert results["results"][0]["detected"] is True
+        assert results["results"][0]["scannerExitCode"] == 2
