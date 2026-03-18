@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-943q-mwmv-hhvh",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-943q-mwmv-hhvh",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "OC-02: Gateway /tools/invoke tool escalation + ACP permission auto-approval",
+    "severity": "high",
+    "publishedAt": "2026-02-14T11:55:07Z",
+    "description": "## Summary\n\nOpenClaw Gateway exposes an authenticated HTTP endpoint (`POST /tools/invoke`) intended for invoking a constrained set of tools. Two issues could combine to significantly increase blast radius in misconfigured or exposed deployments:\n\n- The HTTP gateway layer did not deny high-risk session orchestration tools by default, allowing a caller with Gateway auth to invoke tools like `sessions_spawn` / `sessions_send` and pivot into creating or controlling agent sessions.\n- ACP clients could auto-approve permission requests for risky tools with insufficient user interaction/guardrails, reducing the friction that should normally prevent silent execution or mutation.\n\n## Impact\n\nIf the Gateway is reachable by an attacker and they obtain a valid Gateway token, they may be able to:\n\n- Escalate from single-tool invocation to spawning/controlling sessions and reach command execution capabilities depending on tool policy and runtime environment.\n- Perform cross-session message injection via `sessions_send`.\n- In ACP-integrated scenarios, obtain unintended approvals for non-read/search tool permissions.\n\n## CVSS\n\n- `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H` (8.8)\n\n## Affected versions\n\n- `openclaw < 2026.2.14`\n\n## Fixed in\n\n- `openclaw >= 2026.2.14`\n\n## Remediation\n\nThe default behavior is now hardened:\n\n- PR #15390: deny high-risk tools over HTTP `/tools/invoke` by default (with `gateway.tools.{allow,deny}` overrides) and harden ACP permission handling.\n- Commit `bb1c3dfe1`: ACP clients now prompt for any non-read/search permission request (fail closed for mutating/execution/fetch operations).\n- Commit `539689a2f`: security audit warns when `gateway.tools.allow` re-enables default-denied HTTP tools, since this can increase RCE blast radius if the Gateway is reachable.\n- Commit `153a7644e`: ACP safe-kind inference is stricter to avoid accidental auto-approval due to substring matches (still auto-approves only confident `read/search`).\n\n## Mitigations / deployment guidance\n\n- Keep the Gateway loopback-only unless you have a strong reason not to: `gateway.bind=\"loopback\"` / `openclaw gateway run --bind loopback`.\n- Avoid exposing the Gateway directly to the public internet. Use an SSH tunnel or Tailscale to access a loopback-bound Gateway.\n- Treat opting in to default-denied HTTP tools (via `gateway.tools.allow`) as high-risk and audit such configurations carefully.\n\n## Credits\n\nThanks to @aether-ai-agent for reporting this issue and contributing remediation work.",
+    "cweIds": [
+      "CWE-78"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "score": 8.8
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<2026.2.14",
+        "patchedVersions": ">=2026.2.14"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "68d79e56c2ef91555ccd596cf520a85dd34c83fb",
+    "introducingCommits": [
+      {
+        "sha": "9809b47d4545b394a5e49624796297147a8253cb",
+        "authoredAt": "2026-01-18T08:27:37Z",
+        "subject": "feat(acp): add interactive client harness"
+      },
+      {
+        "sha": "f1083cd52cf43c7312ae09cf0aa696ba9c95282c",
+        "authoredAt": "2026-01-24T09:29:32Z",
+        "subject": "gateway: add /tools/invoke HTTP endpoint"
+      }
+    ],
+    "vulnerableHead": "f1083cd52cf43c7312ae09cf0aa696ba9c95282c",
+    "notes": "Issue combines two independently introduced paths: HTTP /tools/invoke surface and ACP auto-approval logic."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/acp/client.ts",
+      "src/config/types.gateway.ts",
+      "src/gateway/tools-invoke-http.ts",
+      "src/config/zod-schema.ts",
+      "src/security/audit.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=68d79e56c2ef91555ccd596cf520a85dd34c83fb earliest_intro=9809b47d4545b394a5e49624796297147a8253cb"
+      },
+      {
+        "name": "baseline_ancestor_of_all_intro",
+        "pass": true,
+        "details": "baseline should precede introducing commits"
+      },
+      {
+        "name": "intro_precedes_patched_release",
+        "pass": true,
+        "details": "intro=f1083cd52cf43c7312ae09cf0aa696ba9c95282c patched_tag_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      },
+      {
+        "name": "intro_at_or_before_affected_upper",
+        "pass": true,
+        "details": "intro=f1083cd52cf43c7312ae09cf0aa696ba9c95282c affected_upper_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes"
+    ]
+  }
+}

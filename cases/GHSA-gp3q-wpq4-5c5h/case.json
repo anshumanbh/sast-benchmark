@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-gp3q-wpq4-5c5h",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-gp3q-wpq4-5c5h",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "LINE group allowlist scope mismatch with DM pairing-store entries",
+    "severity": "high",
+    "publishedAt": "2026-02-26T22:40:37Z",
+    "description": "### Summary\nIn specific LINE configurations, sender IDs approved through DM pairing could also satisfy group allowlist checks when operators expected group sender access to be scoped only to explicit group allowlists.\n\n### Affected Packages / Versions\n- Package: `openclaw` (npm)\n- Latest published version at triage/update time: `2026.2.25`\n- Affected: `<= 2026.2.25`\n- Patched: `>= 2026.2.26` (planned next release)\n\n### Impact\nThis is a group-authorization scope mismatch. DM pairing-store entries could influence group sender authorization in allowlist mode.\n\n### Technical Details\nRoot cause: group allowlist composition inherited pairing-store entries intended for DM approvals. Under default DM pairing policy, a DM-paired sender could match group allowlist checks.\n\nFixes on `main`:\n- isolate group allowlist composition from pairing-store entries\n- centralize shared DM/group allowlist composition to preserve DM-only pairing behavior\n- add regression coverage for LINE and Mattermost policy paths\n\n### Fix Commit(s)\n- `8bdda7a651c21e98faccdbbd73081e79cffe8be0`\n- `892a9c24b0f6118729ab5b5f5499b1a7e792dd15` (follow-up refactor hardening)\n\n### Release Process Note\n`patched_versions` is pre-set to `>= 2026.2.26` so once npm `2026.2.26` is published, this advisory can be published directly without additional version-field edits.\n\nThanks @tdjackey for reporting.\n",
+    "cweIds": [
+      "CWE-863"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:N",
+      "score": 7.1
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.2.25",
+        "patchedVersions": ">= 2026.2.26"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "101d0f451f238878f9ef48528b33c944d0612d76",
+    "introducingCommits": [
+      {
+        "sha": "c96ffa7186a43cda7aa5e2b865a194f94c24d42e",
+        "authoredAt": "2026-01-25T12:22:36Z",
+        "subject": "feat: Add Line plugin (#1630)"
+      },
+      {
+        "sha": "2493455f08d0dabd570f69ac1a460fc3f85a0b17",
+        "authoredAt": "2026-02-15T00:59:32+01:00",
+        "subject": "refactor(line): extract node webhook handler + shared verification"
+      },
+      {
+        "sha": "8bdda7a651c21e98faccdbbd73081e79cffe8be0",
+        "authoredAt": "2026-02-26T12:58:18+01:00",
+        "subject": "fix(security): keep DM pairing allowlists out of group auth"
+      },
+      {
+        "sha": "bce643a0bd145d3e9cb55400af33bd1b85baeb02",
+        "authoredAt": "2026-02-26T21:57:52+01:00",
+        "subject": "refactor(security): enforce account-scoped pairing APIs"
+      },
+      {
+        "sha": "9a5bfb1fe56d9000a6e089bf0c3fca8081710bb0",
+        "authoredAt": "2026-03-02T23:47:56-06:00",
+        "subject": "fix(line): synthesize media/auth/routing webhook regressions (openclaw#32546) thanks @Takhoffman"
+      }
+    ],
+    "vulnerableHead": "9a5bfb1fe56d9000a6e089bf0c3fca8081710bb0",
+    "notes": "LINE plugin and webhook evolution introduced DM pairing-store entries that could bypass group allowlist scope checks."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/line/bot-handlers.ts",
+      "src/line/webhook.ts",
+      "src/line/webhook-node.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=101d0f451f23 intro=c96ffa7186a4"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=101d0f451f23 intro=2493455f08d0"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=101d0f451f23 intro=8bdda7a651c2"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=101d0f451f23 intro=bce643a0bd14"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=101d0f451f23 intro=9a5bfb1fe56d"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

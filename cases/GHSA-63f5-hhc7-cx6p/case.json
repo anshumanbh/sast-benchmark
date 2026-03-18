@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-63f5-hhc7-cx6p",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-63f5-hhc7-cx6p",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Bootstrap setup codes could be replayed to escalate pending pairing scopes before approval",
+    "severity": "high",
+    "publishedAt": "2026-03-14T05:56:37Z",
+    "description": "### Summary\n`openclaw` versions `<= 2026.3.12` allowed bootstrap setup codes to be replayed before approval, which could widen the scopes on a pending device pairing request.\n\n### Affected Packages / Versions\n- Package: `openclaw` (`npm`)\n- Affected versions: `<= 2026.3.12`\n- Fixed version: `2026.3.13`\n\n### Details\nThe vulnerable path was bootstrap token verification in `src/infra/device-bootstrap.ts`. In affected releases, a valid bootstrap setup code could be verified more than once before the pairing request was approved. That allowed a second verification attempt to mutate a pending device pairing and request broader scopes, including escalation from a lower operator scope to `operator.admin`, before an approver finalized the pairing.\n\nThis issue is in scope under OpenClaw's trust model because bootstrap setup codes are an authentication primitive for device pairing and the replay changed the privileges granted to the pending device.\n\n### Fix\n`openclaw@2026.3.13` makes bootstrap setup codes single-use. Current code consumes the bootstrap token record on the first successful verification, so replay attempts fail before pending scopes can be widened.\n\nRegression coverage exists in `src/infra/device-pairing.test.ts` (`rejects bootstrap token replay before pending scope escalation can be approved`).\n\n### Fix Commit(s)\n- `1803d16d5cec970c54b0e1ac46b31b1cbade335c`\n\nThanks @tdjackey for reporting.\n",
+    "cweIds": [
+      "CWE-269"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<=2026.3.12",
+        "patchedVersions": ">= 2026.3.13"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "9cd54ea8824462b876733471132f2bd7b8c1b0b0",
+    "introducingCommits": [
+      {
+        "sha": "bf89947a8e9ec5d278b71a8c438ce414dd04a2d6",
+        "authoredAt": "2026-03-12T22:23:07Z",
+        "subject": "fix: switch pairing setup codes to bootstrap tokens"
+      }
+    ],
+    "vulnerableHead": "bf89947a8e9ec5d278b71a8c438ce414dd04a2d6",
+    "notes": "Bootstrap token implementation allowed setup code replay to escalate pending pairing scopes before approval."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/infra/device-bootstrap.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=9cd54ea88244 intro=bf89947a8e9e"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

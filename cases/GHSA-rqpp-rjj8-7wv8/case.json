@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-rqpp-rjj8-7wv8",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-rqpp-rjj8-7wv8",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "WebSocket shared-auth connections could self-declare elevated scopes",
+    "severity": "critical",
+    "publishedAt": "2026-03-13T04:34:34Z",
+    "description": "### Summary\n\nA logic flaw in the OpenClaw gateway WebSocket connect path allowed certain device-less shared-token or password-authenticated backend connections to keep client-declared scopes without server-side binding. A shared-authenticated client could present elevated scopes such as `operator.admin` even though those scopes were not tied to a device identity or an explicitly trusted Control UI path.\n\n### Impact\n\nThis crossed the intended authorization boundary and could let a shared-secret-authenticated backend client perform admin-only gateway operations.\n\n### Affected versions\n\n`openclaw` `<= 2026.3.11`\n\n### Patch\n\nFixed in `openclaw` `2026.3.12`. The gateway now clears unbound scopes for non-Control-UI shared-auth connections, and regression tests cover the device-less shared-auth path.\n",
+    "cweIds": [
+      "CWE-269",
+      "CWE-862"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "score": 10.0
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.11",
+        "patchedVersions": "2026.3.12"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "f97c45c5b5e0698b6667bb5f6badc0cac7dabd12",
+    "introducingCommits": [
+      {
+        "sha": "51149fcaf15a04872965ae80137b1d88f918d189",
+        "authoredAt": "2026-02-21T19:47:22+01:00",
+        "subject": "refactor(gateway): extract connect and role policy logic"
+      },
+      {
+        "sha": "9c142993b89dd3f75360552c3bdf9fa2e1e76546",
+        "authoredAt": "2026-02-26T13:40:58Z",
+        "subject": "fix: preserve operator scopes for shared auth connections"
+      }
+    ],
+    "vulnerableHead": "9c142993b89dd3f75360552c3bdf9fa2e1e76546",
+    "notes": "WebSocket connect/role policy extraction and shared-auth operator scope preservation allowed scope self-declaration."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/gateway/server/ws-connection/message-handler.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=f97c45c5b5e0 intro=51149fcaf15a"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=f97c45c5b5e0 intro=9c142993b89d"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

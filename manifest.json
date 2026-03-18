@@ -1,0 +1,249 @@
+{
+  "name": "openclaw-advisory-benchmark",
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-03-18T16:55:40.540907Z",
+  "repository": "openclaw/openclaw",
+  "caseCount": 24,
+  "cases": [
+    {
+      "id": "GHSA-3c6h-g97w-fg78",
+      "severity": "high",
+      "title": "tools.exec.safeBins sort long-option abbreviation bypass can skip exec approval in allowlist mode",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "0e85380e56345d21bab8242d09674c77ea8ad5ea",
+      "vulnerableHead": "89aad7b922835e40b4df54a9e6195a5f8ee2e5b6",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-474h-prjg-mmw3",
+      "severity": "high",
+      "title": "Sandboxed sessions_spawn(runtime=\"acp\") bypassed sandbox inheritance and allowed host ACP initialization",
+      "vulnerabilityClass": "sandboxescape",
+      "baselineCommit": "a9d9a968ed80879f63f519497f778ca09af6f327",
+      "vulnerableHead": "a7d56e3554d088d437477d97d2c967754b9b1f5d",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-4jpw-hj22-2xmc",
+      "severity": "critical",
+      "title": "Pairing-scoped device tokens could mint `operator.admin` and reach node RCE",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+      "vulnerableHead": "e5f7435d9f941822d7fbf6f050ab725237eb2632",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-4rj2-gpmh-qq5x",
+      "severity": "critical",
+      "title": "Inbound allowlist policy bypass in voice-call extension (empty caller ID + suffix matching)",
+      "vulnerabilityClass": "authbypass",
+      "baselineCommit": "3467b0ba074cba456cf20d2178faff96bacaeafb",
+      "vulnerableHead": "42c17adb5e4d3ea1f9b1d2fd921b9abc183b79df",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-5wcw-8jjv-m286",
+      "severity": "high",
+      "title": "Browser-originated WebSocket connections could bypass origin validation in trusted-proxy mode",
+      "vulnerabilityClass": "authbypass",
+      "baselineCommit": "8f8e46d898c55a5b37d4b6d6f1b446e04f104a4e",
+      "vulnerableHead": "20c2db21035e8706ccbd63d553e8042c19bbf8f1",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-63f5-hhc7-cx6p",
+      "severity": "high",
+      "title": "Bootstrap setup codes could be replayed to escalate pending pairing scopes before approval",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "9cd54ea8824462b876733471132f2bd7b8c1b0b0",
+      "vulnerableHead": "bf89947a8e9ec5d278b71a8c438ce414dd04a2d6",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-6f6j-wx9w-ff4j",
+      "severity": "high",
+      "title": "ACPX Windows wrapper shell fallback allowed cwd injection in specific paths",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "a9d9a968ed80879f63f519497f778ca09af6f327",
+      "vulnerableHead": "a7d56e3554d088d437477d97d2c967754b9b1f5d",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-6mgf-v5j7-45cr",
+      "severity": "high",
+      "title": "fetch-guard forwards custom authorization headers across cross-origin redirects",
+      "vulnerabilityClass": "secretdisclosure",
+      "baselineCommit": "d842b28a1517f95aae2a5bcd97f2f726e42b93d8",
+      "vulnerableHead": "9bd64c8a1f91dda602afc1d5246a2ff2be164647",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-943q-mwmv-hhvh",
+      "severity": "high",
+      "title": "OC-02: Gateway /tools/invoke tool escalation + ACP permission auto-approval",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "68d79e56c2ef91555ccd596cf520a85dd34c83fb",
+      "vulnerableHead": "f1083cd52cf43c7312ae09cf0aa696ba9c95282c",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-99qw-6mr3-36qr",
+      "severity": "high",
+      "title": "Workspace plugin auto-discovery allowed code execution from cloned repositories",
+      "vulnerabilityClass": "codeexec",
+      "baselineCommit": "ef36cb8cbcbd8cf7b04a2a92e1782925f48ae1cf",
+      "vulnerableHead": "e8775cda932fbe8c949cba925abdc8e419bb7829",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-g55j-c2v4-pjcg",
+      "severity": "high",
+      "title": "Unauthenticated Local RCE via WebSocket config.apply",
+      "vulnerabilityClass": "codeexec",
+      "baselineCommit": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+      "vulnerableHead": "73e9e787b4df7705556f199f5f3e00580fab38c3",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-g8p2-7wf7-98mq",
+      "severity": "high",
+      "title": "1-Click RCE via Authentication Token Exfiltration From gatewayUrl",
+      "vulnerabilityClass": "secretdisclosure",
+      "baselineCommit": "51dfd6efdb013cfc7e269e0bedf3a9bef0ed7023",
+      "vulnerableHead": "c74551c2ae0611f3ef0e691dc93a38372f366765",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-gp3q-wpq4-5c5h",
+      "severity": "high",
+      "title": "LINE group allowlist scope mismatch with DM pairing-store entries",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "101d0f451f238878f9ef48528b33c944d0612d76",
+      "vulnerableHead": "9a5bfb1fe56d9000a6e089bf0c3fca8081710bb0",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-gv46-4xfq-jv58",
+      "severity": "critical",
+      "title": "Remote Code Execution via Node Invoke Approval Bypass in Gateway",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "b347d5d9ccbb8ccf008c887fc03cdc3410710afd",
+      "vulnerableHead": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
+      "verificationStatus": "pass",
+      "confidence": "medium"
+    },
+    {
+      "id": "GHSA-jq3f-vjww-8rq7",
+      "severity": "high",
+      "title": "Telegram webhook request bodies were read before secret validation, enabling unauthenticated resource exhaustion",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "1e7ec8bfd2e7e5e689c6e5b6f1808b3251a5fe0d",
+      "vulnerableHead": "ee594e2fdb718da52e87a41d0414b16c322a9af6",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-mc68-q9jw-2h3v",
+      "severity": "high",
+      "title": "Command Injection in Clawdbot Docker Execution via PATH Environment Variable",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "7a839e7eb62b9711188cadc88f90b1d8a9a29113",
+      "vulnerableHead": "eaace34233fdf454c526d23cd2fd49de3be8eb32",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-mgrq-9f93-wpp5",
+      "severity": "high",
+      "title": "workspace path guard bypass on non-existent out-of-root symlink leaf",
+      "vulnerabilityClass": "sandboxescape",
+      "baselineCommit": "8a006a32603b0a2cd7ecd9cb7f858e1b96332035",
+      "vulnerableHead": "de61e9c9771899d76710251c2f445a75d6488644",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-mwxv-35wr-4vvj",
+      "severity": "high",
+      "title": "Gateway plugin auth bypass via encoded dot-segment traversal in protected /api/channels paths",
+      "vulnerabilityClass": "authbypass",
+      "baselineCommit": "37a138c554c32abc25347388e68882f787e879f9",
+      "vulnerableHead": "cef5fae0a25eb43524fcefa7514773fbc91e4528",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-q399-23r3-hfx4",
+      "severity": "high",
+      "title": "system.run approvals did not bind PATH-token executable identity, enabling post-approval executable rebind",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "71f357d9498cebb0efe016b0496d5fbe807539fc",
+      "vulnerableHead": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-qrq5-wjgg-rvqw",
+      "severity": "critical",
+      "title": "Path Traversal in Plugin Installation",
+      "vulnerabilityClass": "sandboxescape",
+      "baselineCommit": "a6ea74f8e6ffae13f1de88736b0d47a004b98e54",
+      "vulnerableHead": "3a6ee5ee00176c88aee32bb8bfd543780014c079",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-r5fq-947m-xm57",
+      "severity": "high",
+      "title": "Path traversal in apply_patch could write/delete files outside the workspace",
+      "vulnerabilityClass": "pathtraversal",
+      "baselineCommit": "221c0b4cf8410261e5424dde4cbf7de88805a4bd",
+      "vulnerableHead": "8b4bdaa8a473e6e14cab866a916a407e86ab861a",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-r7vr-gr74-94p8",
+      "severity": "high",
+      "title": "Command-authorized non-owners could reach owner-only `/config` and `/debug` surfaces",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "356d61aacfa5b0f1d5830716ec59d70682a3e7b8",
+      "vulnerableHead": "08e020881d6e1c868ec59e5d0b7d040a60afcec7",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-rqpp-rjj8-7wv8",
+      "severity": "critical",
+      "title": "WebSocket shared-auth connections could self-declare elevated scopes",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "f97c45c5b5e0698b6667bb5f6badc0cac7dabd12",
+      "vulnerableHead": "9c142993b89dd3f75360552c3bdf9fa2e1e76546",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-x22m-j5qq-j49m",
+      "severity": "high",
+      "title": "Two SSRF via sendMediaFeishu and markdown image fetching in Feishu extension",
+      "vulnerabilityClass": "ssrf",
+      "baselineCommit": "02842bef9179e65ac3c8174091a4facfcd0a4083",
+      "vulnerableHead": "2267d58afcc70fe19408b8f0dce108c340f3426d",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    }
+  ]
+}

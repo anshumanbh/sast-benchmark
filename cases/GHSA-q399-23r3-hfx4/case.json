@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-q399-23r3-hfx4",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-q399-23r3-hfx4",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "system.run approvals did not bind PATH-token executable identity, enabling post-approval executable rebind",
+    "severity": "high",
+    "publishedAt": "2026-03-02T05:46:02Z",
+    "description": "### Summary\nFor `host=node` runs, approvals validated command context but did not pin executable identity for non-path-like `argv[0]` tokens (for example `tr`). If PATH resolution changed after approval, execution could run a different binary.\n\n### Impact\nA previously approved action could execute a different executable than the operator approved.\n\n### Fix\nNode `system.run` approvals now require immutable `systemRunPlan` data, and path-token commands are pinned to canonical executable identity (`realpath`) across approval and execution.\n\n### Affected and Patched Versions\n- Affected: `<= 2026.2.26`\n- Patched: `2026.3.1`",
+    "cweIds": [
+      "CWE-367",
+      "CWE-426"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.2.26",
+        "patchedVersions": ">= 2026.3.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "71f357d9498cebb0efe016b0496d5fbe807539fc",
+    "introducingCommits": [
+      {
+        "sha": "cb3290fca32593956638f161d9776266b90ab891",
+        "authoredAt": "2026-02-14T18:53:23+01:00",
+        "subject": "fix(node-host): enforce system.run rawCommand/argv consistency"
+      },
+      {
+        "sha": "6007941f04df1edcca679dd6c95949744fdbd4df",
+        "authoredAt": "2026-02-21T11:49:38+01:00",
+        "subject": "fix(security): harden and refactor system.run command resolution"
+      },
+      {
+        "sha": "9a4b2266ccb9eaf011014d86b6a559b0a78b39ea",
+        "authoredAt": "2026-02-26T16:38:07+01:00",
+        "subject": "fix(security): bind node system.run approvals to env"
+      },
+      {
+        "sha": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+        "authoredAt": "2026-02-26T18:09:01+01:00",
+        "subject": "refactor(security): enforce v1 node exec approval binding"
+      }
+    ],
+    "vulnerableHead": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+    "notes": "system.run approval binding evolved across several security refactors without pinning PATH-token executable identity, allowing symlink rebind."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "commandinjection",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/gateway/node-invoke-system-run-approval.ts",
+      "src/node-host/invoke-system-run.ts",
+      "src/infra/system-run-approval-binding.ts"
+    ],
+    "description": "Scanner should detect commandinjection when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=71f357d9498c intro=cb3290fca325"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=71f357d9498c intro=6007941f04df"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=71f357d9498c intro=9a4b2266ccb9"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=71f357d9498c intro=10481097f8e6"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-mwxv-35wr-4vvj",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-mwxv-35wr-4vvj",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Gateway plugin auth bypass via encoded dot-segment traversal in protected /api/channels paths",
+    "severity": "high",
+    "publishedAt": "2026-02-26T22:40:35Z",
+    "description": "### Summary\nGateway plugin route auth protection for `/api/channels` could be bypassed using encoded dot-segment traversal (for example `..%2f`) in path variants that plugin handlers normalize.\n\n### Affected Packages / Versions\n- Package: npm `openclaw`\n- Latest published vulnerable version: `2026.2.25`\n- Vulnerable version range: `<= 2026.2.25`\n- Patched version: `2026.2.26` (planned next release)\n\n### Impact\nUnder affected versions, crafted alternate paths could bypass gateway auth checks for protected plugin channel routes when plugin handlers decode/canonicalize the incoming path and then route to `/api/channels/...` handlers.\n\n### Fix Commit(s)\n- `258d615c45527ffda37cecd08cd268f97461bde0`\n\n### Release Process Note\n`patched_versions` is pre-set to the planned next release (`2026.2.26`). After npm publish, maintainers only need to publish the advisory.\n\nThanks @zpbrent for reporting.\n",
+    "cweIds": [
+      "CWE-289"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<=2026.2.25",
+        "patchedVersions": ">= 2026.2.26"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "37a138c554c32abc25347388e68882f787e879f9",
+    "introducingCommits": [
+      {
+        "sha": "258d615c4d952926dc552be7776635f870ef3c9f",
+        "authoredAt": "2026-02-26T17:02:06+01:00",
+        "subject": "fix: harden plugin route auth path canonicalization"
+      },
+      {
+        "sha": "08e3357480ffabb1623bd56735bc8961d3b4938c",
+        "authoredAt": "2026-02-26T17:23:46+01:00",
+        "subject": "refactor: share gateway security path canonicalization"
+      },
+      {
+        "sha": "53d10f8688b467a9290990e86c496063158affa3",
+        "authoredAt": "2026-03-02T00:10:51Z",
+        "subject": "fix(gateway): land access/auth/config migration cluster"
+      },
+      {
+        "sha": "cef5fae0a25eb43524fcefa7514773fbc91e4528",
+        "authoredAt": "2026-03-02T00:42:22Z",
+        "subject": "refactor(gateway): dedupe origin seeding and plugin route auth matching"
+      }
+    ],
+    "vulnerableHead": "cef5fae0a25eb43524fcefa7514773fbc91e4528",
+    "notes": "Plugin auth path canonicalization introduced across gateway security refactors left encoded dot-segment traversal bypass."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "authbypass",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/gateway/security-path.ts",
+      "src/gateway/server-http.ts",
+      "src/gateway/server/plugins-http.ts"
+    ],
+    "description": "Scanner should detect authbypass when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=37a138c554c3 intro=258d615c4d95"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=37a138c554c3 intro=08e3357480ff"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=37a138c554c3 intro=53d10f8688b4"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=37a138c554c3 intro=cef5fae0a25e"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

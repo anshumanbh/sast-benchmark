@@ -1,0 +1,272 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/openclaw/openclaw-advisory-benchmark/schema/case.schema.json",
+  "title": "OpenClaw Advisory Benchmark Case",
+  "description": "Schema for a single advisory benchmark case used to test security scanners against real-world OpenClaw GHSA advisories.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "advisoryUrl",
+    "repository",
+    "advisory",
+    "timeline",
+    "expectedOutcome",
+    "verification",
+    "provenance"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^GHSA-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}$",
+      "description": "GitHub Security Advisory ID."
+    },
+    "advisoryUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL of the GitHub security advisory."
+    },
+    "repository": {
+      "type": "string",
+      "const": "openclaw/openclaw",
+      "description": "GitHub owner/repo."
+    },
+    "advisory": {
+      "type": "object",
+      "required": ["title", "severity", "publishedAt", "description", "cweIds"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Short vulnerability title from the advisory."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "description": "Advisory severity level."
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 publication timestamp."
+        },
+        "description": {
+          "type": "string",
+          "description": "Full advisory description in Markdown."
+        },
+        "cweIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CWE-[0-9]+$"
+          },
+          "description": "Associated CWE identifiers."
+        },
+        "cvss": {
+          "type": "object",
+          "required": ["version", "vectorString", "score"],
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "type": "string",
+              "description": "CVSS version (e.g. '3.1')."
+            },
+            "vectorString": {
+              "type": "string",
+              "description": "Full CVSS vector string."
+            },
+            "score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "Numeric CVSS score."
+            }
+          }
+        },
+        "affectedPackages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ecosystem", "name"],
+            "additionalProperties": false,
+            "properties": {
+              "ecosystem": {
+                "type": "string",
+                "description": "Package ecosystem (e.g. 'npm')."
+              },
+              "name": {
+                "type": "string",
+                "description": "Package name."
+              },
+              "vulnerableRange": {
+                "type": "string",
+                "description": "Semver range of vulnerable versions."
+              },
+              "patchedVersions": {
+                "type": "string",
+                "description": "Semver range of patched versions."
+              }
+            }
+          }
+        }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "required": [
+        "baselineCommit",
+        "introducingCommits",
+        "vulnerableHead"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "baselineCommit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Pre-vulnerability commit (parent of earliest introducing commit)."
+        },
+        "introducingCommits": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/commitRef"
+          },
+          "description": "Commits that introduced the vulnerable code."
+        },
+        "vulnerableHead": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "The commit to scan for vulnerability detection. Typically the latest introducing commit."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Context on vulnerability introduction."
+        }
+      }
+    },
+    "expectedOutcome": {
+      "type": "object",
+      "required": ["vulnerabilityClass", "minimumSeverity", "expectedPaths", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "vulnerabilityClass": {
+          "type": "string",
+          "enum": [
+            "authbypass",
+            "brokenauthz",
+            "commandinjection",
+            "codeexec",
+            "pathtraversal",
+            "sandboxescape",
+            "secretdisclosure",
+            "ssrf",
+            "abuse"
+          ],
+          "description": "High-level vulnerability taxonomy class."
+        },
+        "minimumSeverity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "description": "Minimum severity a scanner should report."
+        },
+        "expectedPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "File paths where the scanner should flag findings."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what the scanner should detect."
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": ["status", "confidence", "checks"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pass", "unverified"],
+          "description": "Overall verification status."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Confidence level in the timeline mapping."
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "pass", "details"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the verification check."
+              },
+              "pass": {
+                "type": "boolean",
+                "description": "Whether the check passed."
+              },
+              "details": {
+                "type": "string",
+                "description": "Details or explanation of the check result."
+              }
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["sources"],
+      "additionalProperties": false,
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["securevibes", "securevibes-agent"]
+          },
+          "description": "Which source datasets contributed to this case."
+        },
+        "mergeNotes": {
+          "type": "string",
+          "description": "How data was merged when multiple sources contributed."
+        }
+      }
+    }
+  },
+  "definitions": {
+    "commitRef": {
+      "type": "object",
+      "required": ["sha", "authoredAt", "subject"],
+      "additionalProperties": false,
+      "properties": {
+        "sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Full 40-character commit SHA."
+        },
+        "authoredAt": {
+          "type": "string",
+          "description": "ISO 8601 author date."
+        },
+        "subject": {
+          "type": "string",
+          "description": "First line of commit message."
+        }
+      }
+    }
+  }
+}

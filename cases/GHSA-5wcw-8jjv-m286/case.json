@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-5wcw-8jjv-m286",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-5wcw-8jjv-m286",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Browser-originated WebSocket connections could bypass origin validation in trusted-proxy mode",
+    "severity": "high",
+    "publishedAt": "2026-03-12T16:53:10Z",
+    "description": "## Summary\nIn affected versions of `openclaw`, browser-originated WebSocket connections could bypass origin validation when `gateway.auth.mode` was set to `trusted-proxy` and the request arrived with proxy headers. A page served from an untrusted origin could connect through a trusted reverse proxy, inherit proxy-authenticated identity, and establish a privileged operator session.\n\n## Impact\nThis issue affects deployments that expose the Gateway behind a trusted reverse proxy and rely on browser origin checks such as `controlUi.allowedOrigins` to restrict browser access. An attacker who can cause a victim browser to load a malicious page that can reach the proxy endpoint could establish a cross-site WebSocket connection and call privileged Gateway methods.\n\nIn verified impact, the attacker-origin page was able to request `operator.admin` and successfully call `config.get`, exposing sensitive configuration. Depending on the deployment, the same authenticated operator path could also permit other privileged reads or mutations available to operator-class callers.\n\n## Affected Packages and Versions\n- Package: `openclaw` (npm)\n- Affected versions: `< 2026.3.11`\n- Fixed in: `2026.3.11`\n\n## Technical Details\nThe WebSocket handshake logic treated proxy-delivered requests as exempt from the generic browser origin check whenever an `Origin` header was present alongside proxy headers. In `trusted-proxy` mode, that exemption allowed browser-originated connections to skip the normal origin-validation path even though they were still browser requests.\n\nBecause trusted-proxy authentication can produce a shared authenticated operator context, the affected path could retain requested operator scopes after the handshake. That made the browser origin check the missing boundary between an untrusted origin and an authenticated operator-class session.\n\n## Fix\nOpenClaw now enforces browser origin validation for any browser-originated WebSocket connection regardless of whether proxy headers are present. The fix shipped in `openclaw@2026.3.11`.\n\nFixed commit: `ebed3bbde1a72a1aaa9b87b63b91e7c04a50036b`\nRelease tag: `v2026.3.11`\n\n## Workarounds\nUpgrade to `2026.3.11` or later.\n\nIf you cannot upgrade immediately, avoid exposing browser-reachable Gateway WebSocket endpoints in `trusted-proxy` mode to untrusted origins, and ensure reverse-proxy/browser reachability is restricted to trusted origins only.\n",
+    "cweIds": [],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N",
+      "score": 8.1
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "< 2026.3.11",
+        "patchedVersions": "2026.3.11"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "8f8e46d898c55a5b37d4b6d6f1b446e04f104a4e",
+    "introducingCommits": [
+      {
+        "sha": "20c2db21035e8706ccbd63d553e8042c19bbf8f1",
+        "authoredAt": "2026-02-26T01:37:00+01:00",
+        "subject": "refactor(gateway): split browser auth hardening paths"
+      }
+    ],
+    "vulnerableHead": "20c2db21035e8706ccbd63d553e8042c19bbf8f1",
+    "notes": "Browser auth hardening path split allowed trusted-proxy WebSocket handshakes to bypass origin validation."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "authbypass",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/gateway/server/ws-connection/message-handler.ts"
+    ],
+    "description": "Scanner should detect authbypass when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=8f8e46d898c5 intro=20c2db21035e"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

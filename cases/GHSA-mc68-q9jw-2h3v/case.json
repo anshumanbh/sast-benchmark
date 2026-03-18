@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-mc68-q9jw-2h3v",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-mc68-q9jw-2h3v",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Command Injection in Clawdbot Docker Execution via PATH Environment Variable",
+    "severity": "high",
+    "publishedAt": "2026-01-31T08:52:50Z",
+    "description": "### Summary\nA command injection vulnerability existed in Clawdbot\u2019s Docker sandbox execution mechanism due to unsafe handling of the PATH environment variable when constructing shell commands.\n\nAn authenticated user able to control environment variables could influence command execution within the container context.\nThis issue has been fixed and regression tests have been added to prevent reintroduction.\n\n### Impact\nIn environments where Docker sandbox mode was enabled, authenticated users capable of supplying environment variables could affect the behavior of commands executed inside the container.\n\nThis could lead to:\n1. Execution of unintended commands inside the container\n2. Access to the container filesystem and environment variables\n3. Exposure of sensitive data\n4. Increased risk in misconfigured or privileged container environments\n\n## Fix Commit(s)\n- `771f23d36b95ec2204cc9a0054045f5d8439ea75`\n",
+    "cweIds": [
+      "CWE-78"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "score": 8.8
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "clawdbot",
+        "vulnerableRange": "<= 2026.1.24",
+        "patchedVersions": "v2026.1.29"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "7a839e7eb62b9711188cadc88f90b1d8a9a29113",
+    "introducingCommits": [
+      {
+        "sha": "eaace34233fdf454c526d23cd2fd49de3be8eb32",
+        "authoredAt": "2026-01-15T02:58:20Z",
+        "subject": "fix: restore docker binds and PATH in sandbox exec (#873)"
+      }
+    ],
+    "vulnerableHead": "eaace34233fdf454c526d23cd2fd49de3be8eb32",
+    "notes": "PATH handling weakness is introduced by docker sandbox exec PATH restoration and corrected in dedicated fix commit."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "commandinjection",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/agents/bash-tools.shared.ts"
+    ],
+    "description": "Scanner should detect commandinjection when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=7a839e7eb62b9711188cadc88f90b1d8a9a29113 earliest_intro=eaace34233fdf454c526d23cd2fd49de3be8eb32"
+      },
+      {
+        "name": "baseline_ancestor_of_all_intro",
+        "pass": true,
+        "details": "baseline should precede introducing commits"
+      },
+      {
+        "name": "intro_precedes_patched_release",
+        "pass": true,
+        "details": "intro=eaace34233fdf454c526d23cd2fd49de3be8eb32 patched_tag_commit=77e703c69b07a236c2f0962bd195e03aae1b8da0"
+      },
+      {
+        "name": "intro_at_or_before_affected_upper",
+        "pass": true,
+        "details": "intro=eaace34233fdf454c526d23cd2fd49de3be8eb32 affected_upper_commit=bcedeb4e1f620a50b6e99f1e2b25cc692f0d7bab"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes"
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-r5fq-947m-xm57",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-r5fq-947m-xm57",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Path traversal in apply_patch could write/delete files outside the workspace",
+    "severity": "high",
+    "publishedAt": "2026-02-19T11:23:58Z",
+    "description": "## Summary\r\n\r\nIn affected versions, when `apply_patch` was enabled and the agent ran without filesystem sandbox containment, crafted paths could cause file writes/deletes outside the configured workspace directory.\r\n\r\n## Affected Packages / Versions\r\n\r\n- Package: `openclaw` (npm)\r\n- Affected: `<= 2026.2.13`\r\n- Fixed: `>= 2026.2.14`\r\n\r\n## Details\r\n\r\nThe non-sandbox path resolution in `apply_patch` did not enforce workspace containment. Inputs like `../../...` or absolute paths could escape the working directory in non-sandboxed mode.\r\n\r\n## Impact\r\n\r\nPractical impact depends on deployment and who can trigger tool execution. This is most relevant when tool invocation is exposed to less-trusted callers or when operators expected workspace-only containment.\r\n\r\n## Workarounds\r\n\r\n- Keep `tools.exec.applyPatch.enabled` disabled if you do not need `apply_patch`.\r\n- Keep `tools.exec.applyPatch.workspaceOnly` at its secure default of `true`.\r\n- Restrict who can trigger tool execution (and which tools are allowlisted).\r\n\r\n## Configuration Note\r\n\r\n`tools.exec.applyPatch.workspaceOnly: false` intentionally opts out of workspace containment and can re-enable outside-workspace writes/deletes.\r\n\r\n## Fix\r\n\r\n- PR: https://github.com/openclaw/openclaw/pull/16405\r\n- Merge commit: `5544646a09c0121fca7d7093812dc2de8437c7f1`\r\n\r\n## Credits\r\n\r\nThanks to @p80n-sec for reporting this issue.\r\n",
+    "cweIds": [
+      "CWE-22"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "score": 8.8
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<=2026.2.13",
+        "patchedVersions": ">=2026.2.14"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "221c0b4cf8410261e5424dde4cbf7de88805a4bd",
+    "introducingCommits": [
+      {
+        "sha": "8b4bdaa8a473e6e14cab866a916a407e86ab861a",
+        "authoredAt": "2026-01-12T03:42:56Z",
+        "subject": "feat: add apply_patch tool (exec-gated)"
+      }
+    ],
+    "vulnerableHead": "8b4bdaa8a473e6e14cab866a916a407e86ab861a",
+    "notes": "Vulnerability is anchored to initial apply_patch tool implementation lacking workspace containment in non-sandbox mode."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "pathtraversal",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/agents/apply-patch.ts"
+    ],
+    "description": "Scanner should detect pathtraversal when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=221c0b4cf8410261e5424dde4cbf7de88805a4bd earliest_intro=8b4bdaa8a473e6e14cab866a916a407e86ab861a"
+      },
+      {
+        "name": "baseline_ancestor_of_all_intro",
+        "pass": true,
+        "details": "baseline should precede introducing commits"
+      },
+      {
+        "name": "intro_precedes_patched_release",
+        "pass": true,
+        "details": "intro=8b4bdaa8a473e6e14cab866a916a407e86ab861a patched_tag_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      },
+      {
+        "name": "intro_at_or_before_affected_upper",
+        "pass": true,
+        "details": "intro=8b4bdaa8a473e6e14cab866a916a407e86ab861a affected_upper_commit=e91d957d7089d2ca9589255245eead0edddc16d5"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes"
+    ]
+  }
+}

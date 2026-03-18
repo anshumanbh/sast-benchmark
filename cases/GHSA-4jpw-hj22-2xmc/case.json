@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-4jpw-hj22-2xmc",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-4jpw-hj22-2xmc",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Pairing-scoped device tokens could mint `operator.admin` and reach node RCE",
+    "severity": "critical",
+    "publishedAt": "2026-03-12T17:01:17Z",
+    "description": "## Summary\nIn affected versions of `openclaw`, a caller holding only `operator.pairing` could use `device.token.rotate` to mint a new token with broader scopes for an already paired device. If the target device was approved for `operator.admin`, the attacker could obtain an administrative token without already holding administrative scope.\n\n## Impact\nThis is a critical authorization flaw. On deployments with connected node hosts or companion apps that expose `system.run`, the escalated token could then modify node execution approvals and reach real remote code execution on the node. Even without nodes, the flaw still granted unauthorized gateway-admin access.\n\n## Affected Packages and Versions\n- Package: `openclaw` (npm)\n- Affected versions: `<= 2026.3.8`\n- Fixed in: `2026.3.11`\n\n## Technical Details\n`device.token.rotate` accepted caller-supplied target scopes and validated them against the target device's approved scopes, but it did not constrain the newly minted scopes to the caller's own current scope set. That allowed a pairing-scoped caller to mint a broader token for an already paired administrative device.\n\n## Fix\nOpenClaw now enforces caller-scope subsetting in `device.token.rotate`, preventing callers from minting device tokens broader than the scopes they already hold. The fix shipped in `openclaw@2026.3.11`.\n\n## Workarounds\nUpgrade to `2026.3.11` or later.\n",
+    "cweIds": [
+      "CWE-269"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "score": 10.0
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.8",
+        "patchedVersions": "2026.3.11"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+    "introducingCommits": [
+      {
+        "sha": "73e9e787b4df7705556f199f5f3e00580fab38c3",
+        "authoredAt": "2026-01-19T10:07:56Z",
+        "subject": "feat: unify device auth + pairing"
+      },
+      {
+        "sha": "9dbc1435a6cac576d5fd71f4e4bff11a5d9d43ba",
+        "authoredAt": "2026-01-20T09:24:01Z",
+        "subject": "fix: enforce ws3 roles + node allowlist"
+      },
+      {
+        "sha": "d88b239d3c8a5683a1375affae008191e81d3923",
+        "authoredAt": "2026-01-20T10:30:53Z",
+        "subject": "feat: add device token auth and devices cli"
+      },
+      {
+        "sha": "e5f7435d9f941822d7fbf6f050ab725237eb2632",
+        "authoredAt": "2026-01-20T10:46:33Z",
+        "subject": "fix: sync device scopes on token rotation"
+      }
+    ],
+    "vulnerableHead": "e5f7435d9f941822d7fbf6f050ab725237eb2632",
+    "notes": "Device auth/pairing unification and token rotation allowed scope escalation beyond caller-held scopes."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/gateway/server-methods/devices.ts",
+      "src/infra/device-pairing.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=47d1f23d5552 intro=73e9e787b4df"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=47d1f23d5552 intro=9dbc1435a6ca"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=47d1f23d5552 intro=d88b239d3c8a"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=47d1f23d5552 intro=e5f7435d9f94"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

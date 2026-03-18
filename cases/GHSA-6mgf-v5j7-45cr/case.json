@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-6mgf-v5j7-45cr",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-6mgf-v5j7-45cr",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "fetch-guard forwards custom authorization headers across cross-origin redirects",
+    "severity": "high",
+    "publishedAt": "2026-03-08T14:26:55Z",
+    "description": "OpenClaw's `fetchWithSsrFGuard(...)` followed cross-origin redirects while preserving arbitrary caller-supplied headers except for a narrow denylist (`Authorization`, `Proxy-Authorization`, `Cookie`, `Cookie2`). This allowed custom authorization headers such as `X-Api-Key`, `Private-Token`, and similar sensitive headers to be forwarded to a different origin after a redirect.\n\nThe fix switches cross-origin redirect handling from a narrow sensitive-header denylist to a safe-header allowlist, so only benign headers such as content negotiation and cache validators survive an origin change.\n\n## Affected Packages / Versions\n\n- Package: `openclaw` (npm)\n- Affected versions: `<= 2026.3.2`\n- Patched version: `2026.3.7`\n- Latest published npm version at patch time: `2026.3.2`\n\n## Impact\n\nA remote service that could trigger a redirect across origins could receive custom authorization credentials attached by OpenClaw callers. This can expose API keys, bearer-style custom headers, or private token headers intended only for the original destination.\n\n## Fix Commit(s)\n\n- `46715371b0612a6f9114dffd1466941ac476cef5`\n\n## Verification\n\n- `pnpm check` passed\n- `pnpm test:fast` passed\n- Focused redirect regression tests passed\n- `pnpm exec vitest run --config vitest.gateway.config.ts` still has unrelated current-`main` failures in `src/gateway/server-channels.test.ts` and `src/gateway/server-methods/agents-mutate.test.ts`\n\n## Release Process Note\n\nnpm `2026.3.7` was published on March 8, 2026. This advisory is fixed in the released package.\n\nThanks @Rickidevs for reporting.\n",
+    "cweIds": [
+      "CWE-116",
+      "CWE-184",
+      "CWE-522"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:H/I:L/A:N",
+      "score": 7.5
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.2",
+        "patchedVersions": ">= 2026.3.7"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "d842b28a1517f95aae2a5bcd97f2f726e42b93d8",
+    "introducingCommits": [
+      {
+        "sha": "81c68f582d4a9a20d9cca9f367d2da9edc5a65ae",
+        "authoredAt": "2026-02-02T04:07:29-08:00",
+        "subject": "fix: guard remote media fetches with SSRF checks"
+      },
+      {
+        "sha": "9bd64c8a1f91dda602afc1d5246a2ff2be164647",
+        "authoredAt": "2026-02-02T04:58:32-08:00",
+        "subject": "fix: expand SSRF guard coverage"
+      }
+    ],
+    "vulnerableHead": "9bd64c8a1f91dda602afc1d5246a2ff2be164647",
+    "notes": "SSRF guard implementation did not strip custom authorization headers on cross-origin redirects."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "secretdisclosure",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/infra/net/fetch-guard.ts"
+    ],
+    "description": "Scanner should detect secretdisclosure when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=d842b28a1517 intro=81c68f582d4a"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=d842b28a1517 intro=9bd64c8a1f91"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

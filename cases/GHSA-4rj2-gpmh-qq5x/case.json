@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-4rj2-gpmh-qq5x",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-4rj2-gpmh-qq5x",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Inbound allowlist policy bypass in voice-call extension (empty caller ID + suffix matching)",
+    "severity": "critical",
+    "publishedAt": "2026-02-14T21:29:05Z",
+    "description": "### Summary\n\nAn authentication bypass in the optional `voice-call` extension/plugin allowed unapproved or anonymous callers to reach the voice-call agent when inbound policy was set to `allowlist` or `pairing`.\n\nDeployments that do not install/enable the `voice-call` extension are not affected.\n\n### Affected Packages / Versions\n\n- `openclaw` (npm): `<= 2026.2.1`\n- Fixed in: `>= 2026.2.2`\n\n### Details\n\nIn affected versions (for example `2026.2.1`), the inbound allowlist check in `extensions/voice-call/src/manager.ts` used suffix-based matching and accepted empty caller IDs after normalization.\n\nThis allowed two bypasses:\n\n1. Missing/empty `from` values normalized to an empty string, which caused the allowlist predicate to evaluate as allowed.\n2. Suffix-based matching meant any caller number whose digits ended with an allowlisted number would be accepted.\n\n### Proof Of Concept\n\n1. Configure the voice-call extension with `inboundPolicy: allowlist` and `allowFrom: [\"+15550001234\"]`.\n2. Place/trigger an inbound call with missing/empty caller ID (provider-dependent; for example anonymous/restricted caller). The call is accepted.\n3. Place a call from a number whose E.164 digits end with `15550001234` (for example `+99915550001234`). The call is accepted.\n\n### Impact\n\nOnly operators who install/enable the optional `voice-call` extension and use `inboundPolicy=allowlist` or `pairing` could have inbound access controls bypassed, potentially allowing unauthorized callers to reach auto-response and tool execution.\n\n### Fix\n\nThe fix hardens inbound policy handling:\n\n- Reject inbound calls when caller ID is missing.\n- Require strict equality when comparing normalized caller IDs against the allowlist (no suffix/prefix matching).\n- Add regression tests for missing caller ID, anonymous caller ID, and suffix-collision cases.\n\nFix commit(s):\n\n- `f8dfd034f5d9235c5485f492a9e4ccc114e97fdb`\n\nCredits:\n\n- Reporter: @simecek\n- Reporter: @MegaManSec\n- Analyst: @stanislavfortaisle\n\nThanks @simecek and @MegaManSec for reporting.\n",
+    "cweIds": [
+      "CWE-287"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:L",
+      "score": 9.4
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.2.1",
+        "patchedVersions": ">= 2026.2.2"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "3467b0ba074cba456cf20d2178faff96bacaeafb",
+    "introducingCommits": [
+      {
+        "sha": "42c17adb5e4d3ea1f9b1d2fd921b9abc183b79df",
+        "authoredAt": "2026-01-12T21:44:19Z",
+        "subject": "feat: restore voice-call plugin parity"
+      }
+    ],
+    "vulnerableHead": "42c17adb5e4d3ea1f9b1d2fd921b9abc183b79df",
+    "notes": "Inbound allowlist logic is introduced in the voice-call manager parity commit and hardened in the fix commit."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "authbypass",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "extensions/voice-call/src/manager.ts",
+      "extensions/voice-call/src/manager/events.ts"
+    ],
+    "description": "Scanner should detect authbypass when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=3467b0ba074cba456cf20d2178faff96bacaeafb earliest_intro=42c17adb5e4d3ea1f9b1d2fd921b9abc183b79df"
+      },
+      {
+        "name": "baseline_ancestor_of_all_intro",
+        "pass": true,
+        "details": "baseline should precede introducing commits"
+      },
+      {
+        "name": "intro_precedes_patched_release",
+        "pass": true,
+        "details": "intro=42c17adb5e4d3ea1f9b1d2fd921b9abc183b79df patched_tag_commit=95cd2210f93d6ab2acc5e29dbad6065294365863"
+      },
+      {
+        "name": "intro_at_or_before_affected_upper",
+        "pass": true,
+        "details": "intro=42c17adb5e4d3ea1f9b1d2fd921b9abc183b79df affected_upper_commit=d842b28a1517f95aae2a5bcd97f2f726e42b93d8"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes",
+      "securevibes-agent"
+    ],
+    "mergeNotes": "Timeline from securevibes; vuln class/paths from securevibes-agent."
+  }
+}

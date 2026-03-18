@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-474h-prjg-mmw3",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-474h-prjg-mmw3",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Sandboxed sessions_spawn(runtime=\"acp\") bypassed sandbox inheritance and allowed host ACP initialization",
+    "severity": "high",
+    "publishedAt": "2026-03-03T04:14:22Z",
+    "description": "### Summary\nSandboxed `sessions_spawn(runtime=\"acp\")` could bypass sandbox inheritance and initialize host-side ACP runtime. The fix now fail-closes ACP spawn from sandboxed requester sessions and rejects `sandbox=\"require\"` for `runtime=\"acp\"`.\n\n### Affected Packages / Versions\n- Package: `openclaw` (npm)\n- Latest published npm version at triage time: `2026.3.1` (March 2, 2026)\n- Vulnerable range: `<=2026.3.1`\n- Patched release: `2026.3.2` (released)\n\n### Technical Details\n- Root cause: `runtime=\"subagent\"` enforced sandbox inheritance, while `runtime=\"acp\"` did not enforce equivalent sandbox/runtime checks.\n- Security impact: sandbox-boundary bypass into host-side ACP initialization.\n- Fixed behavior:\n  - deny ACP spawn when requester runtime is sandboxed\n  - deny `sessions_spawn` with `runtime=\"acp\", sandbox=\"require\"`\n  - align sandboxed prompt guidance to avoid advertising blocked ACP paths\n\n### Fix Commit(s)\n- `ac11f0af731d41743ba02d8595f4d0fe747336e3`\n- `c703aa0fe92df9fb71cf254fc46991e05fba2114`",
+    "cweIds": [
+      "CWE-269"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:C/C:H/I:H/A:H",
+      "score": 8.1
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<=2026.3.1",
+        "patchedVersions": ">= 2026.3.2"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "a9d9a968ed80879f63f519497f778ca09af6f327",
+    "introducingCommits": [
+      {
+        "sha": "a7d56e3554d088d437477d97d2c967754b9b1f5d",
+        "authoredAt": "2026-02-26T11:00:09+01:00",
+        "subject": "feat: ACP thread-bound agents (#23580)"
+      }
+    ],
+    "vulnerableHead": "a7d56e3554d088d437477d97d2c967754b9b1f5d",
+    "notes": "ACP thread-bound agents feature added sessions_spawn ACP runtime path without sandbox inheritance enforcement."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "sandboxescape",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/agents/subagent-spawn.ts"
+    ],
+    "description": "Scanner should detect sandboxescape when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=a9d9a968ed80 intro=a7d56e3554d0"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

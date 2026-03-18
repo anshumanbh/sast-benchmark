@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-gv46-4xfq-jv58",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-gv46-4xfq-jv58",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Remote Code Execution via Node Invoke Approval Bypass in Gateway",
+    "severity": "critical",
+    "publishedAt": "2026-02-14T12:06:43Z",
+    "description": "### Summary\n\nA remote code execution (RCE) vulnerability in the gateway-to-node invocation path allowed an authenticated gateway client to bypass node-host exec approvals by injecting internal control fields into `node.invoke` parameters.\n\n### Affected Component\n\n- Gateway method: `node.invoke` for node command `system.run`\n- Node host runner: exec approval gating for `system.run`\n\n### Impact\n\nIf an attacker can authenticate to a gateway (for example via a leaked/shared gateway token or a paired device token with `operator.write`), they could execute arbitrary commands on connected node hosts that support `system.run`. This can lead to full compromise of developer workstations, CI runners, and servers running the node host.\n\n### Technical Details\n\nThe gateway forwarded user-controlled `params` to node hosts without sanitizing internal approval fields. The node host treated `params.approved === true` and/or `params.approvalDecision` as sufficient to skip the approval workflow.\n\n### Fix\n\nPatched in **OpenClaw `2026.2.14`**.\n\n- Commits:\n  - `318379cdb8d045da0009b0051bd0e712e5c65e2d`\n  - `a7af646fdab124a7536998db6bd6ad567d2b06b0`\n  - `c1594627421f95b6bc4ad7c606657dc75b5ad0ce`\n  - `0af76f5f0e93540efbdf054895216c398692afcd`\n- Gateway strips untrusted approval control fields from `system.run` user input.\n- Gateway only re-attaches approval flags when `params.runId` references a valid `exec.approval.request` record and the request context matches. Approval IDs are bound to the requesting device identity (stable across reconnects), preventing replay by other clients.\n- Gateway forwards only an allowlisted set of `system.run` parameters, preventing future control-field smuggling.\n\n### Mitigations\n\n- Upgrade to `2026.2.14` or later.\n- Restrict access to the gateway (do not expose it to untrusted networks/users).\n- Rotate gateway credentials if you suspect token/password exposure.\n- Disable remote command execution on nodes by blocking `system.run` at the gateway (`gateway.nodes.denyCommands`) and/or by configuring node exec security to `deny`.\n\n### Credits\n\nThanks to @222n5 for reporting this issue.\n",
+    "cweIds": [
+      "CWE-20",
+      "CWE-441",
+      "CWE-863"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "score": 10.0
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "< 2026.2.14",
+        "patchedVersions": ">= 2026.2.14"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "b347d5d9ccbb8ccf008c887fc03cdc3410710afd",
+    "introducingCommits": [
+      {
+        "sha": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
+        "authoredAt": "2026-01-19T10:08:29Z",
+        "subject": "refactor: remove bridge protocol"
+      }
+    ],
+    "vulnerableHead": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
+    "notes": "Advisory lists three SHAs that do not resolve via GitHub API; equivalent public fix sequence was resolved by file history and commit messages."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "commandinjection",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/gateway/node-invoke-system-run-approval.ts",
+      "src/gateway/node-invoke-sanitize.ts",
+      "src/gateway/server-methods/nodes.ts"
+    ],
+    "description": "Scanner should detect commandinjection when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "medium",
+    "checks": [
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=b347d5d9ccbb8ccf008c887fc03cdc3410710afd earliest_intro=2f8206862a684d14f7ca92e9fe0dbce627c5d82b"
+      },
+      {
+        "name": "baseline_ancestor_of_all_intro",
+        "pass": true,
+        "details": "baseline should precede introducing commits"
+      },
+      {
+        "name": "intro_precedes_patched_release",
+        "pass": true,
+        "details": "intro=2f8206862a684d14f7ca92e9fe0dbce627c5d82b patched_tag_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      },
+      {
+        "name": "intro_at_or_before_affected_upper",
+        "pass": true,
+        "details": "intro=2f8206862a684d14f7ca92e9fe0dbce627c5d82b affected_upper_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes",
+      "securevibes-agent"
+    ],
+    "mergeNotes": "Timeline from securevibes; vuln class/paths from securevibes-agent."
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-qrq5-wjgg-rvqw",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-qrq5-wjgg-rvqw",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Path Traversal in Plugin Installation",
+    "severity": "critical",
+    "publishedAt": "2026-02-14T21:48:57Z",
+    "description": "### Summary\n\nA path traversal issue in OpenClaw plugin installation could allow a malicious plugin package name to escape the intended extensions directory and write files outside of it.\n\n### Affected Packages / Versions\n\n- Package: `openclaw` (npm)\n- Affected: `>= 2026.1.29-beta.1, < 2026.2.1`\n- Patched: `>= 2026.2.1`\n\n### Details\n\nWhen installing plugins, OpenClaw derives an installation directory name from the plugin's `package.json` `name`. In affected versions, crafted scoped names could result in path segments like `..`, which allowed the computed install target to resolve outside the extensions directory.\n\nExploitation requires the victim to run `openclaw plugins install` on attacker-controlled plugin content.\n\n### Fix\n\nThe install path is now validated and reserved/traversal-like plugin ids are rejected.\n\n#### Fix Commit(s)\n\n- `d03eca8450dc493b198a88b105fd180895238e57`\n\n### Mitigation\n\nUpgrade to `openclaw >= 2026.2.1`.\n\nThanks @logicx24 for reporting.\n",
+    "cweIds": [
+      "CWE-22"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:N/I:H/A:H",
+      "score": 9.3
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": ">= 2026.1.29-beta.1, < 2026.2.1",
+        "patchedVersions": ">= 2026.2.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "a6ea74f8e6ffae13f1de88736b0d47a004b98e54",
+    "introducingCommits": [
+      {
+        "sha": "2f4a248314fdd754b8344d955842fdd47f828fab",
+        "authoredAt": "2026-01-12T01:16:39Z",
+        "subject": "feat: plugin system + voice-call"
+      },
+      {
+        "sha": "3a6ee5ee00176c88aee32bb8bfd543780014c079",
+        "authoredAt": "2026-01-17T07:08:04Z",
+        "subject": "feat: unify hooks installs and webhooks"
+      }
+    ],
+    "vulnerableHead": "3a6ee5ee00176c88aee32bb8bfd543780014c079",
+    "notes": "Plugin install path logic introduced during plugin system bootstrap and hook/plugin install unification."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "sandboxescape",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/plugins/install.ts",
+      "src/plugins/update.ts"
+    ],
+    "description": "Scanner should detect sandboxescape when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=a6ea74f8e6ffae13f1de88736b0d47a004b98e54 earliest_intro=2f4a248314fdd754b8344d955842fdd47f828fab"
+      },
+      {
+        "name": "baseline_ancestor_of_all_intro",
+        "pass": true,
+        "details": "baseline should precede introducing commits"
+      },
+      {
+        "name": "intro_precedes_patched_release",
+        "pass": true,
+        "details": "intro=3a6ee5ee00176c88aee32bb8bfd543780014c079 patched_tag_commit=d842b28a1517f95aae2a5bcd97f2f726e42b93d8"
+      },
+      {
+        "name": "intro_at_or_before_affected_upper",
+        "pass": true,
+        "details": "intro=3a6ee5ee00176c88aee32bb8bfd543780014c079 affected_upper_commit=d842b28a1517f95aae2a5bcd97f2f726e42b93d8"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes",
+      "securevibes-agent"
+    ],
+    "mergeNotes": "Timeline from securevibes; vuln class/paths from securevibes-agent."
+  }
+}

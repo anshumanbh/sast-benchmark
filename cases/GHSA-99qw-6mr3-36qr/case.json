@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-99qw-6mr3-36qr",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-99qw-6mr3-36qr",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Workspace plugin auto-discovery allowed code execution from cloned repositories",
+    "severity": "high",
+    "publishedAt": "2026-03-13T04:34:35Z",
+    "description": "### Summary\n\nOpenClaw automatically discovered and loaded plugins from `.openclaw/extensions/` inside the current workspace without an explicit trust or install step. A malicious repository could include a crafted workspace plugin that executed as soon as a user ran OpenClaw from that cloned directory.\n\n### Impact\n\nOpening or running OpenClaw in an untrusted repository could lead to arbitrary code execution under the user's account.\n\n### Affected versions\n\n`openclaw` `<= 2026.3.11`\n\n### Patch\n\nFixed in `openclaw` `2026.3.12`. Workspace plugin loading now requires explicit trusted state before execution. Users should update to `2026.3.12` or later and avoid running OpenClaw inside untrusted repositories on older releases.\n",
+    "cweIds": [
+      "CWE-829"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.11",
+        "patchedVersions": "2026.3.12"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "ef36cb8cbcbd8cf7b04a2a92e1782925f48ae1cf",
+    "introducingCommits": [
+      {
+        "sha": "e8775cda932fbe8c949cba925abdc8e419bb7829",
+        "authoredAt": "2026-03-09T03:49:50Z",
+        "subject": "fix(agents): re-expose configured tools under restrictive profiles"
+      }
+    ],
+    "vulnerableHead": "e8775cda932fbe8c949cba925abdc8e419bb7829",
+    "notes": "Re-exposing configured tools under restrictive profiles allowed workspace plugin auto-discovery to execute code from cloned repos."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "codeexec",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/plugins/config-state.ts"
+    ],
+    "description": "Scanner should detect codeexec when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=ef36cb8cbcbd intro=e8775cda932f"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-r7vr-gr74-94p8",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-r7vr-gr74-94p8",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Command-authorized non-owners could reach owner-only `/config` and `/debug` surfaces",
+    "severity": "high",
+    "publishedAt": "2026-03-13T04:34:35Z",
+    "description": "### Summary\n\nOpenClaw documented `/config` and `/debug` as owner-only commands, but the command handlers checked only whether the sender was command-authorized. A lower-trust sender who was intentionally allowed to run commands could still reach privileged configuration and debugging surfaces.\n\n### Impact\n\nThis allowed a non-owner sender to read or change privileged configuration that should have remained restricted to owners.\n\n### Affected versions\n\n`openclaw` `<= 2026.3.11`\n\n### Patch\n\nFixed in `openclaw` `2026.3.12`. Owner checks are now enforced for privileged command surfaces, and regression tests cover `/config` and `/debug` access control.\n",
+    "cweIds": [
+      "CWE-285"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "score": 8.8
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.11",
+        "patchedVersions": "2026.3.12"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "356d61aacfa5b0f1d5830716ec59d70682a3e7b8",
+    "introducingCommits": [
+      {
+        "sha": "08e020881d6e1c868ec59e5d0b7d040a60afcec7",
+        "authoredAt": "2026-02-21T13:04:37+01:00",
+        "subject": "refactor(security): unify command gating and blocked-key guards"
+      }
+    ],
+    "vulnerableHead": "08e020881d6e1c868ec59e5d0b7d040a60afcec7",
+    "notes": "Command gating unification allowed command-authorized non-owners to reach owner-only /config and /debug surfaces."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "src/auto-reply/reply/command-gates.ts",
+      "src/auto-reply/reply/commands-config.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=356d61aacfa5 intro=08e020881d6e"
+      }
+    ]
+  },
+  "provenance": {
+    "sources": [
+      "securevibes-agent"
+    ]
+  }
+}
