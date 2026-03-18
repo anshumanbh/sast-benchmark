@@ -80,6 +80,56 @@ VULN_CLASS_OVERRIDES: dict[str, str] = {
     "GHSA-943q-mwmv-hhvh": "brokenauthz",
 }
 
+CASE_RESEARCH_OVERRIDES: dict[str, dict[str, Any]] = {
+    "GHSA-gv46-4xfq-jv58": {
+        "timeline_notes": (
+            "Advisory text lists non-resolving full SHAs for the initial gateway "
+            "fixes, but the local public history contains a matching remediation "
+            "train on the vulnerable path: "
+            "318379cdba1804eb840896f6ebd4dd6dd0fb53cb, "
+            "a7af646fdfc5cff077c04a7abb7c9e7a9c0b9f70, "
+            "c15946274ed62cce3846f0feea723bc83404b462, "
+            "0af76f5f0e93540efbdf054895216c398692afcd, followed by "
+            "cb3290fca32593956638f161d9776266b90ab891 and "
+            "01b3226ecbea6f5aa2a433237dae87d181d8790f before tag "
+            "v2026.2.14 (b5ab92eef4e4f6099c98817e0917c99ec9e03045). "
+            "The introducing commit 2f8206862a684d14f7ca92e9fe0dbce627c5d82b "
+            "forwards raw node.invoke params to the node host, whose runner trusts "
+            "params.approved === true; the parent baseline still used socket-"
+            "mediated approvals and lacks this bypass."
+        ),
+        "verification_confidence": "high",
+        "verification_checks": [
+            {
+                "name": "intro_contains_approval_bypass",
+                "pass": True,
+                "details": (
+                    "intro=2f8206862a684d14f7ca92e9fe0dbce627c5d82b forwards raw "
+                    "node.invoke params via context.nodeRegistry.invoke({params: p.params}); "
+                    "node-host runner at that commit treats params.approved === true "
+                    "as approval. baseline parent 3467b0ba074cba456cf20d2178faff96bacaeafb "
+                    "still uses requestExecApprovalViaSocket."
+                ),
+            },
+            {
+                "name": "public_fix_train_reaches_patched_tag",
+                "pass": True,
+                "details": (
+                    "public_fix_train="
+                    "318379cdba1804eb840896f6ebd4dd6dd0fb53cb,"
+                    "a7af646fdfc5cff077c04a7abb7c9e7a9c0b9f70,"
+                    "c15946274ed62cce3846f0feea723bc83404b462,"
+                    "0af76f5f0e93540efbdf054895216c398692afcd,"
+                    "cb3290fca32593956638f161d9776266b90ab891,"
+                    "01b3226ecbea6f5aa2a433237dae87d181d8790f "
+                    "patched_tag=v2026.2.14 "
+                    "tag_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+                ),
+            },
+        ],
+    }
+}
+
 # ── Researched agent-only case mapping ─────────────────────────────────────────
 # Each entry contains the introducing commit(s), notes, confidence, and baseline
 # derived from git blame/log analysis against the openclaw repo.
@@ -426,6 +476,23 @@ def build_unified_case(
         vf = _build_verification(tl, confidence, checks=checks)
     else:
         vf = {"status": "unverified", "confidence": "low", "checks": []}
+
+    case_override = CASE_RESEARCH_OVERRIDES.get(ghsa_id)
+    if case_override:
+        if case_override.get("timeline_notes"):
+            tl = {**tl, "notes": case_override["timeline_notes"]}
+        vf = dict(vf)
+        if case_override.get("verification_confidence"):
+            vf["confidence"] = case_override["verification_confidence"]
+        override_checks = case_override.get("verification_checks", [])
+        if override_checks:
+            merged_checks = list(vf.get("checks", []))
+            seen_names = {check.get("name") for check in merged_checks}
+            for check in override_checks:
+                if check["name"] not in seen_names:
+                    merged_checks.append(check)
+            vf["checks"] = merged_checks
+            vf["status"] = "pass" if all(c.get("pass", False) for c in merged_checks) else "unverified"
 
     # Expected outcome
     cwe_ids = advisory_data.get("cwe_ids", [])

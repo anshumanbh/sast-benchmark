@@ -37,6 +37,18 @@ CASES_DIR = ROOT / "cases"
 MANIFEST_PATH = ROOT / "manifest.json"
 
 
+def _get_jsonschema_validator() -> Any:
+    """Return the Draft 7 validator class or raise if the dependency is missing."""
+    try:
+        import jsonschema
+    except ImportError as exc:
+        raise RuntimeError(
+            "jsonschema is required for schema validation. "
+            "Install with: pip install jsonschema"
+        ) from exc
+    return jsonschema.Draft7Validator
+
+
 def load_schema(path: Path | None = None) -> dict:
     """Load the JSON Schema for case.json."""
     schema_path = path or SCHEMA_PATH
@@ -46,16 +58,12 @@ def load_schema(path: Path | None = None) -> dict:
 def validate_case_against_schema(case: dict, schema: dict) -> list[ValidationError]:
     """Validate a case dict against the JSON Schema."""
     try:
-        import jsonschema
-    except ImportError:
-        print(
-            "WARNING: jsonschema not installed, skipping schema validation. "
-            "Install with: pip install jsonschema",
-            file=sys.stderr,
-        )
-        return []
+        validator_cls = _get_jsonschema_validator()
+    except RuntimeError as exc:
+        case_id = case.get("id", "unknown")
+        return [ValidationError(case_id, "schema_dependency", str(exc))]
 
-    validator = jsonschema.Draft7Validator(schema)
+    validator = validator_cls(schema)
     errors = []
     for error in validator.iter_errors(case):
         case_id = case.get("id", "unknown")
@@ -212,12 +220,12 @@ def validate_case_strict(case: dict) -> list[ValidationError]:
             )
         )
 
-    if verification.get("confidence") not in ("high", "medium"):
+    if verification.get("confidence") != "high":
         errors.append(
             ValidationError(
                 case_id,
                 "strict",
-                f"verification.confidence is '{verification.get('confidence')}', expected 'high' or 'medium'",
+                f"verification.confidence is '{verification.get('confidence')}', expected 'high'",
             )
         )
 
@@ -255,6 +263,12 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         all_errors.append(
             ValidationError("cases", "exists", f"cases/ directory not found at {cases_dir}")
         )
+        return all_errors
+
+    try:
+        _get_jsonschema_validator()
+    except RuntimeError as exc:
+        all_errors.append(ValidationError("schema", "dependency", str(exc)))
         return all_errors
 
     case_dir_names = [

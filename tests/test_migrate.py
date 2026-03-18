@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from migrate import (
     CWE_TO_CLASS,
     AGENT_ONLY_CASE_MAPPING,
+    CASE_RESEARCH_OVERRIDES,
     SECUREVIBES_CASE_IDS,
     AGENT_CASE_IDS,
     OVERLAP_IDS,
@@ -48,6 +49,14 @@ class TestConstants:
         assert CWE_TO_CLASS["CWE-94"] == "codeexec"
         assert CWE_TO_CLASS["CWE-287"] == "authbypass"
         assert CWE_TO_CLASS["CWE-863"] == "brokenauthz"
+
+    def test_gv46_research_override_present(self):
+        override = CASE_RESEARCH_OVERRIDES["GHSA-gv46-4xfq-jv58"]
+        assert override["verification_confidence"] == "high"
+        assert any(
+            check["name"] == "intro_contains_approval_bypass"
+            for check in override["verification_checks"]
+        )
 
 
 class TestLoadAgentScenarios:
@@ -198,6 +207,54 @@ class TestBuildUnifiedCase:
         # Both sources
         assert "securevibes" in case["provenance"]["sources"]
         assert "securevibes-agent" in case["provenance"]["sources"]
+
+    def test_research_override_upgrades_gv46_confidence(self):
+        advisory_data = self._make_advisory_data("GHSA-gv46-4xfq-jv58")
+        timeline_data = {
+            "baseline_commit": "a" * 40,
+            "introducing_commits": [
+                {
+                    "sha": "b" * 40,
+                    "short": "bbbbbbbbb",
+                    "authored_at": "2026-01-12T01:16:39Z",
+                    "subject": "feat: introduce vulnerability",
+                }
+            ],
+            "vulnerable_head": "b" * 40,
+            "notes": "Original note",
+        }
+        verification_data = {
+            "verification_pass": True,
+            "confidence": "medium",
+            "checks": [
+                {
+                    "name": "baseline_ancestor_of_all_intro",
+                    "pass": True,
+                    "details": "ok",
+                }
+            ],
+        }
+        agent_scenario = {
+            "id": "GHSA-gv46-4xfq-jv58",
+            "expectedVulnerabilityClass": "commandinjection",
+            "expectedPathContains": ["src/gateway/server-methods/nodes.ts"],
+            "minimumSeverity": "high",
+        }
+
+        case = build_unified_case(
+            ghsa_id="GHSA-gv46-4xfq-jv58",
+            advisory_data=advisory_data,
+            timeline_data=timeline_data,
+            verification_data=verification_data,
+            agent_scenario=agent_scenario,
+        )
+
+        assert case["verification"]["confidence"] == "high"
+        assert "public history contains a matching remediation train" in case["timeline"]["notes"]
+        assert any(
+            check["name"] == "public_fix_train_reaches_patched_tag"
+            for check in case["verification"]["checks"]
+        )
 
 
 class TestBuildManifest:

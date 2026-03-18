@@ -19,6 +19,7 @@ from run import (
     parse_sarif,
     parse_simple,
     parse_findings,
+    parse_findings_checked,
     severity_gte,
     paths_overlap,
     evaluate_case,
@@ -303,6 +304,26 @@ class TestParseFindings:
     def test_invalid_returns_empty(self):
         assert parse_findings("not json", "auto") == []
 
+    def test_invalid_sarif_security_severity_reports_error(self):
+        raw = json.dumps(
+            _sarif(
+                [_sarif_result(rule_id="rule-1")],
+                rules=[
+                    {
+                        "id": "rule-1",
+                        "properties": {"security-severity": "not-a-number"},
+                    }
+                ],
+            )
+        )
+        findings, error = parse_findings_checked(raw, "auto")
+        assert findings == []
+        assert (
+            error
+            == "output is not valid SARIF: invalid security-severity for rule "
+            "rule-1: 'not-a-number'"
+        )
+
 
 # ── Severity comparison ───────────────────────────────────────────────────────
 
@@ -411,11 +432,17 @@ class TestEvaluateCase:
         result = evaluate_case("GHSA-test-test-test", [], self._expected())
         assert result["detected"] is False
 
-    def test_no_cwe_skips_class_check(self):
+    def test_no_cwe_does_not_satisfy_class_match(self):
         findings = [_finding(path="src/foo.ts", severity="high", cwe_ids=[])]
         result = evaluate_case("GHSA-test-test-test", findings, self._expected())
-        assert result["detected"] is True
-        assert result["classMatch"] is True
+        assert result["detected"] is False
+        assert result["classMatch"] is False
+
+    def test_unknown_cwe_does_not_satisfy_class_match(self):
+        findings = [_finding(path="src/foo.ts", severity="high", cwe_ids=["CWE-999"])]
+        result = evaluate_case("GHSA-test-test-test", findings, self._expected())
+        assert result["detected"] is False
+        assert result["classMatch"] is False
 
     def test_multiple_findings_one_matches(self):
         findings = [
@@ -426,7 +453,7 @@ class TestEvaluateCase:
         assert result["detected"] is True
 
     def test_empty_expected_paths_treated_as_match(self):
-        findings = [_finding(path="src/anything.ts", severity="high")]
+        findings = [_finding(path="src/anything.ts", severity="high", cwe_ids=["CWE-78"])]
         result = evaluate_case(
             "GHSA-test-test-test", findings, self._expected(paths=[])
         )
@@ -489,7 +516,8 @@ class TestRunBenchmark:
                 scanner_cmd=(
                     "python3 -c "
                     "\"import json; print(json.dumps({'findings': "
-                    "[{'path': 'src/foo.ts', 'severity': 'high'}]}))\""
+                    "[{'path': 'src/foo.ts', 'severity': 'high', "
+                    "'cweIds': ['CWE-22']}]}))\""
                 ),
                 output=str(tmp_path / "results.json"),
                 cases_dir=str(cases_dir),

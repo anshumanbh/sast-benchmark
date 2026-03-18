@@ -111,6 +111,8 @@ The runner accepts two output formats (auto-detected by default):
 }
 ```
 
+`expectedOutcome.vulnerabilityClass` is matched from the finding's CWE metadata. Findings without CWE/class metadata cannot satisfy the class-match requirement.
+
 ### Results
 
 The runner writes a JSON results file (default: `results.json`) and prints a console scorecard:
@@ -129,12 +131,13 @@ The runner writes a JSON results file (default: `results.json`) and prints a con
 
 ```bash
 # Structural validation (schema conformance, manifest consistency)
+# Requires: pip install jsonschema
 python3 scripts/validate.py
 
 # Semantic validation (commit SHAs resolve, ancestry checks pass)
 python3 scripts/validate.py --openclaw-repo ../openclaw
 
-# Strict mode (all cases must pass verification)
+# Strict mode (all cases must pass verification with high confidence)
 python3 scripts/validate.py --openclaw-repo ../openclaw --strict
 ```
 
@@ -154,6 +157,7 @@ python3 scripts/migrate.py \
 A scanner "detects" a case when scanning `vulnerableHead` if:
 
 1. **Class match** — reported vulnerability class matches `expectedOutcome.vulnerabilityClass`
+   - For SARIF/simple JSON inputs, this is derived from the finding's CWE metadata.
 2. **Path overlap** — at least one finding path overlaps with `expectedOutcome.expectedPaths`
 3. **Severity floor** — reported severity >= `expectedOutcome.minimumSeverity`
 

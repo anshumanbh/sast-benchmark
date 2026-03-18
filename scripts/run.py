@@ -212,7 +212,13 @@ def parse_sarif(data: dict[str, Any]) -> list[Finding]:
             rule_def = rules_by_id.get(rule_id, {})
             sec_sev = (rule_def.get("properties") or {}).get("security-severity")
             if sec_sev is not None:
-                severity = _security_severity_to_level(float(sec_sev))
+                try:
+                    severity = _security_severity_to_level(float(sec_sev))
+                except (TypeError, ValueError) as exc:
+                    rule_label = rule_id or "<unknown>"
+                    raise ValueError(
+                        f"invalid security-severity for rule {rule_label}: {sec_sev!r}"
+                    ) from exc
             else:
                 severity = SARIF_LEVEL_TO_SEVERITY.get(level, "medium")
 
@@ -291,10 +297,16 @@ def parse_findings_checked(
     elif format == "simple" and _detect_format_from_data(data) != "simple":
         return [], "output is not valid simple JSON"
 
-    if format == "sarif":
-        return parse_sarif(data), None
-    if format == "simple":
-        return parse_simple(data), None
+    try:
+        if format == "sarif":
+            return parse_sarif(data), None
+        if format == "simple":
+            return parse_simple(data), None
+    except (AttributeError, TypeError, ValueError) as exc:
+        if format == "sarif":
+            return [], f"output is not valid SARIF: {exc}"
+        if format == "simple":
+            return [], f"output is not valid simple JSON: {exc}"
     return [], "output format is not recognized"
 
 
@@ -318,7 +330,8 @@ def evaluate_case(
     """Evaluate findings against a case's expectedOutcome.
 
     Detection requires: path overlap AND severity >= minimum AND class match.
-    Class match defaults to True if no findings report CWE information.
+    Class match requires at least one relevant finding to map to the expected
+    vulnerability class.
     Path match defaults to True if expectedPaths is empty.
     """
     expected_class = expected_outcome["vulnerabilityClass"]
@@ -352,21 +365,16 @@ def evaluate_case(
     # Severity matching — at least one relevant finding meets the threshold
     severity_match = any(severity_gte(f.severity, min_severity) for f in relevant)
 
-    # Class matching — check CWE-derived classes from relevant+severe findings
+    # Class matching — require at least one relevant+severe finding to map to
+    # the expected vulnerability class.
     severe_relevant = [f for f in relevant if severity_gte(f.severity, min_severity)]
-    any_has_class = False
-    class_match = False
-    for f in severe_relevant:
-        derived = _vuln_class_from_cwes(f.cwe_ids)
-        if derived:
-            any_has_class = True
-            if derived == expected_class:
-                class_match = True
-                break
-
-    # If no findings reported CWE info, don't penalize — default to True
-    if not any_has_class:
-        class_match = True
+    derived_classes = {
+        derived
+        for f in severe_relevant
+        for derived in [_vuln_class_from_cwes(f.cwe_ids)]
+        if derived
+    }
+    class_match = expected_class in derived_classes
 
     detected = False if error else path_match and severity_match and class_match
 

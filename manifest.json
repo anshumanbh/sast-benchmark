@@ -143,7 +143,7 @@
       "baselineCommit": "b347d5d9ccbb8ccf008c887fc03cdc3410710afd",
       "vulnerableHead": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-jq3f-vjww-8rq7",

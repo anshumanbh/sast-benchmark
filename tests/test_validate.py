@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import tempfile
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -15,12 +16,15 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
+import validate as validate_module
 from validate import (
     load_schema,
     validate_case_against_schema,
     validate_case_semantic,
+    validate_case_strict,
     validate_manifest_consistency,
     validate_no_duplicate_ids,
+    run_validation,
     ValidationError,
 )
 
@@ -180,6 +184,18 @@ class TestSchemaValidation:
         errors = validate_case_against_schema(case, schema)
         assert len(errors) > 0
 
+    def test_missing_jsonschema_returns_validation_error(self, monkeypatch, schema):
+        def _raise() -> None:
+            raise RuntimeError(
+                "jsonschema is required for schema validation. "
+                "Install with: pip install jsonschema"
+            )
+
+        monkeypatch.setattr(validate_module, "_get_jsonschema_validator", _raise)
+        errors = validate_case_against_schema(_minimal_case(), schema)
+        assert len(errors) == 1
+        assert errors[0].check == "schema_dependency"
+
 
 class TestManifestConsistency:
     def test_matching_manifest(self):
@@ -239,6 +255,38 @@ class TestNoDuplicateIds:
         ]
         errors = validate_no_duplicate_ids(cases)
         assert len(errors) > 0
+
+
+class TestStrictValidation:
+    def test_requires_high_confidence(self):
+        case = _minimal_case({"verification": {"confidence": "medium"}})
+        errors = validate_case_strict(case)
+        assert any("expected 'high'" in str(error) for error in errors)
+
+    def test_run_validation_fails_when_jsonschema_missing(
+        self, monkeypatch, tmp_path: Path
+    ):
+        case = _minimal_case()
+        case_dir = tmp_path / "cases" / case["id"]
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(
+            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
+            encoding="utf-8",
+        )
+
+        def _raise() -> None:
+            raise RuntimeError(
+                "jsonschema is required for schema validation. "
+                "Install with: pip install jsonschema"
+            )
+
+        monkeypatch.setattr(validate_module, "_get_jsonschema_validator", _raise)
+        errors = run_validation(
+            Namespace(openclaw_repo=None, strict=False, output_dir=str(tmp_path))
+        )
+        assert len(errors) == 1
+        assert errors[0].check == "dependency"
 
 
 class TestSemanticValidation:

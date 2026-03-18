@@ -37,7 +37,7 @@
       }
     ],
     "vulnerableHead": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
-    "notes": "Advisory lists three SHAs that do not resolve via GitHub API; equivalent public fix sequence was resolved by file history and commit messages."
+    "notes": "Advisory text lists non-resolving full SHAs for the initial gateway fixes, but the local public history contains a matching remediation train on the vulnerable path: 318379cdba1804eb840896f6ebd4dd6dd0fb53cb, a7af646fdfc5cff077c04a7abb7c9e7a9c0b9f70, c15946274ed62cce3846f0feea723bc83404b462, 0af76f5f0e93540efbdf054895216c398692afcd, followed by cb3290fca32593956638f161d9776266b90ab891 and 01b3226ecbea6f5aa2a433237dae87d181d8790f before tag v2026.2.14 (b5ab92eef4e4f6099c98817e0917c99ec9e03045). The introducing commit 2f8206862a684d14f7ca92e9fe0dbce627c5d82b forwards raw node.invoke params to the node host, whose runner trusts params.approved === true; the parent baseline still used socket-mediated approvals and lacks this bypass."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "commandinjection",
@@ -51,7 +51,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "baseline_is_parent_of_earliest_intro",
@@ -72,6 +72,16 @@
         "name": "intro_at_or_before_affected_upper",
         "pass": true,
         "details": "intro=2f8206862a684d14f7ca92e9fe0dbce627c5d82b affected_upper_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      },
+      {
+        "name": "intro_contains_approval_bypass",
+        "pass": true,
+        "details": "intro=2f8206862a684d14f7ca92e9fe0dbce627c5d82b forwards raw node.invoke params via context.nodeRegistry.invoke({params: p.params}); node-host runner at that commit treats params.approved === true as approval. baseline parent 3467b0ba074cba456cf20d2178faff96bacaeafb still uses requestExecApprovalViaSocket."
+      },
+      {
+        "name": "public_fix_train_reaches_patched_tag",
+        "pass": true,
+        "details": "public_fix_train=318379cdba1804eb840896f6ebd4dd6dd0fb53cb,a7af646fdfc5cff077c04a7abb7c9e7a9c0b9f70,c15946274ed62cce3846f0feea723bc83404b462,0af76f5f0e93540efbdf054895216c398692afcd,cb3290fca32593956638f161d9776266b90ab891,01b3226ecbea6f5aa2a433237dae87d181d8790f patched_tag=v2026.2.14 tag_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
       }
     ]
   },
