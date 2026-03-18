@@ -18,6 +18,7 @@ import dataclasses
 import json
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,6 +37,15 @@ class Finding:
     rule_id: str = ""
     cwe_ids: list[str] = dataclasses.field(default_factory=list)
     message: str = ""
+
+
+@dataclasses.dataclass
+class BenchmarkWorktree:
+    """A temporary worktree used to run benchmark scans safely."""
+
+    source_repo: Path
+    path: Path
+    tempdir: tempfile.TemporaryDirectory
 
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -259,19 +269,33 @@ def parse_findings(raw: str, format: str = "auto") -> list[Finding]:
     Format: "auto" (detect), "sarif", or "simple".
     Returns empty list on parse failure.
     """
+    findings, _ = parse_findings_checked(raw, format)
+    return findings
+
+
+def parse_findings_checked(
+    raw: str, format: str = "auto"
+) -> tuple[list[Finding], str | None]:
+    """Parse scanner output into Findings, returning an error on parse failure."""
     try:
         data = json.loads(raw)
     except (json.JSONDecodeError, ValueError):
-        return []
+        return [], "output is not valid JSON"
 
     if format == "auto":
         format = _detect_format_from_data(data)
+        if format == "unknown":
+            return [], "output format is not recognized"
+    elif format == "sarif" and _detect_format_from_data(data) != "sarif":
+        return [], "output is not valid SARIF"
+    elif format == "simple" and _detect_format_from_data(data) != "simple":
+        return [], "output is not valid simple JSON"
 
     if format == "sarif":
-        return parse_sarif(data)
+        return parse_sarif(data), None
     if format == "simple":
-        return parse_simple(data)
-    return []
+        return parse_simple(data), None
+    return [], "output format is not recognized"
 
 
 # ── Case evaluation ───────────────────────────────────────────────────────────
@@ -344,7 +368,7 @@ def evaluate_case(
     if not any_has_class:
         class_match = True
 
-    detected = path_match and severity_match and class_match
+    detected = False if error else path_match and severity_match and class_match
 
     return {
         "caseId": case_id,
@@ -392,11 +416,69 @@ def checkout_commit(repo: Path, sha: str) -> None:
         raise RuntimeError(f"git checkout {sha[:12]} failed: {proc.stderr.strip()}")
 
 
+def create_benchmark_worktree(repo: Path) -> BenchmarkWorktree:
+    """Create a detached temp worktree so the benchmark never mutates the source checkout."""
+    head_proc = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if head_proc.returncode != 0:
+        raise RuntimeError(f"git rev-parse HEAD failed: {head_proc.stderr.strip()}")
+
+    tempdir = tempfile.TemporaryDirectory(prefix="openclaw-benchmark-")
+    worktree_path = Path(tempdir.name) / "repo"
+    add_proc = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "worktree",
+            "add",
+            "--detach",
+            str(worktree_path),
+            head_proc.stdout.strip(),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if add_proc.returncode != 0:
+        tempdir.cleanup()
+        raise RuntimeError(f"git worktree add failed: {add_proc.stderr.strip()}")
+
+    return BenchmarkWorktree(source_repo=repo, path=worktree_path, tempdir=tempdir)
+
+
+def cleanup_benchmark_worktree(worktree: BenchmarkWorktree) -> None:
+    """Remove the detached temp worktree created for the benchmark run."""
+    remove_proc = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(worktree.source_repo),
+            "worktree",
+            "remove",
+            "--force",
+            str(worktree.path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    worktree.tempdir.cleanup()
+    if remove_proc.returncode != 0:
+        raise RuntimeError(
+            f"git worktree remove failed: {remove_proc.stderr.strip()}"
+        )
+
+
 # ── Scanner execution ─────────────────────────────────────────────────────────
 
 
-def run_scanner(cmd: str, cwd: Path, timeout: int = 300) -> tuple[str, int]:
-    """Run scanner command and return (stdout, returncode)."""
+def run_scanner(cmd: str, cwd: Path, timeout: int = 300) -> tuple[str, str, int]:
+    """Run scanner command and return (stdout, stderr, returncode)."""
     try:
         proc = subprocess.run(
             cmd,
@@ -406,9 +488,11 @@ def run_scanner(cmd: str, cwd: Path, timeout: int = 300) -> tuple[str, int]:
             text=True,
             timeout=timeout,
         )
-        return proc.stdout, proc.returncode
-    except subprocess.TimeoutExpired:
-        return "", -1
+        return proc.stdout, proc.stderr, proc.returncode
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout if isinstance(exc.stdout, str) else ""
+        stderr = exc.stderr if isinstance(exc.stderr, str) else ""
+        return stdout, stderr, -1
 
 
 # ── Case loading ──────────────────────────────────────────────────────────────
@@ -492,43 +576,59 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         print("No cases found.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"  Scanner:  {scanner_cmd}")
-    print(f"  Repo:     {repo}")
-    print(f"  Cases:    {len(cases)}")
+    try:
+        worktree = create_benchmark_worktree(repo)
+    except RuntimeError as exc:
+        print(f"Failed to prepare benchmark worktree: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"  Scanner:   {scanner_cmd}")
+    print(f"  Repo:      {repo}")
+    print(f"  Worktree:  {worktree.path}")
+    print(f"  Cases:     {len(cases)}")
     print()
 
     case_results: list[dict[str, Any]] = []
 
-    for case in cases:
-        case_id = case["id"]
-        vuln_head = case["timeline"]["vulnerableHead"]
-        expected = case["expectedOutcome"]
+    try:
+        for case in cases:
+            case_id = case["id"]
+            vuln_head = case["timeline"]["vulnerableHead"]
+            expected = case["expectedOutcome"]
 
-        error = None
-        findings: list[Finding] = []
-        t0 = time.monotonic()
+            error = None
+            findings: list[Finding] = []
+            t0 = time.monotonic()
 
-        try:
-            checkout_commit(repo, vuln_head)
-        except RuntimeError as e:
-            error = f"checkout failed: {e}"
-
-        if not error:
-            stdout, rc = run_scanner(scanner_cmd, repo, timeout)
-            if rc == -1:
-                error = "timeout"
-            elif not stdout.strip():
-                error = f"no output (exit code {rc})"
+            try:
+                checkout_commit(worktree.path, vuln_head)
+            except RuntimeError as e:
+                error = f"checkout failed: {e}"
 
             if not error:
-                findings = parse_findings(stdout, fmt)
+                stdout, stderr, rc = run_scanner(scanner_cmd, worktree.path, timeout)
+                if rc == -1:
+                    error = "timeout"
+                elif not stdout.strip():
+                    error = f"no output (exit code {rc})"
+                else:
+                    findings, parse_error = parse_findings_checked(stdout, fmt)
+                    if parse_error:
+                        error = f"{parse_error} (exit code {rc})"
+                    elif rc != 0:
+                        error = f"scanner exited with code {rc}"
 
-        elapsed = time.monotonic() - t0
-        result = evaluate_case(case_id, findings, expected, error=error)
-        result["vulnerabilityClass"] = expected["vulnerabilityClass"]
-        result["minimumSeverity"] = expected["minimumSeverity"]
-        result["elapsed"] = round(elapsed, 1)
-        case_results.append(result)
+                if error and stderr.strip():
+                    error = f"{error}: {stderr.strip()}"
+
+            elapsed = time.monotonic() - t0
+            result = evaluate_case(case_id, findings, expected, error=error)
+            result["vulnerabilityClass"] = expected["vulnerabilityClass"]
+            result["minimumSeverity"] = expected["minimumSeverity"]
+            result["elapsed"] = round(elapsed, 1)
+            case_results.append(result)
+    finally:
+        cleanup_benchmark_worktree(worktree)
 
     print_scorecard(case_results)
     print()

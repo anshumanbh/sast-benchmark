@@ -169,10 +169,28 @@ def validate_case_semantic(case: dict, repo: Path) -> list[ValidationError]:
 
     # Ancestry checks (only if commits exist)
     if not errors:
+        errors.extend(
+            validate_ancestry(
+                case_id,
+                repo,
+                baseline,
+                vulnerable_head,
+                "baseline → vulnerableHead",
+            )
+        )
         for ic in timeline.get("introducingCommits", []):
             errors.extend(
                 validate_ancestry(
                     case_id, repo, baseline, ic["sha"], "baseline → intro"
+                )
+            )
+            errors.extend(
+                validate_ancestry(
+                    case_id,
+                    repo,
+                    ic["sha"],
+                    vulnerable_head,
+                    "intro → vulnerableHead",
                 )
             )
 

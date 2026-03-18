@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -21,6 +23,7 @@ from run import (
     paths_overlap,
     evaluate_case,
     build_results,
+    run_benchmark,
     SEVERITY_ORDER,
     CWE_TO_VULN_CLASS,
 )
@@ -69,6 +72,44 @@ def _sarif_result(
     if cwe_ids:
         result["properties"] = {"cweIds": cwe_ids}
     return result
+
+
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(repo), *args],
+        text=True,
+    ).strip()
+
+
+def _init_git_repo(repo: Path) -> None:
+    subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "test@example.com"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "Test User"],
+        check=True,
+    )
+
+
+def _write_case(cases_dir: Path, vulnerable_head: str) -> None:
+    case_dir = cases_dir / "GHSA-test-test-test"
+    case_dir.mkdir(parents=True)
+    (case_dir / "case.json").write_text(
+        json.dumps(
+            {
+                "id": "GHSA-test-test-test",
+                "timeline": {"vulnerableHead": vulnerable_head},
+                "expectedOutcome": {
+                    "vulnerabilityClass": "pathtraversal",
+                    "minimumSeverity": "high",
+                    "expectedPaths": ["src/foo.ts"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 # ── Path normalization ─────────────────────────────────────────────────────────
@@ -420,3 +461,113 @@ class TestBuildResults:
 
     def test_empty(self):
         assert build_results([], "")["detectionRate"] == 0.0
+
+
+class TestRunBenchmark:
+    def test_uses_temp_worktree_and_preserves_source_repo(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("committed\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        head_before = _git(repo, "rev-parse", "HEAD")
+        branch_before = _git(repo, "rev-parse", "--abbrev-ref", "HEAD")
+
+        tracked.write_text("local change\n", encoding="utf-8")
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, head_before)
+
+        results = run_benchmark(
+            Namespace(
+                openclaw_repo=str(repo),
+                scanner_cmd=(
+                    "python3 -c "
+                    "\"import json; print(json.dumps({'findings': "
+                    "[{'path': 'src/foo.ts', 'severity': 'high'}]}))\""
+                ),
+                output=str(tmp_path / "results.json"),
+                cases_dir=str(cases_dir),
+                timeout=10,
+                format="auto",
+                filter=None,
+            )
+        )
+
+        assert results["results"][0]["detected"] is True
+        assert results["results"][0]["error"] is None
+        assert tracked.read_text(encoding="utf-8") == "local change\n"
+        assert _git(repo, "rev-parse", "HEAD") == head_before
+        assert _git(repo, "rev-parse", "--abbrev-ref", "HEAD") == branch_before
+        assert _git(repo, "status", "--short") == "M tracked.txt"
+
+    def test_invalid_json_output_is_reported_as_error(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("committed\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        head = _git(repo, "rev-parse", "HEAD")
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, head)
+
+        results = run_benchmark(
+            Namespace(
+                openclaw_repo=str(repo),
+                scanner_cmd='python3 -c "import sys; print(\'not-json\'); sys.exit(2)"',
+                output=str(tmp_path / "results.json"),
+                cases_dir=str(cases_dir),
+                timeout=10,
+                format="auto",
+                filter=None,
+            )
+        )
+
+        assert results["results"][0]["error"] == "output is not valid JSON (exit code 2)"
+        assert results["results"][0]["detected"] is False
+
+    def test_nonzero_exit_code_is_reported_as_error(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("committed\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        head = _git(repo, "rev-parse", "HEAD")
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, head)
+
+        results = run_benchmark(
+            Namespace(
+                openclaw_repo=str(repo),
+                scanner_cmd=(
+                    "python3 -c "
+                    "\"import json, sys; print(json.dumps({'findings': "
+                    "[{'path': 'src/foo.ts', 'severity': 'high'}]})); sys.exit(2)\""
+                ),
+                output=str(tmp_path / "results.json"),
+                cases_dir=str(cases_dir),
+                timeout=10,
+                format="auto",
+                filter=None,
+            )
+        )
+
+        assert results["results"][0]["error"] == "scanner exited with code 2"
+        assert results["results"][0]["detected"] is False

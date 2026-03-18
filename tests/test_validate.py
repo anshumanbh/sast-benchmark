@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -17,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from validate import (
     load_schema,
     validate_case_against_schema,
+    validate_case_semantic,
     validate_manifest_consistency,
     validate_no_duplicate_ids,
     ValidationError,
@@ -86,6 +88,25 @@ def _deep_merge(base: dict, override: dict) -> None:
             _deep_merge(base[key], val)
         else:
             base[key] = val
+
+
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(repo), *args],
+        text=True,
+    ).strip()
+
+
+def _init_git_repo(repo: Path) -> None:
+    subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "test@example.com"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "Test User"],
+        check=True,
+    )
 
 
 class TestSchemaValidation:
@@ -218,3 +239,58 @@ class TestNoDuplicateIds:
         ]
         errors = validate_no_duplicate_ids(cases)
         assert len(errors) > 0
+
+
+class TestSemanticValidation:
+    def test_intro_commit_must_reach_vulnerable_head(self):
+        with tempfile.TemporaryDirectory() as td:
+            repo = Path(td)
+            _init_git_repo(repo)
+
+            tracked = repo / "tracked.txt"
+            tracked.write_text("baseline\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+            subprocess.run(
+                ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+                check=True,
+            )
+            baseline = _git(repo, "rev-parse", "HEAD")
+
+            tracked.write_text("introducing change\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(repo), "commit", "-qam", "introduce vuln"],
+                check=True,
+            )
+            intro = _git(repo, "rev-parse", "HEAD")
+
+            subprocess.run(
+                ["git", "-C", str(repo), "checkout", "-q", baseline],
+                check=True,
+            )
+            (repo / "other.txt").write_text("different branch\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "other.txt"], check=True)
+            subprocess.run(
+                ["git", "-C", str(repo), "commit", "-q", "-m", "other branch"],
+                check=True,
+            )
+            vulnerable_head = _git(repo, "rev-parse", "HEAD")
+
+            case = _minimal_case(
+                {
+                    "timeline": {
+                        "baselineCommit": baseline,
+                        "introducingCommits": [
+                            {
+                                "sha": intro,
+                                "authoredAt": "2026-01-12T01:16:39Z",
+                                "subject": "feat: introduce vulnerability",
+                            }
+                        ],
+                        "vulnerableHead": vulnerable_head,
+                    }
+                }
+            )
+
+            errors = validate_case_semantic(case, repo)
+
+        assert any("intro → vulnerableHead" in str(error) for error in errors)
