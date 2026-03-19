@@ -28,7 +28,7 @@
     "introducingCommits": [
       {
         "sha": "20c2db21035e8706ccbd63d553e8042c19bbf8f1",
-        "authoredAt": "2026-02-26T01:37:00+01:00",
+        "authoredAt": "2026-02-26T01:36:52+01:00",
         "subject": "refactor(gateway): split browser auth hardening paths"
       }
     ],
@@ -51,6 +51,16 @@
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=8f8e46d898c5 intro=20c2db21035e"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=20c2db21035e vulnerable_head=20c2db21035e"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=8f8e46d898c5 vulnerable_head=20c2db21035e"
       }
     ]
   },

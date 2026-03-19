@@ -9,6 +9,7 @@ Strict mode (--strict): all cases must have verification.status == "pass" with h
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 import subprocess
 import sys
@@ -579,6 +580,50 @@ def validate_case_strict(case: Any) -> list[ValidationError]:
                     f"verification check '{check_name}' failed: {check_details}",
                 )
             )
+
+    if errors:
+        return errors
+
+    provenance = _json_object(case.get("provenance")) or {}
+    sources = _json_array(provenance.get("sources")) or []
+    if sources == ["securevibes-agent"]:
+        timeline = _json_object(case.get("timeline"))
+        if timeline is None:
+            errors.append(
+                ValidationError(case_id, "strict", "timeline must be an object")
+            )
+            return errors
+
+        introducing_commits = _json_array(timeline.get("introducingCommits"))
+        if not introducing_commits:
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    "timeline.introducingCommits must contain at least one commit",
+                )
+            )
+            return errors
+
+        check_names = Counter(
+            check_obj["name"] for check_obj in checks if isinstance(check_obj, dict)
+        )
+        required_counts = {
+            "baseline_ancestor_of_intro": len(introducing_commits),
+            "intro_ancestor_of_vulnerable_head": len(introducing_commits),
+            "baseline_ancestor_of_vulnerable_head": 1,
+        }
+        for check_name, expected_count in required_counts.items():
+            actual_count = check_names.get(check_name, 0)
+            if actual_count != expected_count:
+                errors.append(
+                    ValidationError(
+                        case_id,
+                        "strict",
+                        f"verification must include {expected_count} "
+                        f"'{check_name}' check(s); found {actual_count}",
+                    )
+                )
 
     return errors
 

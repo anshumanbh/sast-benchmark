@@ -30,7 +30,7 @@
     "introducingCommits": [
       {
         "sha": "c96ffa7186a43cda7aa5e2b865a194f94c24d42e",
-        "authoredAt": "2026-01-25T12:22:36Z",
+        "authoredAt": "2026-01-25T07:22:36-05:00",
         "subject": "feat: Add Line plugin (#1630)"
       },
       {
@@ -40,12 +40,12 @@
       },
       {
         "sha": "8bdda7a651c21e98faccdbbd73081e79cffe8be0",
-        "authoredAt": "2026-02-26T12:58:18+01:00",
+        "authoredAt": "2026-02-26T12:58:06+01:00",
         "subject": "fix(security): keep DM pairing allowlists out of group auth"
       },
       {
         "sha": "bce643a0bd145d3e9cb55400af33bd1b85baeb02",
-        "authoredAt": "2026-02-26T21:57:52+01:00",
+        "authoredAt": "2026-02-26T21:57:10+01:00",
         "subject": "refactor(security): enforce account-scoped pairing APIs"
       },
       {
@@ -77,9 +77,19 @@
         "details": "baseline=101d0f451f23 intro=c96ffa7186a4"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=c96ffa7186a4 vulnerable_head=9a5bfb1fe56d"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=101d0f451f23 intro=2493455f08d0"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=2493455f08d0 vulnerable_head=9a5bfb1fe56d"
       },
       {
         "name": "baseline_ancestor_of_intro",
@@ -87,14 +97,34 @@
         "details": "baseline=101d0f451f23 intro=8bdda7a651c2"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=8bdda7a651c2 vulnerable_head=9a5bfb1fe56d"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=101d0f451f23 intro=bce643a0bd14"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=bce643a0bd14 vulnerable_head=9a5bfb1fe56d"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=101d0f451f23 intro=9a5bfb1fe56d"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=9a5bfb1fe56d vulnerable_head=9a5bfb1fe56d"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=101d0f451f23 vulnerable_head=9a5bfb1fe56d"
       }
     ]
   },

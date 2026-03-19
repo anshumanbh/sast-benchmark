@@ -31,7 +31,7 @@
     "introducingCommits": [
       {
         "sha": "de61e9c9771899d76710251c2f445a75d6488644",
-        "authoredAt": "2026-02-26T03:59:17+01:00",
+        "authoredAt": "2026-02-26T03:59:08+01:00",
         "subject": "refactor(security): unify path alias guard policies"
       }
     ],
@@ -55,6 +55,16 @@
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=8a006a32603b intro=de61e9c97718"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=de61e9c97718 vulnerable_head=de61e9c97718"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=8a006a32603b vulnerable_head=de61e9c97718"
       }
     ]
   },

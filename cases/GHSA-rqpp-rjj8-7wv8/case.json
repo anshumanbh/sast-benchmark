@@ -31,12 +31,12 @@
     "introducingCommits": [
       {
         "sha": "51149fcaf15a04872965ae80137b1d88f918d189",
-        "authoredAt": "2026-02-21T19:47:22+01:00",
+        "authoredAt": "2026-02-21T19:47:17+01:00",
         "subject": "refactor(gateway): extract connect and role policy logic"
       },
       {
         "sha": "9c142993b89dd3f75360552c3bdf9fa2e1e76546",
-        "authoredAt": "2026-02-26T13:40:58Z",
+        "authoredAt": "2026-02-26T04:11:19-08:00",
         "subject": "fix: preserve operator scopes for shared auth connections"
       }
     ],
@@ -61,9 +61,24 @@
         "details": "baseline=f97c45c5b5e0 intro=51149fcaf15a"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=51149fcaf15a vulnerable_head=9c142993b89d"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=f97c45c5b5e0 intro=9c142993b89d"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=9c142993b89d vulnerable_head=9c142993b89d"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=f97c45c5b5e0 vulnerable_head=9c142993b89d"
       }
     ]
   },

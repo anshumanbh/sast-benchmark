@@ -30,7 +30,7 @@
     "introducingCommits": [
       {
         "sha": "08e020881d6e1c868ec59e5d0b7d040a60afcec7",
-        "authoredAt": "2026-02-21T13:04:37+01:00",
+        "authoredAt": "2026-02-21T13:04:31+01:00",
         "subject": "refactor(security): unify command gating and blocked-key guards"
       }
     ],
@@ -54,6 +54,16 @@
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=356d61aacfa5 intro=08e020881d6e"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=08e020881d6e vulnerable_head=08e020881d6e"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=356d61aacfa5 vulnerable_head=08e020881d6e"
       }
     ]
   },

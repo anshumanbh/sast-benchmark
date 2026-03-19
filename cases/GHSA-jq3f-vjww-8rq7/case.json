@@ -25,7 +25,7 @@
     "introducingCommits": [
       {
         "sha": "ee594e2fdb718da52e87a41d0414b16c322a9af6",
-        "authoredAt": "2026-02-25T20:56:53-06:00",
+        "authoredAt": "2026-02-25T21:56:53-05:00",
         "subject": "fix(telegram): webhook hang - tests and fix (openclaw#26933) thanks @huntharo"
       }
     ],
@@ -48,6 +48,16 @@
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=1e7ec8bfd2e7 intro=ee594e2fdb71"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=ee594e2fdb71 vulnerable_head=ee594e2fdb71"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=1e7ec8bfd2e7 vulnerable_head=ee594e2fdb71"
       }
     ]
   },

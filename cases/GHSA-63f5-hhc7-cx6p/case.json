@@ -25,7 +25,7 @@
     "introducingCommits": [
       {
         "sha": "bf89947a8e9ec5d278b71a8c438ce414dd04a2d6",
-        "authoredAt": "2026-03-12T22:23:07Z",
+        "authoredAt": "2026-03-12T22:22:44Z",
         "subject": "fix: switch pairing setup codes to bootstrap tokens"
       }
     ],
@@ -48,6 +48,16 @@
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=9cd54ea88244 intro=bf89947a8e9e"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=bf89947a8e9e vulnerable_head=bf89947a8e9e"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=9cd54ea88244 vulnerable_head=bf89947a8e9e"
       }
     ]
   },

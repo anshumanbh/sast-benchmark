@@ -1,7 +1,7 @@
 {
   "name": "openclaw-advisory-benchmark",
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-03-18T16:55:40.540907Z",
+  "generatedAt": "2026-03-19T05:30:58.754064Z",
   "repository": "openclaw/openclaw",
   "caseCount": 24,
   "cases": [

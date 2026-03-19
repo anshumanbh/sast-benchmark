@@ -26,22 +26,22 @@
     "introducingCommits": [
       {
         "sha": "cb3290fca32593956638f161d9776266b90ab891",
-        "authoredAt": "2026-02-14T18:53:23+01:00",
+        "authoredAt": "2026-02-14T18:52:13+01:00",
         "subject": "fix(node-host): enforce system.run rawCommand/argv consistency"
       },
       {
         "sha": "6007941f04df1edcca679dd6c95949744fdbd4df",
-        "authoredAt": "2026-02-21T11:49:38+01:00",
+        "authoredAt": "2026-02-21T11:49:13+01:00",
         "subject": "fix(security): harden and refactor system.run command resolution"
       },
       {
         "sha": "9a4b2266ccb9eaf011014d86b6a559b0a78b39ea",
-        "authoredAt": "2026-02-26T16:38:07+01:00",
+        "authoredAt": "2026-02-26T16:37:54+01:00",
         "subject": "fix(security): bind node system.run approvals to env"
       },
       {
         "sha": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
-        "authoredAt": "2026-02-26T18:09:01+01:00",
+        "authoredAt": "2026-02-26T18:08:51+01:00",
         "subject": "refactor(security): enforce v1 node exec approval binding"
       }
     ],
@@ -68,9 +68,19 @@
         "details": "baseline=71f357d9498c intro=cb3290fca325"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=cb3290fca325 vulnerable_head=10481097f8e6"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=71f357d9498c intro=6007941f04df"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=6007941f04df vulnerable_head=10481097f8e6"
       },
       {
         "name": "baseline_ancestor_of_intro",
@@ -78,9 +88,24 @@
         "details": "baseline=71f357d9498c intro=9a4b2266ccb9"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=9a4b2266ccb9 vulnerable_head=10481097f8e6"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=71f357d9498c intro=10481097f8e6"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=10481097f8e6 vulnerable_head=10481097f8e6"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=71f357d9498c vulnerable_head=10481097f8e6"
       }
     ]
   },

@@ -32,12 +32,12 @@
     "introducingCommits": [
       {
         "sha": "81c68f582d4a9a20d9cca9f367d2da9edc5a65ae",
-        "authoredAt": "2026-02-02T04:07:29-08:00",
+        "authoredAt": "2026-02-02T04:04:27-08:00",
         "subject": "fix: guard remote media fetches with SSRF checks"
       },
       {
         "sha": "9bd64c8a1f91dda602afc1d5246a2ff2be164647",
-        "authoredAt": "2026-02-02T04:58:32-08:00",
+        "authoredAt": "2026-02-02T04:57:09-08:00",
         "subject": "fix: expand SSRF guard coverage"
       }
     ],
@@ -62,9 +62,24 @@
         "details": "baseline=d842b28a1517 intro=81c68f582d4a"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=81c68f582d4a vulnerable_head=9bd64c8a1f91"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=d842b28a1517 intro=9bd64c8a1f91"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=9bd64c8a1f91 vulnerable_head=9bd64c8a1f91"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=d842b28a1517 vulnerable_head=9bd64c8a1f91"
       }
     ]
   },

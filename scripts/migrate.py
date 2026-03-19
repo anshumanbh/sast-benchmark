@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Migrate and consolidate benchmark data from securevibes and securevibes-agent.
+"""Refresh benchmark artifacts from the checked-in corpus and agent ground truth.
 
-Produces 24 unified case.json files + manifest.json from:
-- securevibes/docs/benchmarks/openclaw-ghsa-batch1/cases/ (10 cases)
-- securevibes-agent/docs/testing/openclaw-advisory-ground-truth.json (17 scenarios)
+The checked-in `cases/` directory is the canonical source for the 10 historical
+cases that were originally imported from securevibes. Agent-only cases are
+rebuilt from securevibes-agent ground truth plus local OpenClaw history.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from typing import Any
 
 # ── IDs ────────────────────────────────────────────────────────────────────────
 
-SECUREVIBES_CASE_IDS = [
+CHECKED_IN_CASE_IDS = [
     "GHSA-qrq5-wjgg-rvqw",
     "GHSA-4rj2-gpmh-qq5x",
     "GHSA-gv46-4xfq-jv58",
@@ -237,6 +237,8 @@ AGENT_ONLY_CASE_MAPPING: dict[str, dict[str, Any]] = {
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+ROOT = Path(__file__).resolve().parents[1]
+
 def git_cmd(repo: Path, *args: str) -> str:
     proc = subprocess.run(
         ["git", "-C", str(repo)] + list(args),
@@ -252,7 +254,7 @@ def git_cmd(repo: Path, *args: str) -> str:
 
 
 def commit_meta(repo: Path, sha: str) -> dict[str, str]:
-    out = git_cmd(repo, "show", "-s", "--format=%H\t%cI\t%s", sha)
+    out = git_cmd(repo, "show", "-s", "--format=%H\t%aI\t%s", sha)
     full, authored_at, subject = out.split("\t", 2)
     return {"sha": full, "authoredAt": authored_at, "subject": subject}
 
@@ -272,26 +274,80 @@ def write_json(path: Path, data: Any) -> None:
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
+def _parse_iso8601(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
 # ── Loaders ────────────────────────────────────────────────────────────────────
-
-def load_securevibes_case(case_dir: Path) -> dict[str, Any]:
-    """Load advisory.json, timeline.json, verification.json from a securevibes case dir."""
-    advisory = json.loads((case_dir / "advisory.json").read_text(encoding="utf-8"))
-    timeline = json.loads((case_dir / "timeline.json").read_text(encoding="utf-8"))
-    verification = json.loads(
-        (case_dir / "verification.json").read_text(encoding="utf-8")
-    )
-    return {
-        "advisory": advisory,
-        "timeline": timeline,
-        "verification": verification,
-    }
-
 
 def load_agent_scenarios(manifest_path: Path) -> list[dict[str, Any]]:
     """Load scenarios from the securevibes-agent ground truth manifest."""
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
     return data.get("scenarios", [])
+
+
+def load_benchmark_case(case_dir: Path) -> dict[str, Any]:
+    """Load a checked-in benchmark case.json."""
+    return json.loads((case_dir / "case.json").read_text(encoding="utf-8"))
+
+
+def load_checked_in_cases(
+    case_ids: list[str], cases_dir: Path | None = None
+) -> dict[str, dict[str, Any]]:
+    """Load checked-in benchmark cases by GHSA ID."""
+    source_dir = cases_dir or ROOT / "cases"
+    loaded: dict[str, dict[str, Any]] = {}
+    missing: list[str] = []
+    for case_id in case_ids:
+        case_path = source_dir / case_id / "case.json"
+        if case_path.exists():
+            loaded[case_id] = load_benchmark_case(source_dir / case_id)
+        else:
+            missing.append(case_id)
+
+    if missing:
+        raise ValueError(
+            "Missing checked-in benchmark case(s): " + ", ".join(sorted(missing))
+        )
+    return loaded
+
+
+def advisory_data_from_case(case: dict[str, Any]) -> dict[str, Any]:
+    """Convert a benchmark case.json advisory block back to migration input shape."""
+    advisory = case["advisory"]
+    result: dict[str, Any] = {
+        "ghsa_id": case["id"],
+        "summary": advisory.get("title", ""),
+        "severity": advisory.get("severity", "high"),
+        "published_at": advisory.get("publishedAt", ""),
+        "description": advisory.get("description", ""),
+        "cwe_ids": advisory.get("cweIds", []),
+        "html_url": case.get("advisoryUrl", ""),
+    }
+
+    cvss = advisory.get("cvss")
+    if isinstance(cvss, dict):
+        result["cvss_v3"] = {
+            "vector_string": cvss.get("vectorString", ""),
+            "score": cvss.get("score"),
+        }
+
+    affected_packages = advisory.get("affectedPackages")
+    if isinstance(affected_packages, list):
+        result["affected_packages"] = [
+            {
+                "package": {
+                    "ecosystem": pkg.get("ecosystem", "npm"),
+                    "name": pkg.get("name", "openclaw"),
+                },
+                "vulnerable_version_range": pkg.get("vulnerableRange", ""),
+                "patched_versions": pkg.get("patchedVersions", ""),
+            }
+            for pkg in affected_packages
+            if isinstance(pkg, dict)
+        ]
+
+    return result
 
 
 # ── Case builders ──────────────────────────────────────────────────────────────
@@ -356,10 +412,10 @@ def _build_advisory_block(advisory_data: dict[str, Any]) -> dict[str, Any]:
     return block
 
 
-def _build_timeline_from_securevibes(
+def _build_timeline_from_source_data(
     timeline_data: dict[str, Any],
 ) -> dict[str, Any]:
-    """Build timeline block from securevibes timeline.json data."""
+    """Build timeline block from pre-normalized source data."""
     intro_commits = [
         {
             "sha": c["sha"],
@@ -387,7 +443,7 @@ def _build_timeline_from_research(
 
     intro_metas = sorted(
         [commit_meta(repo, sha) for sha in intro_shas],
-        key=lambda x: x["authoredAt"],
+        key=lambda x: _parse_iso8601(x["authoredAt"]),
     )
 
     earliest_intro = intro_metas[0]["sha"]
@@ -412,7 +468,7 @@ def _build_verification(
 ) -> dict[str, Any]:
     """Build verification block, optionally running live ancestry checks."""
     if checks is not None:
-        # Use existing checks from securevibes
+        # Preserve existing verification checks from source data.
         normalized_checks = [
             {"name": c["name"], "pass": c["pass"], "details": c["details"]}
             for c in checks
@@ -499,7 +555,7 @@ def build_unified_case(
     if timeline_block is not None:
         tl = timeline_block
     elif timeline_data is not None:
-        tl = _build_timeline_from_securevibes(timeline_data)
+        tl = _build_timeline_from_source_data(timeline_data)
     else:
         raise ValueError(f"No timeline data for {ghsa_id}")
 
@@ -615,49 +671,18 @@ def build_manifest(cases: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-# ── Expected paths derivation for securevibes-only cases ───────────────────────
-
-def derive_expected_paths(
-    repo: Path, reference_commits: list[dict[str, Any]]
-) -> list[str]:
-    """Derive expected paths from the files changed in the given commits.
-
-    At migration time this is called with the fix commits from the securevibes
-    source data — the fix diff is the best signal for which files are
-    security-relevant, even though fix metadata is not included in the output.
-    """
-    paths: list[str] = []
-    for fc in reference_commits:
-        sha = fc["sha"] if isinstance(fc, dict) else fc
-        out = git_cmd(repo, "diff-tree", "--no-commit-id", "-r", "--name-only", sha)
-        for p in out.split("\n"):
-            if (
-                p
-                and not p.startswith("CHANGELOG")
-                and not p.endswith(".test.ts")
-                and not p.endswith(".test.tsx")
-                and not p.startswith("docs/")
-                and (
-                    p.startswith("src/")
-                    or p.startswith("extensions/")
-                    or p.startswith("ui/src/")
-                )
-            ):
-                if p not in paths:
-                    paths.append(p)
-    return paths
-
-
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def run_migration(args: argparse.Namespace) -> None:
-    sv_dir = Path(args.securevibes_dir).resolve()
     agent_manifest = Path(args.agent_manifest).resolve()
     output_dir = Path(args.output_dir).resolve()
     repo = Path(args.openclaw_repo).resolve() if args.openclaw_repo else None
+    checked_in_cases_dir = ROOT / "cases"
 
     # Load advisory data from GitHub API cache
-    advisories_file = Path(args.advisories_file).resolve() if args.advisories_file else None
+    advisories_file = (
+        Path(args.advisories_file).resolve() if args.advisories_file else None
+    )
     if advisories_file is not None and not advisories_file.exists():
         raise ValueError(f"Advisories file not found: {advisories_file}")
     if advisories_file and advisories_file.exists():
@@ -666,8 +691,7 @@ def run_migration(args: argparse.Namespace) -> None:
     else:
         advisory_by_id = {}
 
-    # Load securevibes cases
-    sv_cases_dir = sv_dir / "docs" / "benchmarks" / "openclaw-ghsa-batch1" / "cases"
+    checked_in_cases = load_checked_in_cases(CHECKED_IN_CASE_IDS, checked_in_cases_dir)
 
     # Load agent scenarios
     agent_scenarios = load_agent_scenarios(agent_manifest)
@@ -681,63 +705,37 @@ def run_migration(args: argparse.Namespace) -> None:
 
     # Build all 24 cases
     all_cases: list[dict[str, Any]] = []
-    all_ids = sorted(set(SECUREVIBES_CASE_IDS) | set(AGENT_CASE_IDS))
+    all_ids = sorted(set(CHECKED_IN_CASE_IDS) | set(AGENT_CASE_IDS))
 
     for ghsa_id in all_ids:
-        is_sv = ghsa_id in SECUREVIBES_CASE_IDS
+        is_sv = ghsa_id in CHECKED_IN_CASE_IDS
         is_agent = ghsa_id in AGENT_CASE_IDS
         agent_scenario = agent_by_id.get(ghsa_id)
+        existing_case_path = checked_in_cases_dir / ghsa_id / "case.json"
+        existing_case = (
+            load_benchmark_case(checked_in_cases_dir / ghsa_id)
+            if existing_case_path.exists()
+            else None
+        )
+
+        if is_agent and agent_scenario is None:
+            raise ValueError(
+                f"Missing agent scenario for {ghsa_id} in {agent_manifest}"
+            )
 
         if is_sv:
-            # Load from securevibes
-            sv_case = load_securevibes_case(sv_cases_dir / ghsa_id)
-            advisory_data = sv_case["advisory"]
-            # Supplement with API data if available
-            if ghsa_id in advisory_by_id:
-                api_adv = advisory_by_id[ghsa_id]
-                advisory_data.setdefault("cwe_ids", api_adv.get("cwe_ids", []))
-
-            timeline_data = sv_case["timeline"]
-            verification_data = sv_case["verification"]
-
-            # For securevibes-only cases, derive vuln class and paths
-            vuln_class_override = None
-            expected_paths_override = None
-            if not is_agent:
-                vuln_class_override = _derive_vuln_class(
-                    ghsa_id, advisory_data.get("cwe_ids", [])
-                )
-                if repo:
-                    expected_paths_override = derive_expected_paths(
-                        repo,
-                        timeline_data["fix_commits"],
-                    )
-
-            case = build_unified_case(
-                ghsa_id=ghsa_id,
-                advisory_data=advisory_data,
-                timeline_data=timeline_data,
-                verification_data=verification_data,
-                agent_scenario=agent_scenario if is_agent else None,
-                vuln_class_override=vuln_class_override,
-                expected_paths_override=expected_paths_override,
-            )
+            case = checked_in_cases[ghsa_id]
         else:
             # Agent-only case
             mapping = AGENT_ONLY_CASE_MAPPING[ghsa_id]
             advisory_data = advisory_by_id.get(ghsa_id, {})
+            if not advisory_data and existing_case is not None:
+                advisory_data = advisory_data_from_case(existing_case)
             if not advisory_data:
-                advisory_data = {
-                    "ghsa_id": ghsa_id,
-                    "severity": "high",
-                    "summary": agent_scenario["title"] if agent_scenario else "",
-                    "description": "",
-                    "html_url": agent_scenario["advisoryUrl"]
-                    if agent_scenario
-                    else "",
-                    "cwe_ids": [],
-                    "published_at": "",
-                }
+                raise ValueError(
+                    f"Missing advisory metadata for {ghsa_id}. Provide "
+                    "--advisories-file or keep the checked-in case data available."
+                )
 
             timeline_block = _build_timeline_from_research(mapping, repo)
             verification_block = _build_verification(
@@ -777,12 +775,6 @@ def run_migration(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--securevibes-dir",
-        type=str,
-        required=True,
-        help="Path to securevibes repo root",
-    )
     parser.add_argument(
         "--agent-manifest",
         type=str,

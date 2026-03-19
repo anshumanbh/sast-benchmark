@@ -148,14 +148,14 @@ python3 scripts/validate.py --openclaw-repo ../openclaw --strict
 
 ```bash
 python3 scripts/migrate.py \
-  --securevibes-dir ../securevibes \
   --agent-manifest ../securevibes-agent/docs/testing/openclaw-advisory-ground-truth.json \
   --openclaw-repo ../openclaw \
-  --advisories-file /tmp/openclaw_all_advisories.json \
   --output-dir .
 ```
 
-`--openclaw-repo` is required for full benchmark regeneration because agent-only cases need exact commit timeline resolution. `--advisories-file` is required to populate complete advisory metadata for agent-only cases.
+No `securevibes` checkout is required. The checked-in `cases/` directory is the canonical source for the 10 historical benchmark cases already in this repo, and regeneration refreshes the manifest plus the agent-derived cases from `securevibes-agent` ground truth. `--openclaw-repo` is still required because agent-only cases need exact commit timeline resolution.
+
+`--advisories-file` is optional when refreshing the current dataset in-place: if omitted, the script reuses advisory metadata from the checked-in `cases/` directory for agent-only cases. It is still recommended when adding or refreshing advisory metadata from an external cache.
 
 ## Outcome Matching Criteria
 

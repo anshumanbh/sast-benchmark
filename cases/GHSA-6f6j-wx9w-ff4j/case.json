@@ -48,6 +48,16 @@
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=a9d9a968ed80 intro=a7d56e3554d0"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=a7d56e3554d0 vulnerable_head=a7d56e3554d0"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=a9d9a968ed80 vulnerable_head=a7d56e3554d0"
       }
     ]
   },

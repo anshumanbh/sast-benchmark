@@ -25,7 +25,7 @@
     "introducingCommits": [
       {
         "sha": "e8775cda932fbe8c949cba925abdc8e419bb7829",
-        "authoredAt": "2026-03-09T03:49:50Z",
+        "authoredAt": "2026-03-09T03:41:24Z",
         "subject": "fix(agents): re-expose configured tools under restrictive profiles"
       }
     ],
@@ -48,6 +48,16 @@
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=ef36cb8cbcbd intro=e8775cda932f"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=e8775cda932f vulnerable_head=e8775cda932f"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=ef36cb8cbcbd vulnerable_head=e8775cda932f"
       }
     ]
   },

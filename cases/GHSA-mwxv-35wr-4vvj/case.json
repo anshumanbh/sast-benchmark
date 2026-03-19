@@ -25,22 +25,22 @@
     "introducingCommits": [
       {
         "sha": "258d615c4d952926dc552be7776635f870ef3c9f",
-        "authoredAt": "2026-02-26T17:02:06+01:00",
+        "authoredAt": "2026-02-26T17:01:41+01:00",
         "subject": "fix: harden plugin route auth path canonicalization"
       },
       {
         "sha": "08e3357480ffabb1623bd56735bc8961d3b4938c",
-        "authoredAt": "2026-02-26T17:23:46+01:00",
+        "authoredAt": "2026-02-26T17:23:41+01:00",
         "subject": "refactor: share gateway security path canonicalization"
       },
       {
         "sha": "53d10f8688b467a9290990e86c496063158affa3",
-        "authoredAt": "2026-03-02T00:10:51Z",
+        "authoredAt": "2026-03-02T00:05:48Z",
         "subject": "fix(gateway): land access/auth/config migration cluster"
       },
       {
         "sha": "cef5fae0a25eb43524fcefa7514773fbc91e4528",
-        "authoredAt": "2026-03-02T00:42:22Z",
+        "authoredAt": "2026-03-02T00:42:15Z",
         "subject": "refactor(gateway): dedupe origin seeding and plugin route auth matching"
       }
     ],
@@ -67,9 +67,19 @@
         "details": "baseline=37a138c554c3 intro=258d615c4d95"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=258d615c4d95 vulnerable_head=cef5fae0a25e"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=37a138c554c3 intro=08e3357480ff"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=08e3357480ff vulnerable_head=cef5fae0a25e"
       },
       {
         "name": "baseline_ancestor_of_intro",
@@ -77,9 +87,24 @@
         "details": "baseline=37a138c554c3 intro=53d10f8688b4"
       },
       {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=53d10f8688b4 vulnerable_head=cef5fae0a25e"
+      },
+      {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
         "details": "baseline=37a138c554c3 intro=cef5fae0a25e"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=cef5fae0a25e vulnerable_head=cef5fae0a25e"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=37a138c554c3 vulnerable_head=cef5fae0a25e"
       }
     ]
   },

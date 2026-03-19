@@ -331,6 +331,59 @@ class TestStrictValidation:
             for error in errors
         )
 
+    def test_securevibes_agent_cases_require_complete_ancestry_checks(self):
+        case = _minimal_case(
+            {
+                "provenance": {"sources": ["securevibes-agent"]},
+                "verification": {
+                    "checks": [
+                        {
+                            "name": "baseline_ancestor_of_intro",
+                            "pass": True,
+                            "details": "baseline precedes intro",
+                        }
+                    ]
+                },
+            }
+        )
+        errors = validate_case_strict(case)
+
+        assert any(
+            "intro_ancestor_of_vulnerable_head" in error.message for error in errors
+        )
+        assert any(
+            "baseline_ancestor_of_vulnerable_head" in error.message
+            for error in errors
+        )
+
+    def test_complete_securevibes_agent_checks_pass(self):
+        case = _minimal_case(
+            {
+                "provenance": {"sources": ["securevibes-agent"]},
+                "verification": {
+                    "checks": [
+                        {
+                            "name": "baseline_ancestor_of_intro",
+                            "pass": True,
+                            "details": "baseline precedes intro",
+                        },
+                        {
+                            "name": "intro_ancestor_of_vulnerable_head",
+                            "pass": True,
+                            "details": "intro reaches vulnerable head",
+                        },
+                        {
+                            "name": "baseline_ancestor_of_vulnerable_head",
+                            "pass": True,
+                            "details": "baseline reaches vulnerable head",
+                        },
+                    ]
+                },
+            }
+        )
+
+        assert validate_case_strict(case) == []
+
     def test_run_validation_reports_dependency_when_jsonschema_missing_for_structural_only(
         self, monkeypatch, tmp_path: Path
     ):
