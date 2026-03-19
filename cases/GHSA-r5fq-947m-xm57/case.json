@@ -68,6 +68,27 @@
         "name": "intro_at_or_before_affected_upper",
         "pass": true,
         "details": "intro=8b4bdaa8a473e6e14cab866a916a407e86ab861a affected_upper_commit=e91d957d7089d2ca9589255245eead0edddc16d5"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=221c0b4cf8410261e5424dde4cbf7de88805a4bd intro=8b4bdaa8a473e6e14cab866a916a407e86ab861a",
+        "ancestor": "221c0b4cf8410261e5424dde4cbf7de88805a4bd",
+        "descendant": "8b4bdaa8a473e6e14cab866a916a407e86ab861a"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=8b4bdaa8a473e6e14cab866a916a407e86ab861a vulnerable_head=8b4bdaa8a473e6e14cab866a916a407e86ab861a",
+        "ancestor": "8b4bdaa8a473e6e14cab866a916a407e86ab861a",
+        "descendant": "8b4bdaa8a473e6e14cab866a916a407e86ab861a"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=221c0b4cf8410261e5424dde4cbf7de88805a4bd vulnerable_head=8b4bdaa8a473e6e14cab866a916a407e86ab861a",
+        "ancestor": "221c0b4cf8410261e5424dde4cbf7de88805a4bd",
+        "descendant": "8b4bdaa8a473e6e14cab866a916a407e86ab861a"
       }
     ]
   }

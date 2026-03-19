@@ -220,6 +220,16 @@
               "details": {
                 "type": "string",
                 "description": "Details or explanation of the check result."
+              },
+              "ancestor": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$",
+                "description": "Optional ancestor commit SHA for machine-readable ancestry checks."
+              },
+              "descendant": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$",
+                "description": "Optional descendant commit SHA for machine-readable ancestry checks."
               }
             }
           }

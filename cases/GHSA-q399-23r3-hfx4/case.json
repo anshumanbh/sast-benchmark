@@ -65,47 +65,65 @@
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=71f357d9498c intro=cb3290fca325"
+        "details": "baseline=71f357d9498cebb0efe016b0496d5fbe807539fc intro=cb3290fca32593956638f161d9776266b90ab891",
+        "ancestor": "71f357d9498cebb0efe016b0496d5fbe807539fc",
+        "descendant": "cb3290fca32593956638f161d9776266b90ab891"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=cb3290fca325 vulnerable_head=10481097f8e6"
+        "details": "intro=cb3290fca32593956638f161d9776266b90ab891 vulnerable_head=10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+        "ancestor": "cb3290fca32593956638f161d9776266b90ab891",
+        "descendant": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=71f357d9498c intro=6007941f04df"
+        "details": "baseline=71f357d9498cebb0efe016b0496d5fbe807539fc intro=6007941f04df1edcca679dd6c95949744fdbd4df",
+        "ancestor": "71f357d9498cebb0efe016b0496d5fbe807539fc",
+        "descendant": "6007941f04df1edcca679dd6c95949744fdbd4df"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=6007941f04df vulnerable_head=10481097f8e6"
+        "details": "intro=6007941f04df1edcca679dd6c95949744fdbd4df vulnerable_head=10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+        "ancestor": "6007941f04df1edcca679dd6c95949744fdbd4df",
+        "descendant": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=71f357d9498c intro=9a4b2266ccb9"
+        "details": "baseline=71f357d9498cebb0efe016b0496d5fbe807539fc intro=9a4b2266ccb9eaf011014d86b6a559b0a78b39ea",
+        "ancestor": "71f357d9498cebb0efe016b0496d5fbe807539fc",
+        "descendant": "9a4b2266ccb9eaf011014d86b6a559b0a78b39ea"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=9a4b2266ccb9 vulnerable_head=10481097f8e6"
+        "details": "intro=9a4b2266ccb9eaf011014d86b6a559b0a78b39ea vulnerable_head=10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+        "ancestor": "9a4b2266ccb9eaf011014d86b6a559b0a78b39ea",
+        "descendant": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=71f357d9498c intro=10481097f8e6"
+        "details": "baseline=71f357d9498cebb0efe016b0496d5fbe807539fc intro=10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+        "ancestor": "71f357d9498cebb0efe016b0496d5fbe807539fc",
+        "descendant": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=10481097f8e6 vulnerable_head=10481097f8e6"
+        "details": "intro=10481097f8e6dd0346db9be0b5f27570e1bdfcfa vulnerable_head=10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+        "ancestor": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+        "descendant": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=71f357d9498c vulnerable_head=10481097f8e6"
+        "details": "baseline=71f357d9498cebb0efe016b0496d5fbe807539fc vulnerable_head=10481097f8e6dd0346db9be0b5f27570e1bdfcfa",
+        "ancestor": "71f357d9498cebb0efe016b0496d5fbe807539fc",
+        "descendant": "10481097f8e6dd0346db9be0b5f27570e1bdfcfa"
       }
     ]
   }

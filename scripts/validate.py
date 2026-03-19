@@ -38,6 +38,20 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "schema" / "case.schema.json"
 CASES_DIR = ROOT / "cases"
 MANIFEST_PATH = ROOT / "manifest.json"
+MANIFEST_SUMMARY_FIELDS = (
+    "severity",
+    "title",
+    "vulnerabilityClass",
+    "baselineCommit",
+    "vulnerableHead",
+    "verificationStatus",
+    "confidence",
+)
+REQUIRED_ANCESTRY_CHECK_NAMES = (
+    "baseline_ancestor_of_intro",
+    "intro_ancestor_of_vulnerable_head",
+    "baseline_ancestor_of_vulnerable_head",
+)
 
 
 def _case_id(case: Any, fallback: str = "unknown") -> str:
@@ -90,6 +104,11 @@ def _is_datetime_string(value: Any) -> bool:
     except ValueError:
         return False
     return parsed.tzinfo is not None
+
+
+def _short_sha(value: str) -> str:
+    """Return a short SHA for readable validation errors."""
+    return value[:12]
 
 
 def _get_jsonschema_validator() -> Any:
@@ -268,8 +287,16 @@ def validate_manifest_consistency(
             "confidence": verification["confidence"],
         }
 
-        for field_name, expected_value in expected_fields.items():
+        for field_name in MANIFEST_SUMMARY_FIELDS:
+            expected_value = expected_fields[field_name]
             if field_name not in manifest_case:
+                errors.append(
+                    ValidationError(
+                        case_id,
+                        "manifest",
+                        f"{field_name} missing from manifest entry",
+                    )
+                )
                 continue
             actual_value = manifest_case[field_name]
             if actual_value != expected_value:
@@ -615,23 +642,132 @@ def validate_case_strict(case: Any) -> list[ValidationError]:
         )
         return errors
 
-    check_names = Counter(
-        check_obj["name"] for check_obj in checks if isinstance(check_obj, dict)
-    )
-    required_counts = {
-        "baseline_ancestor_of_intro": len(introducing_commits),
-        "intro_ancestor_of_vulnerable_head": len(introducing_commits),
-        "baseline_ancestor_of_vulnerable_head": 1,
-    }
-    for check_name, expected_count in required_counts.items():
-        actual_count = check_names.get(check_name, 0)
-        if actual_count != expected_count:
+    baseline = _full_sha_string(timeline.get("baselineCommit"))
+    if baseline is None:
+        errors.append(
+            ValidationError(
+                case_id,
+                "strict",
+                "timeline.baselineCommit must be a 40-character lowercase hex SHA",
+            )
+        )
+
+    vulnerable_head = _full_sha_string(timeline.get("vulnerableHead"))
+    if vulnerable_head is None:
+        errors.append(
+            ValidationError(
+                case_id,
+                "strict",
+                "timeline.vulnerableHead must be a 40-character lowercase hex SHA",
+            )
+        )
+
+    introducing_shas: list[str] = []
+    for index, commit in enumerate(introducing_commits):
+        commit_obj = _json_object(commit)
+        if commit_obj is None:
             errors.append(
                 ValidationError(
                     case_id,
                     "strict",
-                    f"verification must include {expected_count} "
-                    f"'{check_name}' check(s); found {actual_count}",
+                    f"timeline.introducingCommits[{index}] must be an object",
+                )
+            )
+            continue
+
+        sha = _full_sha_string(commit_obj.get("sha"))
+        if sha is None:
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"timeline.introducingCommits[{index}].sha must be a 40-character lowercase hex SHA",
+                )
+            )
+            continue
+        introducing_shas.append(sha)
+
+    ancestry_pairs = {
+        name: Counter()
+        for name in REQUIRED_ANCESTRY_CHECK_NAMES
+    }
+    for index, check in enumerate(checks):
+        check_obj = _json_object(check)
+        if check_obj is None:
+            continue
+
+        check_name = check_obj.get("name")
+        if check_name not in REQUIRED_ANCESTRY_CHECK_NAMES:
+            continue
+
+        ancestor = _full_sha_string(check_obj.get("ancestor"))
+        if ancestor is None:
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"verification.checks[{index}].ancestor must be a 40-character lowercase hex SHA for '{check_name}'",
+                )
+            )
+        descendant = _full_sha_string(check_obj.get("descendant"))
+        if descendant is None:
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"verification.checks[{index}].descendant must be a 40-character lowercase hex SHA for '{check_name}'",
+                )
+            )
+        if ancestor is not None and descendant is not None:
+            ancestry_pairs[check_name][(ancestor, descendant)] += 1
+
+    if errors:
+        return errors
+
+    assert baseline is not None
+    assert vulnerable_head is not None
+
+    expected_pairs = {
+        "baseline_ancestor_of_intro": {
+            (baseline, intro_sha) for intro_sha in introducing_shas
+        },
+        "intro_ancestor_of_vulnerable_head": {
+            (intro_sha, vulnerable_head) for intro_sha in introducing_shas
+        },
+        "baseline_ancestor_of_vulnerable_head": {(baseline, vulnerable_head)},
+    }
+    for check_name, expected in expected_pairs.items():
+        actual_counter = ancestry_pairs[check_name]
+        actual_pairs = set(actual_counter)
+
+        for pair, count in actual_counter.items():
+            ancestor, descendant = pair
+            if count > 1:
+                errors.append(
+                    ValidationError(
+                        case_id,
+                        "strict",
+                        f"duplicate '{check_name}' check for "
+                        f"{_short_sha(ancestor)} -> {_short_sha(descendant)}",
+                    )
+                )
+            if pair not in expected:
+                errors.append(
+                    ValidationError(
+                        case_id,
+                        "strict",
+                        f"unexpected '{check_name}' check for "
+                        f"{_short_sha(ancestor)} -> {_short_sha(descendant)}",
+                    )
+                )
+
+        for ancestor, descendant in sorted(expected - actual_pairs):
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"missing '{check_name}' check for "
+                    f"{_short_sha(ancestor)} -> {_short_sha(descendant)}",
                 )
             )
 

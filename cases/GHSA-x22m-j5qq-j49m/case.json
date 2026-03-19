@@ -69,6 +69,27 @@
         "name": "intro_at_or_before_affected_upper",
         "pass": true,
         "details": "intro=2267d58afcc70fe19408b8f0dce108c340f3426d affected_upper_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=02842bef9179e65ac3c8174091a4facfcd0a4083 intro=2267d58afcc70fe19408b8f0dce108c340f3426d",
+        "ancestor": "02842bef9179e65ac3c8174091a4facfcd0a4083",
+        "descendant": "2267d58afcc70fe19408b8f0dce108c340f3426d"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=2267d58afcc70fe19408b8f0dce108c340f3426d vulnerable_head=2267d58afcc70fe19408b8f0dce108c340f3426d",
+        "ancestor": "2267d58afcc70fe19408b8f0dce108c340f3426d",
+        "descendant": "2267d58afcc70fe19408b8f0dce108c340f3426d"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=02842bef9179e65ac3c8174091a4facfcd0a4083 vulnerable_head=2267d58afcc70fe19408b8f0dce108c340f3426d",
+        "ancestor": "02842bef9179e65ac3c8174091a4facfcd0a4083",
+        "descendant": "2267d58afcc70fe19408b8f0dce108c340f3426d"
       }
     ]
   }

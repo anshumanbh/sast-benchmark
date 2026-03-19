@@ -67,6 +67,27 @@
         "name": "intro_precedes_patched_release",
         "pass": true,
         "details": "intro=c74551c2ae0611f3ef0e691dc93a38372f366765 patched_tag_commit=77e703c69b07a236c2f0962bd195e03aae1b8da0"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=51dfd6efdb013cfc7e269e0bedf3a9bef0ed7023 intro=c74551c2ae0611f3ef0e691dc93a38372f366765",
+        "ancestor": "51dfd6efdb013cfc7e269e0bedf3a9bef0ed7023",
+        "descendant": "c74551c2ae0611f3ef0e691dc93a38372f366765"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=c74551c2ae0611f3ef0e691dc93a38372f366765 vulnerable_head=c74551c2ae0611f3ef0e691dc93a38372f366765",
+        "ancestor": "c74551c2ae0611f3ef0e691dc93a38372f366765",
+        "descendant": "c74551c2ae0611f3ef0e691dc93a38372f366765"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=51dfd6efdb013cfc7e269e0bedf3a9bef0ed7023 vulnerable_head=c74551c2ae0611f3ef0e691dc93a38372f366765",
+        "ancestor": "51dfd6efdb013cfc7e269e0bedf3a9bef0ed7023",
+        "descendant": "c74551c2ae0611f3ef0e691dc93a38372f366765"
       }
     ]
   }

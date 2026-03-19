@@ -82,6 +82,53 @@ def _minimal_case(overrides: dict | None = None) -> dict:
     return case
 
 
+def _ancestry_check(
+    name: str, ancestor: str, descendant: str, details: str | None = None
+) -> dict:
+    return {
+        "name": name,
+        "pass": True,
+        "details": details or f"{ancestor[:12]} -> {descendant[:12]}",
+        "ancestor": ancestor,
+        "descendant": descendant,
+    }
+
+
+def _manifest_entry(case: dict, overrides: dict | None = None) -> dict:
+    entry = {"id": case["id"]}
+    advisory = case.get("advisory")
+    expected_outcome = case.get("expectedOutcome")
+    timeline = case.get("timeline")
+    verification = case.get("verification")
+    if (
+        isinstance(advisory, dict)
+        and isinstance(expected_outcome, dict)
+        and isinstance(timeline, dict)
+        and isinstance(verification, dict)
+    ):
+        entry.update(
+            {
+                "severity": advisory["severity"],
+                "title": advisory["title"],
+                "vulnerabilityClass": expected_outcome["vulnerabilityClass"],
+                "baselineCommit": timeline["baselineCommit"],
+                "vulnerableHead": timeline["vulnerableHead"],
+                "verificationStatus": verification["status"],
+                "confidence": verification["confidence"],
+            }
+        )
+    if overrides:
+        entry.update(overrides)
+    return entry
+
+
+def _write_manifest(root: Path, *entries: dict) -> None:
+    (root / "manifest.json").write_text(
+        json.dumps({"caseCount": len(entries), "cases": list(entries)}),
+        encoding="utf-8",
+    )
+
+
 def _deep_merge(base: dict, override: dict) -> None:
     for key, val in override.items():
         if key in base and isinstance(base[key], dict) and isinstance(val, dict):
@@ -309,6 +356,18 @@ class TestManifestConsistency:
         assert any("severity does not match case.json" in error.message for error in errors)
         assert any("title does not match case.json" in error.message for error in errors)
 
+    def test_manifest_fields_are_required_when_case_payload_is_loaded(self):
+        case = _minimal_case()
+        manifest = {
+            "caseCount": 1,
+            "cases": [{"id": case["id"]}],
+        }
+
+        errors = validate_manifest_consistency(manifest, [case["id"]], [case])
+
+        assert any("severity missing from manifest entry" in error.message for error in errors)
+        assert any("title missing from manifest entry" in error.message for error in errors)
+
 
 class TestNoDuplicateIds:
     def test_no_duplicates(self):
@@ -347,11 +406,9 @@ class TestStrictValidation:
             {
                 "verification": {
                     "checks": [
-                        {
-                            "name": "baseline_ancestor_of_intro",
-                            "pass": True,
-                            "details": "baseline precedes intro",
-                        }
+                        _ancestry_check(
+                            "baseline_ancestor_of_intro", "a" * 40, "b" * 40
+                        )
                     ]
                 },
             }
@@ -371,27 +428,102 @@ class TestStrictValidation:
             {
                 "verification": {
                     "checks": [
-                        {
-                            "name": "baseline_ancestor_of_intro",
-                            "pass": True,
-                            "details": "baseline precedes intro",
-                        },
-                        {
-                            "name": "intro_ancestor_of_vulnerable_head",
-                            "pass": True,
-                            "details": "intro reaches vulnerable head",
-                        },
-                        {
-                            "name": "baseline_ancestor_of_vulnerable_head",
-                            "pass": True,
-                            "details": "baseline reaches vulnerable head",
-                        },
+                        _ancestry_check(
+                            "baseline_ancestor_of_intro", "a" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "intro_ancestor_of_vulnerable_head", "b" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "baseline_ancestor_of_vulnerable_head",
+                            "a" * 40,
+                            "b" * 40,
+                        ),
                     ]
                 },
             }
         )
 
         assert validate_case_strict(case) == []
+
+    def test_structured_ancestry_fields_are_required(self):
+        case = _minimal_case(
+            {
+                "verification": {
+                    "checks": [
+                        {
+                            "name": "baseline_ancestor_of_intro",
+                            "pass": True,
+                            "details": "baseline precedes intro",
+                        },
+                        _ancestry_check(
+                            "intro_ancestor_of_vulnerable_head", "b" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "baseline_ancestor_of_vulnerable_head",
+                            "a" * 40,
+                            "b" * 40,
+                        ),
+                    ]
+                },
+            }
+        )
+
+        errors = validate_case_strict(case)
+
+        assert any(".ancestor must be a 40-character" in error.message for error in errors)
+        assert any(".descendant must be a 40-character" in error.message for error in errors)
+
+    def test_duplicate_structured_ancestry_check_does_not_satisfy_distinct_intro(self):
+        case = _minimal_case(
+            {
+                "timeline": {
+                    "introducingCommits": [
+                        {
+                            "sha": "b" * 40,
+                            "authoredAt": "2026-01-12T01:16:39Z",
+                            "subject": "feat: introduce vulnerability",
+                        },
+                        {
+                            "sha": "c" * 40,
+                            "authoredAt": "2026-01-13T01:16:39Z",
+                            "subject": "feat: introduce another vulnerability",
+                        },
+                    ],
+                    "vulnerableHead": "d" * 40,
+                },
+                "verification": {
+                    "checks": [
+                        _ancestry_check(
+                            "baseline_ancestor_of_intro", "a" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "baseline_ancestor_of_intro", "a" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "intro_ancestor_of_vulnerable_head", "b" * 40, "d" * 40
+                        ),
+                        _ancestry_check(
+                            "intro_ancestor_of_vulnerable_head", "b" * 40, "d" * 40
+                        ),
+                        _ancestry_check(
+                            "baseline_ancestor_of_vulnerable_head",
+                            "a" * 40,
+                            "d" * 40,
+                        ),
+                    ]
+                },
+            }
+        )
+
+        errors = validate_case_strict(case)
+
+        assert any("duplicate 'baseline_ancestor_of_intro'" in error.message for error in errors)
+        assert any(
+            "missing 'baseline_ancestor_of_intro' check for aaaaaaaaaaaa -> cccccccccccc"
+            in error.message
+            for error in errors
+        )
 
     def test_run_validation_reports_dependency_when_jsonschema_missing_for_structural_only(
         self, monkeypatch, tmp_path: Path
@@ -400,10 +532,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
 
         def _raise() -> None:
             raise RuntimeError(
@@ -493,10 +622,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
 
         def _raise() -> None:
             raise RuntimeError(
@@ -520,10 +646,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
         repo = tmp_path / "repo"
         repo.mkdir()
 
@@ -579,10 +702,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
 
         def _raise() -> None:
             raise RuntimeError(
@@ -636,10 +756,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
 
         def _raise() -> None:
             raise RuntimeError(
@@ -706,10 +823,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
 
         def _raise() -> None:
             raise RuntimeError(
@@ -766,10 +880,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
 
         def _raise() -> None:
             raise RuntimeError(
@@ -802,10 +913,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
 
         def _raise() -> None:
             raise RuntimeError(
@@ -837,10 +945,7 @@ class TestStrictValidation:
         case_dir = tmp_path / "cases" / case["id"]
         case_dir.mkdir(parents=True)
         (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
-        (tmp_path / "manifest.json").write_text(
-            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
-            encoding="utf-8",
-        )
+        _write_manifest(tmp_path, _manifest_entry(case))
 
         def _raise() -> None:
             raise RuntimeError(

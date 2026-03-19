@@ -77,6 +77,41 @@
         "name": "intro_at_or_before_affected_upper",
         "pass": true,
         "details": "intro=f1083cd52cf43c7312ae09cf0aa696ba9c95282c affected_upper_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=68d79e56c2ef91555ccd596cf520a85dd34c83fb intro=9809b47d4545b394a5e49624796297147a8253cb",
+        "ancestor": "68d79e56c2ef91555ccd596cf520a85dd34c83fb",
+        "descendant": "9809b47d4545b394a5e49624796297147a8253cb"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=68d79e56c2ef91555ccd596cf520a85dd34c83fb intro=f1083cd52cf43c7312ae09cf0aa696ba9c95282c",
+        "ancestor": "68d79e56c2ef91555ccd596cf520a85dd34c83fb",
+        "descendant": "f1083cd52cf43c7312ae09cf0aa696ba9c95282c"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=9809b47d4545b394a5e49624796297147a8253cb vulnerable_head=f1083cd52cf43c7312ae09cf0aa696ba9c95282c",
+        "ancestor": "9809b47d4545b394a5e49624796297147a8253cb",
+        "descendant": "f1083cd52cf43c7312ae09cf0aa696ba9c95282c"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=f1083cd52cf43c7312ae09cf0aa696ba9c95282c vulnerable_head=f1083cd52cf43c7312ae09cf0aa696ba9c95282c",
+        "ancestor": "f1083cd52cf43c7312ae09cf0aa696ba9c95282c",
+        "descendant": "f1083cd52cf43c7312ae09cf0aa696ba9c95282c"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=68d79e56c2ef91555ccd596cf520a85dd34c83fb vulnerable_head=f1083cd52cf43c7312ae09cf0aa696ba9c95282c",
+        "ancestor": "68d79e56c2ef91555ccd596cf520a85dd34c83fb",
+        "descendant": "f1083cd52cf43c7312ae09cf0aa696ba9c95282c"
       }
     ]
   }

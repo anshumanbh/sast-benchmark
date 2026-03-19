@@ -58,27 +58,37 @@
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=f97c45c5b5e0 intro=51149fcaf15a"
+        "details": "baseline=f97c45c5b5e0698b6667bb5f6badc0cac7dabd12 intro=51149fcaf15a04872965ae80137b1d88f918d189",
+        "ancestor": "f97c45c5b5e0698b6667bb5f6badc0cac7dabd12",
+        "descendant": "51149fcaf15a04872965ae80137b1d88f918d189"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=51149fcaf15a vulnerable_head=9c142993b89d"
+        "details": "intro=51149fcaf15a04872965ae80137b1d88f918d189 vulnerable_head=9c142993b89dd3f75360552c3bdf9fa2e1e76546",
+        "ancestor": "51149fcaf15a04872965ae80137b1d88f918d189",
+        "descendant": "9c142993b89dd3f75360552c3bdf9fa2e1e76546"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=f97c45c5b5e0 intro=9c142993b89d"
+        "details": "baseline=f97c45c5b5e0698b6667bb5f6badc0cac7dabd12 intro=9c142993b89dd3f75360552c3bdf9fa2e1e76546",
+        "ancestor": "f97c45c5b5e0698b6667bb5f6badc0cac7dabd12",
+        "descendant": "9c142993b89dd3f75360552c3bdf9fa2e1e76546"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=9c142993b89d vulnerable_head=9c142993b89d"
+        "details": "intro=9c142993b89dd3f75360552c3bdf9fa2e1e76546 vulnerable_head=9c142993b89dd3f75360552c3bdf9fa2e1e76546",
+        "ancestor": "9c142993b89dd3f75360552c3bdf9fa2e1e76546",
+        "descendant": "9c142993b89dd3f75360552c3bdf9fa2e1e76546"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=f97c45c5b5e0 vulnerable_head=9c142993b89d"
+        "details": "baseline=f97c45c5b5e0698b6667bb5f6badc0cac7dabd12 vulnerable_head=9c142993b89dd3f75360552c3bdf9fa2e1e76546",
+        "ancestor": "f97c45c5b5e0698b6667bb5f6badc0cac7dabd12",
+        "descendant": "9c142993b89dd3f75360552c3bdf9fa2e1e76546"
       }
     ]
   }

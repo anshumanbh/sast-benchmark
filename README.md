@@ -42,9 +42,10 @@ Each case directory contains a single `case.json` with these sections:
 | `timeline` | Baseline commit, introducing commit(s), vulnerable head |
 | `expectedOutcome` | Vulnerability class, minimum severity, expected file paths, description |
 | `verification` | Ancestry check results (baseline → intro ordering) |
-| `provenance` | Which source datasets contributed to this case |
 
 See `schema/case.schema.json` for the full JSON Schema (draft-07).
+
+For `--strict` validation, required ancestry checks in `verification.checks` should carry machine-readable `ancestor` and `descendant` SHAs.
 
 ## Vulnerability Class Taxonomy
 

@@ -82,6 +82,27 @@
         "name": "public_fix_train_reaches_patched_tag",
         "pass": true,
         "details": "public_fix_train=318379cdba1804eb840896f6ebd4dd6dd0fb53cb,a7af646fdfc5cff077c04a7abb7c9e7a9c0b9f70,c15946274ed62cce3846f0feea723bc83404b462,0af76f5f0e93540efbdf054895216c398692afcd,cb3290fca32593956638f161d9776266b90ab891,01b3226ecbea6f5aa2a433237dae87d181d8790f patched_tag=v2026.2.14 tag_commit=b5ab92eef4e4f6099c98817e0917c99ec9e03045"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=b347d5d9ccbb8ccf008c887fc03cdc3410710afd intro=2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
+        "ancestor": "b347d5d9ccbb8ccf008c887fc03cdc3410710afd",
+        "descendant": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=2f8206862a684d14f7ca92e9fe0dbce627c5d82b vulnerable_head=2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
+        "ancestor": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
+        "descendant": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=b347d5d9ccbb8ccf008c887fc03cdc3410710afd vulnerable_head=2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
+        "ancestor": "b347d5d9ccbb8ccf008c887fc03cdc3410710afd",
+        "descendant": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b"
       }
     ]
   }
