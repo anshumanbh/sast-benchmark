@@ -633,7 +633,10 @@ def load_cases(
             continue
         case_path = d / "case.json"
         if case_path.exists():
-            cases.append(json.loads(case_path.read_text(encoding="utf-8")))
+            try:
+                cases.append(json.loads(case_path.read_text(encoding="utf-8")))
+            except (json.JSONDecodeError, ValueError) as exc:
+                print(f"Skipping {d.name}: invalid case.json: {exc}", file=sys.stderr)
     return cases
 
 
