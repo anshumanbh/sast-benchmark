@@ -16,6 +16,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from taxonomy import CWE_TO_VULN_CLASS as CWE_TO_CLASS
+
 
 # ── IDs ────────────────────────────────────────────────────────────────────────
 
@@ -53,20 +55,6 @@ AGENT_CASE_IDS = [
 ]
 
 OVERLAP_IDS = ["GHSA-4rj2-gpmh-qq5x", "GHSA-gv46-4xfq-jv58", "GHSA-qrq5-wjgg-rvqw"]
-
-# ── CWE-to-vulnerability-class mapping ────────────────────────────────────────
-
-CWE_TO_CLASS: dict[str, str] = {
-    "CWE-22": "pathtraversal",
-    "CWE-78": "commandinjection",
-    "CWE-918": "ssrf",
-    "CWE-94": "codeexec",
-    "CWE-287": "authbypass",
-    "CWE-306": "authbypass",
-    "CWE-863": "brokenauthz",
-    "CWE-20": "commandinjection",
-    "CWE-441": "commandinjection",
-}
 
 # Override table for ambiguous cases
 VULN_CLASS_OVERRIDES: dict[str, str] = {

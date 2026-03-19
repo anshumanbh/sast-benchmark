@@ -14,6 +14,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
+from run import CWE_TO_VULN_CLASS
 from migrate import (
     CWE_TO_CLASS,
     AGENT_ONLY_CASE_MAPPING,
@@ -59,6 +60,9 @@ class TestConstants:
         assert CWE_TO_CLASS["CWE-94"] == "codeexec"
         assert CWE_TO_CLASS["CWE-287"] == "authbypass"
         assert CWE_TO_CLASS["CWE-863"] == "brokenauthz"
+
+    def test_cwe_mapping_matches_runner(self):
+        assert CWE_TO_CLASS == CWE_TO_VULN_CLASS
 
     def test_gv46_research_override_present(self):
         override = CASE_RESEARCH_OVERRIDES["GHSA-gv46-4xfq-jv58"]
@@ -407,6 +411,33 @@ class TestBuildUnifiedCase:
                     "checks": [],
                 },
             )
+
+    def test_build_case_uses_shared_cwe_mapping_for_unoverridden_cwe(self):
+        advisory_data = self._make_advisory_data()
+        advisory_data["cwe_ids"] = ["CWE-265"]
+
+        case = build_unified_case(
+            ghsa_id="GHSA-test-test-test",
+            advisory_data=advisory_data,
+            timeline_block={
+                "baselineCommit": "a" * 40,
+                "introducingCommits": [
+                    {
+                        "sha": "b" * 40,
+                        "authoredAt": "2026-01-12T01:16:39Z",
+                        "subject": "feat: introduce vulnerability",
+                    }
+                ],
+                "vulnerableHead": "b" * 40,
+            },
+            verification_block={
+                "status": "pass",
+                "confidence": "high",
+                "checks": [{"name": "x", "pass": True, "details": "ok"}],
+            },
+        )
+
+        assert case["expectedOutcome"]["vulnerabilityClass"] == "sandboxescape"
 
 
 class TestBuildVerification:

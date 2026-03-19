@@ -81,6 +81,17 @@ def _full_sha_string(value: Any) -> str | None:
     return value
 
 
+def _is_datetime_string(value: Any) -> bool:
+    """Return whether a value is a valid ISO 8601 date-time string."""
+    if not isinstance(value, str):
+        return False
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return parsed.tzinfo is not None
+
+
 def _get_jsonschema_validator() -> Any:
     """Return the Draft 7 validator class or raise if the dependency is missing."""
     try:
@@ -108,13 +119,7 @@ def _get_jsonschema_format_checker() -> Any:
 
     @checker.checks("date-time")
     def _is_datetime(value: object) -> bool:
-        if not isinstance(value, str):
-            return False
-        try:
-            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        except ValueError:
-            return False
-        return parsed.tzinfo is not None
+        return _is_datetime_string(value)
 
     return checker
 
@@ -419,6 +424,14 @@ def validate_case_semantic(case: Any, repo: Path) -> list[ValidationError]:
                     f"timeline.introducingCommits[{index}].authoredAt must be a string",
                 )
             )
+        elif not _is_datetime_string(authored_at):
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "semantic",
+                    f"timeline.introducingCommits[{index}].authoredAt must be an ISO 8601 date-time string",
+                )
+            )
 
         subject = commit_obj.get("subject")
         if not isinstance(subject, str):
@@ -586,7 +599,8 @@ def validate_case_strict(case: Any) -> list[ValidationError]:
 
     provenance = _json_object(case.get("provenance")) or {}
     sources = _json_array(provenance.get("sources")) or []
-    if sources == ["securevibes-agent"]:
+    source_names = [source for source in sources if isinstance(source, str)]
+    if source_names and set(source_names) == {"securevibes-agent"}:
         timeline = _json_object(case.get("timeline"))
         if timeline is None:
             errors.append(
@@ -699,6 +713,16 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
                 )
             )
             continue
+
+        case_id = case.get("id")
+        if isinstance(case_id, str) and case_id != dir_name:
+            all_errors.append(
+                ValidationError(
+                    dir_name,
+                    "case_dir",
+                    f"case directory name {dir_name!r} does not match case.json id {case_id!r}",
+                )
+            )
 
         loaded_cases.append(case)
 

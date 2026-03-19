@@ -234,6 +234,7 @@
       "properties": {
         "sources": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "type": "string",
             "enum": ["securevibes", "securevibes-agent"]
@@ -260,6 +261,7 @@
         },
         "authoredAt": {
           "type": "string",
+          "format": "date-time",
           "description": "ISO 8601 author date."
         },
         "subject": {

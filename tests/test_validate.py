@@ -163,6 +163,27 @@ class TestSchemaValidation:
             for error in errors
         )
 
+    def test_invalid_intro_authored_at_format(self, schema):
+        case = _minimal_case(
+            {
+                "timeline": {
+                    "introducingCommits": [
+                        {
+                            "sha": "b" * 40,
+                            "authoredAt": "not-a-date",
+                            "subject": "feat: introduce vulnerability",
+                        }
+                    ]
+                }
+            }
+        )
+        errors = validate_case_against_schema(case, schema)
+        assert any(
+            "introducingCommits[0].authoredAt" in error.message
+            and "date-time" in error.message
+            for error in errors
+        )
+
     def test_optional_cvss_allowed(self, schema):
         case = _minimal_case()
         case["advisory"]["cvss"] = {
@@ -197,6 +218,13 @@ class TestSchemaValidation:
         case["provenance"]["sources"] = ["unknown-source"]
         errors = validate_case_against_schema(case, schema)
         assert len(errors) > 0
+
+    def test_provenance_duplicate_sources_rejected(self, schema):
+        case = _minimal_case(
+            {"provenance": {"sources": ["securevibes-agent", "securevibes-agent"]}}
+        )
+        errors = validate_case_against_schema(case, schema)
+        assert any("non-unique" in error.message for error in errors)
 
     def test_missing_jsonschema_returns_validation_error(self, monkeypatch, schema):
         def _raise() -> None:
@@ -383,6 +411,33 @@ class TestStrictValidation:
         )
 
         assert validate_case_strict(case) == []
+
+    def test_duplicate_agent_sources_still_require_complete_ancestry_checks(self):
+        case = _minimal_case(
+            {
+                "provenance": {
+                    "sources": ["securevibes-agent", "securevibes-agent"]
+                },
+                "verification": {
+                    "checks": [
+                        {
+                            "name": "baseline_ancestor_of_intro",
+                            "pass": True,
+                            "details": "baseline precedes intro",
+                        }
+                    ]
+                },
+            }
+        )
+        errors = validate_case_strict(case)
+
+        assert any(
+            "intro_ancestor_of_vulnerable_head" in error.message for error in errors
+        )
+        assert any(
+            "baseline_ancestor_of_vulnerable_head" in error.message
+            for error in errors
+        )
 
     def test_run_validation_reports_dependency_when_jsonschema_missing_for_structural_only(
         self, monkeypatch, tmp_path: Path
@@ -656,6 +711,69 @@ class TestStrictValidation:
         )
         assert "Skipping schema validation" in captured.err
 
+    def test_run_validation_reports_invalid_intro_authored_at_when_schema_missing(
+        self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("introducing change\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "introduce vuln"],
+            check=True,
+        )
+        intro = _git(repo, "rev-parse", "HEAD")
+
+        case = _minimal_case(
+            {
+                "timeline": {
+                    "baselineCommit": baseline,
+                    "introducingCommits": [
+                        {
+                            "sha": intro,
+                            "authoredAt": "not-a-date",
+                            "subject": "feat: introduce vulnerability",
+                        }
+                    ],
+                    "vulnerableHead": intro,
+                }
+            }
+        )
+        case_dir = tmp_path / "cases" / case["id"]
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(
+            json.dumps({"caseCount": 1, "cases": [{"id": case["id"]}]}),
+            encoding="utf-8",
+        )
+
+        def _raise() -> None:
+            raise RuntimeError(
+                "jsonschema is required for schema validation. "
+                "Install with: pip install jsonschema"
+            )
+
+        monkeypatch.setattr(validate_module, "_get_jsonschema_validator", _raise)
+        errors = run_validation(
+            Namespace(openclaw_repo=str(repo), strict=False, output_dir=str(tmp_path))
+        )
+        captured = capsys.readouterr()
+
+        assert len(errors) == 1
+        assert errors[0].check == "semantic"
+        assert "ISO 8601 date-time string" in errors[0].message
+        assert "Skipping schema validation" in captured.err
+
     def test_run_validation_reports_commit_sha_shape_errors_when_schema_missing(
         self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ):
@@ -805,6 +923,24 @@ class TestStrictValidation:
         assert len(errors) == 1
         assert errors[0].check == "case_file"
         assert "not valid JSON" in errors[0].message
+
+    def test_run_validation_reports_case_directory_id_mismatch(self, tmp_path: Path):
+        case = _minimal_case({"id": "GHSA-bar1-bar1-bar1"})
+        case_dir = tmp_path / "cases" / "GHSA-foo0-foo0-foo0"
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(
+            json.dumps({"caseCount": 1, "cases": [{"id": "GHSA-foo0-foo0-foo0"}]}),
+            encoding="utf-8",
+        )
+
+        errors = run_validation(
+            Namespace(openclaw_repo=None, strict=False, output_dir=str(tmp_path))
+        )
+
+        assert len(errors) == 1
+        assert errors[0].check == "case_dir"
+        assert "does not match case.json id" in errors[0].message
 
 
 class TestSemanticValidation:
