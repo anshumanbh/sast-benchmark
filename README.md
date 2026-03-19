@@ -41,11 +41,32 @@ Each case directory contains a single `case.json` with these sections:
 | `advisory` | Title, severity, CVSS, CWEs, affected package ranges from the GHSA |
 | `timeline` | Baseline commit, introducing commit(s), vulnerable head |
 | `expectedOutcome` | Vulnerability class, minimum severity, expected file paths, description |
-| `verification` | Ancestry check results (baseline → intro ordering) |
+| `verification` | Verification evidence and ancestry checks for baseline → intro → vulnerableHead relationships |
 
 See `schema/case.schema.json` for the full JSON Schema (draft-07).
 
-For `--strict` validation, required ancestry checks in `verification.checks` should carry machine-readable `ancestor` and `descendant` SHAs.
+For `--strict` validation, the required ancestry checks in `verification.checks` are:
+
+- `baseline_ancestor_of_intro`
+- `intro_ancestor_of_vulnerable_head`
+- `baseline_ancestor_of_vulnerable_head`
+
+Those checks should carry machine-readable `ancestor` and `descendant` SHAs.
+
+## Manifest
+
+`manifest.json` is the checked-in summary index for the benchmark. Each entry in `manifest.cases` should include:
+
+- `id`
+- `severity`
+- `title`
+- `vulnerabilityClass`
+- `baselineCommit`
+- `vulnerableHead`
+- `verificationStatus`
+- `confidence`
+
+Validation checks these summary fields against the corresponding `case.json`.
 
 ## Vulnerability Class Taxonomy
 
@@ -133,14 +154,18 @@ The runner writes a JSON results file (default: `results.json`) and prints a con
 ## Validation
 
 ```bash
-# Structural validation (full schema conformance requires: pip install jsonschema)
+# Structural validation (schema + manifest consistency; requires: pip install jsonschema)
 python3 scripts/validate.py
 
-# Semantic validation (commit SHAs resolve, ancestry checks pass)
+# Strict metadata validation (offline)
+# If jsonschema is missing, schema checks are skipped with a warning.
+python3 scripts/validate.py --strict
+
+# Semantic validation (commit SHAs resolve, ancestry checks pass in git history)
 # If jsonschema is missing, schema checks are skipped with a warning.
 python3 scripts/validate.py --openclaw-repo ../openclaw
 
-# Strict mode (all cases must pass verification with high confidence)
+# Full validation (strict metadata + semantic git checks)
 # If jsonschema is missing, schema checks are skipped with a warning.
 python3 scripts/validate.py --openclaw-repo ../openclaw --strict
 ```

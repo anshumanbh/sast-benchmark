@@ -224,12 +224,12 @@
               "ancestor": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{40}$",
-                "description": "Optional ancestor commit SHA for machine-readable ancestry checks."
+                "description": "Ancestor commit SHA for machine-readable ancestry checks. Required for strict ancestry checks such as baseline_ancestor_of_intro, intro_ancestor_of_vulnerable_head, and baseline_ancestor_of_vulnerable_head."
               },
               "descendant": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{40}$",
-                "description": "Optional descendant commit SHA for machine-readable ancestry checks."
+                "description": "Descendant commit SHA for machine-readable ancestry checks. Required for strict ancestry checks such as baseline_ancestor_of_intro, intro_ancestor_of_vulnerable_head, and baseline_ancestor_of_vulnerable_head."
               }
             }
           }
