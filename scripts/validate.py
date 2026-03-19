@@ -277,17 +277,31 @@ def validate_manifest_consistency(
         ):
             continue
 
-        expected_fields = {
-            "severity": advisory["severity"],
-            "title": advisory["title"],
-            "vulnerabilityClass": expected_outcome["vulnerabilityClass"],
-            "baselineCommit": timeline["baselineCommit"],
-            "vulnerableHead": timeline["vulnerableHead"],
-            "verificationStatus": verification["status"],
-            "confidence": verification["confidence"],
+        field_sources = {
+            "severity": (advisory, "severity"),
+            "title": (advisory, "title"),
+            "vulnerabilityClass": (expected_outcome, "vulnerabilityClass"),
+            "baselineCommit": (timeline, "baselineCommit"),
+            "vulnerableHead": (timeline, "vulnerableHead"),
+            "verificationStatus": (verification, "status"),
+            "confidence": (verification, "confidence"),
         }
+        expected_fields = {}
+        for field_name, (source, key) in field_sources.items():
+            if key not in source:
+                errors.append(
+                    ValidationError(
+                        case_id,
+                        "manifest_field",
+                        f"case.json missing '{key}' needed for manifest check",
+                    )
+                )
+            else:
+                expected_fields[field_name] = source[key]
 
         for field_name in MANIFEST_SUMMARY_FIELDS:
+            if field_name not in expected_fields:
+                continue
             expected_value = expected_fields[field_name]
             if field_name not in manifest_case:
                 errors.append(

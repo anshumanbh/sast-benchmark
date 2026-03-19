@@ -566,7 +566,11 @@ def create_benchmark_worktree(repo: Path) -> BenchmarkWorktree:
 
 
 def cleanup_benchmark_worktree(worktree: BenchmarkWorktree) -> None:
-    """Remove the detached temp worktree created for the benchmark run."""
+    """Remove the detached temp worktree created for the benchmark run.
+
+    Errors are printed to stderr rather than raised, because cleanup runs
+    in a finally block and raising would discard results from a completed run.
+    """
     remove_proc = subprocess.run(
         [
             "git",
@@ -583,8 +587,9 @@ def cleanup_benchmark_worktree(worktree: BenchmarkWorktree) -> None:
     )
     worktree.tempdir.cleanup()
     if remove_proc.returncode != 0:
-        raise RuntimeError(
-            f"git worktree remove failed: {remove_proc.stderr.strip()}"
+        print(
+            f"WARNING: git worktree remove failed: {remove_proc.stderr.strip()}",
+            file=sys.stderr,
         )
 
 
@@ -617,6 +622,9 @@ def load_cases(
 ) -> list[dict[str, Any]]:
     """Load case.json files from cases/GHSA-*/case.json."""
     cdir = cases_dir or CASES_DIR
+    if not cdir.is_dir():
+        print(f"Cases directory not found: {cdir}", file=sys.stderr)
+        return []
     cases = []
     for d in sorted(cdir.iterdir()):
         if not d.is_dir() or not d.name.startswith("GHSA-"):
