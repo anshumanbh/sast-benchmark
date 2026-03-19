@@ -250,6 +250,91 @@ class TestParseSarif:
         data = _sarif([_sarif_result(rule_id="rule-1")], rules=rules)
         assert parse_sarif(data)[0].cwe_ids == ["CWE-78"]
 
+    def test_uri_base_id_is_resolved_for_path_matching(self):
+        data = {
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "test-scanner",
+                            "rules": [
+                                {
+                                    "id": "rule-1",
+                                    "properties": {"tags": ["CWE-78"]},
+                                }
+                            ],
+                        }
+                    },
+                    "originalUriBaseIds": {
+                        "%SRCROOT%": {"uri": "file:///repo/src/"}
+                    },
+                    "results": [
+                        {
+                            "ruleId": "rule-1",
+                            "level": "error",
+                            "message": {"text": "found something"},
+                            "locations": [
+                                {
+                                    "physicalLocation": {
+                                        "artifactLocation": {
+                                            "uri": "foo.ts",
+                                            "uriBaseId": "%SRCROOT%",
+                                        }
+                                    }
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+
+        findings = parse_sarif(data)
+        assert findings[0].path == "repo/src/foo.ts"
+        result = evaluate_case(
+            "GHSA-test-test-test",
+            findings,
+            {
+                "vulnerabilityClass": "commandinjection",
+                "minimumSeverity": "high",
+                "expectedPaths": ["src/foo.ts"],
+                "description": "test",
+            },
+        )
+        assert result["detected"] is True
+
+    def test_extension_rules_supply_severity_and_cwe_metadata(self):
+        data = {
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {"name": "test-scanner", "rules": []},
+                        "extensions": [
+                            {
+                                "name": "ext",
+                                "rules": [
+                                    {
+                                        "id": "rule-1",
+                                        "properties": {
+                                            "security-severity": "9.5",
+                                            "tags": ["CWE-78"],
+                                        },
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    "results": [_sarif_result(rule_id="rule-1")],
+                }
+            ],
+        }
+
+        findings = parse_sarif(data)
+        assert findings[0].severity == "critical"
+        assert findings[0].cwe_ids == ["CWE-78"]
+
     def test_empty_results(self):
         data = _sarif([])
         assert parse_sarif(data) == []

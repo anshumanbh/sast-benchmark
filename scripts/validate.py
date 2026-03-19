@@ -142,7 +142,7 @@ def validate_case_against_schema(case: Any, schema: dict) -> list[ValidationErro
 
 
 def validate_manifest_consistency(
-    manifest: Any, case_dirs: list[str]
+    manifest: Any, case_dirs: list[str], cases: list[Any] | None = None
 ) -> list[ValidationError]:
     """Check manifest matches case directories."""
     manifest_obj = _json_object(manifest)
@@ -160,8 +160,16 @@ def validate_manifest_consistency(
             ValidationError("manifest", "manifest", "manifest.cases must be a list")
         ]
 
+    loaded_cases_by_id: dict[str, Any] = {}
+    if cases is not None:
+        for case in cases:
+            case_id = _case_id(case)
+            if case_id != "unknown" and case_id not in loaded_cases_by_id:
+                loaded_cases_by_id[case_id] = case
+
     manifest_ids: set[str] = set()
     seen_manifest_ids: dict[str, int] = {}
+    manifest_case_by_id: dict[str, dict[str, Any]] = {}
     for index, case in enumerate(manifest_cases):
         case_obj = _json_object(case)
         if case_obj is None:
@@ -194,6 +202,7 @@ def validate_manifest_consistency(
             )
         else:
             seen_manifest_ids[case_id] = index
+            manifest_case_by_id[case_id] = case_obj
         manifest_ids.add(case_id)
 
     dir_ids = set(case_dirs)
@@ -223,6 +232,49 @@ def validate_manifest_consistency(
                 f"Declared caseCount={declared_count} but {actual_count} cases listed",
             )
         )
+
+    for case_id in sorted(manifest_ids & dir_ids & loaded_cases_by_id.keys()):
+        manifest_case = manifest_case_by_id.get(case_id)
+        if manifest_case is None:
+            continue
+
+        case_obj = _json_object(loaded_cases_by_id[case_id])
+        if case_obj is None:
+            continue
+
+        advisory = _json_object(case_obj.get("advisory"))
+        expected_outcome = _json_object(case_obj.get("expectedOutcome"))
+        timeline = _json_object(case_obj.get("timeline"))
+        verification = _json_object(case_obj.get("verification"))
+        if any(
+            value is None
+            for value in (advisory, expected_outcome, timeline, verification)
+        ):
+            continue
+
+        expected_fields = {
+            "severity": advisory["severity"],
+            "title": advisory["title"],
+            "vulnerabilityClass": expected_outcome["vulnerabilityClass"],
+            "baselineCommit": timeline["baselineCommit"],
+            "vulnerableHead": timeline["vulnerableHead"],
+            "verificationStatus": verification["status"],
+            "confidence": verification["confidence"],
+        }
+
+        for field_name, expected_value in expected_fields.items():
+            if field_name not in manifest_case:
+                continue
+            actual_value = manifest_case[field_name]
+            if actual_value != expected_value:
+                errors.append(
+                    ValidationError(
+                        case_id,
+                        "manifest",
+                        f"{field_name} does not match case.json "
+                        f"(manifest={actual_value!r}, case={expected_value!r})",
+                    )
+                )
 
     return errors
 
@@ -581,9 +633,6 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         d.name for d in sorted(cases_dir.iterdir()) if d.is_dir() and d.name.startswith("GHSA-")
     ]
 
-    # Manifest consistency
-    all_errors.extend(validate_manifest_consistency(manifest, case_dir_names))
-
     # Load and validate each case
     loaded_cases: list[Any] = []
     for dir_name in case_dir_names:
@@ -620,6 +669,11 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         # Strict validation
         if args.strict:
             all_errors.extend(validate_case_strict(case))
+
+    # Manifest consistency
+    all_errors.extend(
+        validate_manifest_consistency(manifest, case_dir_names, loaded_cases)
+    )
 
     # Duplicate check
     all_errors.extend(validate_no_duplicate_ids(loaded_cases))

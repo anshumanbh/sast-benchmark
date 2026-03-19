@@ -658,6 +658,8 @@ def run_migration(args: argparse.Namespace) -> None:
 
     # Load advisory data from GitHub API cache
     advisories_file = Path(args.advisories_file).resolve() if args.advisories_file else None
+    if advisories_file is not None and not advisories_file.exists():
+        raise ValueError(f"Advisories file not found: {advisories_file}")
     if advisories_file and advisories_file.exists():
         all_advisories = json.loads(advisories_file.read_text(encoding="utf-8"))
         advisory_by_id = {a["ghsa_id"]: a for a in all_advisories}

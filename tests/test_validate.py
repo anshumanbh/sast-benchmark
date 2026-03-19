@@ -275,6 +275,29 @@ class TestManifestConsistency:
         assert errors[0].check == "caseCount"
         assert "must be an integer" in errors[0].message
 
+    def test_manifest_fields_must_match_case_payload(self):
+        case = _minimal_case()
+        manifest = {
+            "caseCount": 1,
+            "cases": [
+                {
+                    "id": case["id"],
+                    "severity": "low",
+                    "title": "Wrong title",
+                    "vulnerabilityClass": "abuse",
+                    "baselineCommit": "0" * 40,
+                    "vulnerableHead": "1" * 40,
+                    "verificationStatus": "unverified",
+                    "confidence": "low",
+                }
+            ],
+        }
+
+        errors = validate_manifest_consistency(manifest, [case["id"]], [case])
+
+        assert any("severity does not match case.json" in error.message for error in errors)
+        assert any("title does not match case.json" in error.message for error in errors)
+
 
 class TestNoDuplicateIds:
     def test_no_duplicates(self):
@@ -332,6 +355,40 @@ class TestStrictValidation:
         )
         assert len(errors) == 1
         assert errors[0].check == "dependency"
+
+    def test_run_validation_reports_manifest_field_mismatch(self, tmp_path: Path):
+        case = _minimal_case()
+        case_dir = tmp_path / "cases" / case["id"]
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        (tmp_path / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "caseCount": 1,
+                    "cases": [
+                        {
+                            "id": case["id"],
+                            "severity": "low",
+                            "title": case["advisory"]["title"],
+                            "vulnerabilityClass": case["expectedOutcome"][
+                                "vulnerabilityClass"
+                            ],
+                            "baselineCommit": case["timeline"]["baselineCommit"],
+                            "vulnerableHead": case["timeline"]["vulnerableHead"],
+                            "verificationStatus": case["verification"]["status"],
+                            "confidence": case["verification"]["confidence"],
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        errors = run_validation(
+            Namespace(openclaw_repo=None, strict=False, output_dir=str(tmp_path))
+        )
+
+        assert any("severity does not match case.json" in error.message for error in errors)
 
     def test_run_validation_skips_schema_when_jsonschema_missing_for_semantic_mode(
         self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]

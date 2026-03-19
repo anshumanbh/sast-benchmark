@@ -400,6 +400,22 @@ class TestRunMigration:
                 )
             )
 
+    def test_explicit_missing_advisories_file_raises(self, tmp_path: Path):
+        agent_manifest = tmp_path / "ground-truth.json"
+        agent_manifest.write_text(json.dumps({"scenarios": []}), encoding="utf-8")
+        missing_advisories = tmp_path / "missing-advisories.json"
+
+        with pytest.raises(ValueError, match="Advisories file not found"):
+            run_migration(
+                Namespace(
+                    securevibes_dir=str(tmp_path / "securevibes"),
+                    agent_manifest=str(agent_manifest),
+                    openclaw_repo=str(tmp_path / "repo"),
+                    advisories_file=str(missing_advisories),
+                    output_dir=str(tmp_path / "out"),
+                )
+            )
+
 
 class TestBuildManifest:
     def test_manifest_structure(self):

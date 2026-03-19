@@ -24,6 +24,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin
 
 
 # ── Data types ─────────────────────────────────────────────────────────────────
@@ -216,16 +217,92 @@ def _detect_format_from_data(data: Any) -> str:
 # ── SARIF parsing ─────────────────────────────────────────────────────────────
 
 
+def _build_sarif_rule_lookup(run: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Collect SARIF rules from the driver and extension components."""
+    rules_by_id: dict[str, dict[str, Any]] = {}
+    tool = run.get("tool", {})
+    if not isinstance(tool, dict):
+        return rules_by_id
+
+    components: list[Any] = [tool.get("driver")]
+    extensions = tool.get("extensions", [])
+    if isinstance(extensions, list):
+        components.extend(extensions)
+
+    for component in components:
+        if not isinstance(component, dict):
+            continue
+        rules = component.get("rules", [])
+        if not isinstance(rules, list):
+            continue
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+            rule_id = rule.get("id")
+            if isinstance(rule_id, str) and rule_id and rule_id not in rules_by_id:
+                rules_by_id[rule_id] = rule
+
+    return rules_by_id
+
+
+def _resolve_sarif_base_uri(
+    base_id: str, original_uri_base_ids: dict[str, Any], seen: set[str] | None = None
+) -> str:
+    """Resolve a SARIF uriBaseId through originalUriBaseIds."""
+    if not base_id:
+        return ""
+
+    if seen is None:
+        seen = set()
+    if base_id in seen:
+        return ""
+    seen.add(base_id)
+
+    base_entry = original_uri_base_ids.get(base_id)
+    if not isinstance(base_entry, dict):
+        return ""
+
+    base_uri = base_entry.get("uri")
+    if not isinstance(base_uri, str) or not base_uri:
+        return ""
+
+    parent_base_id = base_entry.get("uriBaseId")
+    if isinstance(parent_base_id, str) and parent_base_id:
+        parent_base_uri = _resolve_sarif_base_uri(
+            parent_base_id, original_uri_base_ids, seen
+        )
+        if parent_base_uri:
+            return urljoin(parent_base_uri, base_uri)
+
+    return base_uri
+
+
+def _resolve_sarif_artifact_uri(
+    artifact_location: dict[str, Any], original_uri_base_ids: dict[str, Any]
+) -> str:
+    """Resolve a SARIF artifact URI, including uriBaseId references."""
+    uri = artifact_location.get("uri", "")
+    if not isinstance(uri, str) or not uri:
+        return ""
+
+    uri_base_id = artifact_location.get("uriBaseId")
+    if isinstance(uri_base_id, str) and uri_base_id:
+        base_uri = _resolve_sarif_base_uri(uri_base_id, original_uri_base_ids)
+        if base_uri:
+            return urljoin(base_uri, uri)
+
+    return uri
+
+
 def parse_sarif(data: dict[str, Any]) -> list[Finding]:
     """Parse SARIF 2.1.0 into normalized Findings."""
     findings: list[Finding] = []
 
     for run in data.get("runs", []):
-        # Build rule lookup for security-severity and CWE tags
-        rules_by_id: dict[str, dict] = {}
-        driver = run.get("tool", {}).get("driver", {})
-        for rule in driver.get("rules", []):
-            rules_by_id[rule.get("id", "")] = rule
+        rules_by_id = _build_sarif_rule_lookup(run)
+        original_uri_base_ids = run.get("originalUriBaseIds", {})
+        if not isinstance(original_uri_base_ids, dict):
+            original_uri_base_ids = {}
 
         for result in run.get("results", []):
             locations = result.get("locations", [])
@@ -262,7 +339,12 @@ def parse_sarif(data: dict[str, Any]) -> list[Finding]:
 
             for loc in locations:
                 phys = loc.get("physicalLocation", {})
-                uri = phys.get("artifactLocation", {}).get("uri", "")
+                artifact_location = phys.get("artifactLocation", {})
+                if not isinstance(artifact_location, dict):
+                    continue
+                uri = _resolve_sarif_artifact_uri(
+                    artifact_location, original_uri_base_ids
+                )
                 if not uri:
                     continue
 
