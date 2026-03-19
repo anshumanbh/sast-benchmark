@@ -96,7 +96,7 @@ python3 scripts/run.py \
 
 The runner accepts two output formats (auto-detected by default):
 
-**SARIF 2.1.0** (recommended) — Industry standard. Severity is derived from `security-severity` rule properties when available, otherwise from the SARIF `level` field. CWE IDs are extracted from result properties or rule tags.
+**SARIF 2.1.0** (recommended) — Industry standard. Severity is derived from `security-severity` rule properties when available, otherwise from the result `level` or the rule's `defaultConfiguration.level`. CWE IDs are extracted from result properties or rule tags.
 
 **Simple JSON** — Minimal format for scanners without SARIF support:
 ```json
@@ -155,7 +155,7 @@ python3 scripts/migrate.py \
   --output-dir .
 ```
 
-`--advisories-file` is required to populate complete advisory metadata for agent-only cases.
+`--openclaw-repo` is required for full benchmark regeneration because agent-only cases need exact commit timeline resolution. `--advisories-file` is required to populate complete advisory metadata for agent-only cases.
 
 ## Outcome Matching Criteria
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from argparse import Namespace
 import json
 import subprocess
 import tempfile
@@ -24,6 +25,7 @@ from migrate import (
     load_agent_scenarios,
     build_unified_case,
     build_manifest,
+    run_migration,
 )
 
 
@@ -360,6 +362,43 @@ class TestBuildVerification:
             check["name"] == "intro_ancestor_of_vulnerable_head" and not check["pass"]
             for check in verification["checks"]
         )
+
+    def test_existing_empty_checks_are_not_marked_pass(self):
+        verification = _build_verification(
+            {
+                "baselineCommit": "a" * 40,
+                "introducingCommits": [
+                    {
+                        "sha": "b" * 40,
+                        "authoredAt": "2026-01-12T01:16:39Z",
+                        "subject": "feat: introduce vulnerability",
+                    }
+                ],
+                "vulnerableHead": "b" * 40,
+            },
+            "high",
+            checks=[],
+        )
+
+        assert verification["status"] == "unverified"
+        assert verification["checks"] == []
+
+
+class TestRunMigration:
+    def test_requires_openclaw_repo_for_full_dataset(self, tmp_path: Path):
+        agent_manifest = tmp_path / "ground-truth.json"
+        agent_manifest.write_text(json.dumps({"scenarios": []}), encoding="utf-8")
+
+        with pytest.raises(ValueError, match="--openclaw-repo is required"):
+            run_migration(
+                Namespace(
+                    securevibes_dir=str(tmp_path / "securevibes"),
+                    agent_manifest=str(agent_manifest),
+                    openclaw_repo=None,
+                    advisories_file=None,
+                    output_dir=str(tmp_path / "out"),
+                )
+            )
 
 
 class TestBuildManifest:

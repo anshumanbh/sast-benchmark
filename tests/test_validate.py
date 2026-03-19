@@ -300,6 +300,14 @@ class TestStrictValidation:
         errors = validate_case_strict(case)
         assert any("expected 'high'" in str(error) for error in errors)
 
+    def test_requires_non_empty_verification_checks(self):
+        case = _minimal_case({"verification": {"checks": []}})
+        errors = validate_case_strict(case)
+        assert any(
+            "verification.checks must contain at least one check" in str(error)
+            for error in errors
+        )
+
     def test_run_validation_reports_dependency_when_jsonschema_missing_for_structural_only(
         self, monkeypatch, tmp_path: Path
     ):

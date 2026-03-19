@@ -207,6 +207,31 @@ class TestParseSarif:
         data = _sarif([_sarif_result(rule_id="rule-1")], rules=rules)
         assert parse_sarif(data)[0].severity == "low"
 
+    def test_default_configuration_level_used_when_result_level_missing(self):
+        rules = [{"id": "rule-1", "defaultConfiguration": {"level": "error"}}]
+        data = _sarif(
+            [
+                {
+                    "ruleId": "rule-1",
+                    "message": {"text": "found something"},
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": "src/foo.ts"}
+                            }
+                        }
+                    ],
+                }
+            ],
+            rules=rules,
+        )
+        assert parse_sarif(data)[0].severity == "high"
+
+    def test_result_level_overrides_default_configuration_level(self):
+        rules = [{"id": "rule-1", "defaultConfiguration": {"level": "error"}}]
+        data = _sarif([_sarif_result(rule_id="rule-1", level="note")], rules=rules)
+        assert parse_sarif(data)[0].severity == "low"
+
     def test_cwe_from_result_properties(self):
         data = _sarif([_sarif_result(cwe_ids=["CWE-78"])])
         assert parse_sarif(data)[0].cwe_ids == ["CWE-78"]
@@ -482,6 +507,22 @@ class TestEvaluateCase:
             )
         ]
         result = evaluate_case("GHSA-test-test-test", findings, self._expected())
+        assert result["detected"] is True
+        assert result["classMatch"] is True
+
+    def test_multiple_cwes_match_any_expected_class(self):
+        findings = [
+            _finding(
+                path="src/foo.ts",
+                severity="high",
+                cwe_ids=["CWE-200", "CWE-918"],
+            )
+        ]
+        result = evaluate_case(
+            "GHSA-test-test-test",
+            findings,
+            self._expected(vuln_class="ssrf"),
+        )
         assert result["detected"] is True
         assert result["classMatch"] is True
 

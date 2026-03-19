@@ -462,6 +462,15 @@ def validate_case_strict(case: Any) -> list[ValidationError]:
             ValidationError(case_id, "strict", "verification.checks must be a list")
         )
         return errors
+    if not checks:
+        errors.append(
+            ValidationError(
+                case_id,
+                "strict",
+                "verification.checks must contain at least one check",
+            )
+        )
+        return errors
 
     for index, check in enumerate(checks):
         check_obj = _json_object(check)

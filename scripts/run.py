@@ -233,7 +233,6 @@ def parse_sarif(data: dict[str, Any]) -> list[Finding]:
                 continue
 
             rule_id = result.get("ruleId", "")
-            level = result.get("level", "warning")
             message = result.get("message", {}).get("text", "")
 
             # Severity: prefer security-severity from rule, else map level
@@ -248,7 +247,12 @@ def parse_sarif(data: dict[str, Any]) -> list[Finding]:
                         f"invalid security-severity for rule {rule_label}: {sec_sev!r}"
                     ) from exc
             else:
-                severity = SARIF_LEVEL_TO_SEVERITY.get(level, "medium")
+                level = (
+                    result.get("level")
+                    or (rule_def.get("defaultConfiguration") or {}).get("level")
+                    or "warning"
+                )
+                severity = SARIF_LEVEL_TO_SEVERITY.get(str(level).lower(), "medium")
 
             # CWE IDs: from result properties, then rule tags
             cwe_ids = extract_cwe_ids((result.get("properties") or {}).get("cweIds", []))
@@ -341,12 +345,13 @@ def parse_findings_checked(
 # ── Case evaluation ───────────────────────────────────────────────────────────
 
 
-def _vuln_class_from_cwes(cwe_ids: list[str]) -> str:
-    """Map CWE IDs to a vulnerability class. Returns empty string if no match."""
-    for cwe in extract_cwe_ids(cwe_ids):
-        if cwe in CWE_TO_VULN_CLASS:
-            return CWE_TO_VULN_CLASS[cwe]
-    return ""
+def _vuln_classes_from_cwes(cwe_ids: list[str]) -> set[str]:
+    """Map all recognized CWE IDs to vulnerability classes."""
+    return {
+        CWE_TO_VULN_CLASS[cwe]
+        for cwe in extract_cwe_ids(cwe_ids)
+        if cwe in CWE_TO_VULN_CLASS
+    }
 
 
 def evaluate_case(
@@ -397,10 +402,9 @@ def evaluate_case(
     # the expected vulnerability class.
     severe_relevant = [f for f in relevant if severity_gte(f.severity, min_severity)]
     derived_classes = {
-        derived
+        mapped_class
         for f in severe_relevant
-        for derived in [_vuln_class_from_cwes(f.cwe_ids)]
-        if derived
+        for mapped_class in _vuln_classes_from_cwes(f.cwe_ids)
     }
     class_match = expected_class in derived_classes
 

@@ -413,14 +413,17 @@ def _build_verification(
     """Build verification block, optionally running live ancestry checks."""
     if checks is not None:
         # Use existing checks from securevibes
-        all_pass = all(c.get("pass", False) for c in checks)
+        normalized_checks = [
+            {"name": c["name"], "pass": c["pass"], "details": c["details"]}
+            for c in checks
+        ]
+        all_pass = bool(normalized_checks) and all(
+            c.get("pass", False) for c in normalized_checks
+        )
         return {
             "status": "pass" if all_pass else "unverified",
             "confidence": confidence,
-            "checks": [
-                {"name": c["name"], "pass": c["pass"], "details": c["details"]}
-                for c in checks
-            ],
+            "checks": normalized_checks,
         }
 
     if repo is None:
@@ -668,6 +671,12 @@ def run_migration(args: argparse.Namespace) -> None:
     agent_scenarios = load_agent_scenarios(agent_manifest)
     agent_by_id = {s["id"]: s for s in agent_scenarios}
 
+    if repo is None:
+        raise ValueError(
+            "--openclaw-repo is required to build the full benchmark because "
+            "agent-only cases need exact commit timeline resolution."
+        )
+
     # Build all 24 cases
     all_cases: list[dict[str, Any]] = []
     all_ids = sorted(set(SECUREVIBES_CASE_IDS) | set(AGENT_CASE_IDS))
@@ -728,30 +737,12 @@ def run_migration(args: argparse.Namespace) -> None:
                     "published_at": "",
                 }
 
-            if repo:
-                timeline_block = _build_timeline_from_research(mapping, repo)
-                verification_block = _build_verification(
-                    timeline_block,
-                    mapping.get("confidence", "high"),
-                    repo=repo,
-                )
-            else:
-                # Without repo, build a minimal timeline from mapping
-                timeline_block: dict[str, Any] = {
-                    "baselineCommit": "0" * 40,
-                    "introducingCommits": [
-                        {"sha": s, "authoredAt": "", "subject": ""}
-                        for s in mapping["introducing_commits"]
-                    ],
-                    "vulnerableHead": mapping["introducing_commits"][-1],
-                }
-                if mapping.get("notes"):
-                    timeline_block["notes"] = mapping["notes"]
-                verification_block = {
-                    "status": "unverified",
-                    "confidence": mapping.get("confidence", "high"),
-                    "checks": [],
-                }
+            timeline_block = _build_timeline_from_research(mapping, repo)
+            verification_block = _build_verification(
+                timeline_block,
+                mapping.get("confidence", "high"),
+                repo=repo,
+            )
 
             case = build_unified_case(
                 ghsa_id=ghsa_id,
@@ -800,7 +791,10 @@ def main() -> None:
         "--openclaw-repo",
         type=str,
         default=None,
-        help="Path to local OpenClaw git checkout (for timeline resolution)",
+        help=(
+            "Path to local OpenClaw git checkout. Required to resolve exact "
+            "commit timelines for full benchmark generation."
+        ),
     )
     parser.add_argument(
         "--advisories-file",
