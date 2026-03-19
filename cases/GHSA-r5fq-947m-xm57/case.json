@@ -70,10 +70,5 @@
         "details": "intro=8b4bdaa8a473e6e14cab866a916a407e86ab861a affected_upper_commit=e91d957d7089d2ca9589255245eead0edddc16d5"
       }
     ]
-  },
-  "provenance": {
-    "sources": [
-      "securevibes"
-    ]
   }
 }

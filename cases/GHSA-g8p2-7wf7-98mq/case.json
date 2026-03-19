@@ -69,10 +69,5 @@
         "details": "intro=c74551c2ae0611f3ef0e691dc93a38372f366765 patched_tag_commit=77e703c69b07a236c2f0962bd195e03aae1b8da0"
       }
     ]
-  },
-  "provenance": {
-    "sources": [
-      "securevibes"
-    ]
   }
 }

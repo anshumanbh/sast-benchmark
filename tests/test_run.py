@@ -8,8 +8,6 @@ import sys
 from argparse import Namespace
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from run import (
@@ -26,8 +24,6 @@ from run import (
     evaluate_case,
     build_results,
     run_benchmark,
-    SEVERITY_ORDER,
-    CWE_TO_VULN_CLASS,
 )
 
 

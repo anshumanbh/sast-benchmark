@@ -12,8 +12,7 @@
     "advisory",
     "timeline",
     "expectedOutcome",
-    "verification",
-    "provenance"
+    "verification"
   ],
   "additionalProperties": false,
   "properties": {
@@ -224,26 +223,6 @@
               }
             }
           }
-        }
-      }
-    },
-    "provenance": {
-      "type": "object",
-      "required": ["sources"],
-      "additionalProperties": false,
-      "properties": {
-        "sources": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "enum": ["securevibes", "securevibes-agent"]
-          },
-          "description": "Which source datasets contributed to this case."
-        },
-        "mergeNotes": {
-          "type": "string",
-          "description": "How data was merged when multiple sources contributed."
         }
       }
     }

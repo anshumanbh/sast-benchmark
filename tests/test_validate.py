@@ -25,7 +25,6 @@ from validate import (
     validate_manifest_consistency,
     validate_no_duplicate_ids,
     run_validation,
-    ValidationError,
 )
 
 
@@ -76,9 +75,6 @@ def _minimal_case(overrides: dict | None = None) -> dict:
                     "details": "baseline precedes intro",
                 }
             ],
-        },
-        "provenance": {
-            "sources": ["securevibes"],
         },
     }
     if overrides:
@@ -213,19 +209,6 @@ class TestSchemaValidation:
         errors = validate_case_against_schema(case, schema)
         assert len(errors) > 0
 
-    def test_provenance_invalid_source(self, schema):
-        case = _minimal_case()
-        case["provenance"]["sources"] = ["unknown-source"]
-        errors = validate_case_against_schema(case, schema)
-        assert len(errors) > 0
-
-    def test_provenance_duplicate_sources_rejected(self, schema):
-        case = _minimal_case(
-            {"provenance": {"sources": ["securevibes-agent", "securevibes-agent"]}}
-        )
-        errors = validate_case_against_schema(case, schema)
-        assert any("non-unique" in error.message for error in errors)
-
     def test_missing_jsonschema_returns_validation_error(self, monkeypatch, schema):
         def _raise() -> None:
             raise RuntimeError(
@@ -359,10 +342,9 @@ class TestStrictValidation:
             for error in errors
         )
 
-    def test_securevibes_agent_cases_require_complete_ancestry_checks(self):
+    def test_incomplete_ancestry_checks_rejected(self):
         case = _minimal_case(
             {
-                "provenance": {"sources": ["securevibes-agent"]},
                 "verification": {
                     "checks": [
                         {
@@ -384,10 +366,9 @@ class TestStrictValidation:
             for error in errors
         )
 
-    def test_complete_securevibes_agent_checks_pass(self):
+    def test_complete_ancestry_checks_pass(self):
         case = _minimal_case(
             {
-                "provenance": {"sources": ["securevibes-agent"]},
                 "verification": {
                     "checks": [
                         {
@@ -411,33 +392,6 @@ class TestStrictValidation:
         )
 
         assert validate_case_strict(case) == []
-
-    def test_duplicate_agent_sources_still_require_complete_ancestry_checks(self):
-        case = _minimal_case(
-            {
-                "provenance": {
-                    "sources": ["securevibes-agent", "securevibes-agent"]
-                },
-                "verification": {
-                    "checks": [
-                        {
-                            "name": "baseline_ancestor_of_intro",
-                            "pass": True,
-                            "details": "baseline precedes intro",
-                        }
-                    ]
-                },
-            }
-        )
-        errors = validate_case_strict(case)
-
-        assert any(
-            "intro_ancestor_of_vulnerable_head" in error.message for error in errors
-        )
-        assert any(
-            "baseline_ancestor_of_vulnerable_head" in error.message
-            for error in errors
-        )
 
     def test_run_validation_reports_dependency_when_jsonschema_missing_for_structural_only(
         self, monkeypatch, tmp_path: Path

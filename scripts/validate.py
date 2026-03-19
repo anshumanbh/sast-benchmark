@@ -597,47 +597,43 @@ def validate_case_strict(case: Any) -> list[ValidationError]:
     if errors:
         return errors
 
-    provenance = _json_object(case.get("provenance")) or {}
-    sources = _json_array(provenance.get("sources")) or []
-    source_names = [source for source in sources if isinstance(source, str)]
-    if source_names and set(source_names) == {"securevibes-agent"}:
-        timeline = _json_object(case.get("timeline"))
-        if timeline is None:
-            errors.append(
-                ValidationError(case_id, "strict", "timeline must be an object")
-            )
-            return errors
+    timeline = _json_object(case.get("timeline"))
+    if timeline is None:
+        errors.append(
+            ValidationError(case_id, "strict", "timeline must be an object")
+        )
+        return errors
 
-        introducing_commits = _json_array(timeline.get("introducingCommits"))
-        if not introducing_commits:
+    introducing_commits = _json_array(timeline.get("introducingCommits"))
+    if not introducing_commits:
+        errors.append(
+            ValidationError(
+                case_id,
+                "strict",
+                "timeline.introducingCommits must contain at least one commit",
+            )
+        )
+        return errors
+
+    check_names = Counter(
+        check_obj["name"] for check_obj in checks if isinstance(check_obj, dict)
+    )
+    required_counts = {
+        "baseline_ancestor_of_intro": len(introducing_commits),
+        "intro_ancestor_of_vulnerable_head": len(introducing_commits),
+        "baseline_ancestor_of_vulnerable_head": 1,
+    }
+    for check_name, expected_count in required_counts.items():
+        actual_count = check_names.get(check_name, 0)
+        if actual_count != expected_count:
             errors.append(
                 ValidationError(
                     case_id,
                     "strict",
-                    "timeline.introducingCommits must contain at least one commit",
+                    f"verification must include {expected_count} "
+                    f"'{check_name}' check(s); found {actual_count}",
                 )
             )
-            return errors
-
-        check_names = Counter(
-            check_obj["name"] for check_obj in checks if isinstance(check_obj, dict)
-        )
-        required_counts = {
-            "baseline_ancestor_of_intro": len(introducing_commits),
-            "intro_ancestor_of_vulnerable_head": len(introducing_commits),
-            "baseline_ancestor_of_vulnerable_head": 1,
-        }
-        for check_name, expected_count in required_counts.items():
-            actual_count = check_names.get(check_name, 0)
-            if actual_count != expected_count:
-                errors.append(
-                    ValidationError(
-                        case_id,
-                        "strict",
-                        f"verification must include {expected_count} "
-                        f"'{check_name}' check(s); found {actual_count}",
-                    )
-                )
 
     return errors
 

@@ -60,10 +60,5 @@
         "details": "baseline=a9d9a968ed80 vulnerable_head=a7d56e3554d0"
       }
     ]
-  },
-  "provenance": {
-    "sources": [
-      "securevibes-agent"
-    ]
   }
 }

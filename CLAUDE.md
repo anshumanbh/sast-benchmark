@@ -12,7 +12,6 @@ manifest.json            — Index of all cases
 schema/case.schema.json  — JSON Schema for case files
 scripts/run.py           — Benchmark runner (checkout → scan → score)
 scripts/validate.py      — Case file validation
-scripts/migrate.py       — Case generation from source data (rarely needed)
 tests/                   — pytest tests (run with: python3 -m pytest tests/)
 ```
 

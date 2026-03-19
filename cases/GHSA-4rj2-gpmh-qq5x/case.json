@@ -71,12 +71,5 @@
         "details": "intro=42c17adb5e4d3ea1f9b1d2fd921b9abc183b79df affected_upper_commit=d842b28a1517f95aae2a5bcd97f2f726e42b93d8"
       }
     ]
-  },
-  "provenance": {
-    "sources": [
-      "securevibes",
-      "securevibes-agent"
-    ],
-    "mergeNotes": "Timeline from securevibes; vuln class/paths from securevibes-agent."
   }
 }
