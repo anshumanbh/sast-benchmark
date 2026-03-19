@@ -407,9 +407,10 @@ def parse_findings_checked(
 def _vuln_classes_from_cwes(cwe_ids: list[str]) -> set[str]:
     """Map all recognized CWE IDs to vulnerability classes."""
     return {
-        CWE_TO_VULN_CLASS[cwe]
+        cls
         for cwe in extract_cwe_ids(cwe_ids)
         if cwe in CWE_TO_VULN_CLASS
+        for cls in CWE_TO_VULN_CLASS[cwe]
     }
 
 
@@ -521,6 +522,7 @@ def clean_worktree(repo: Path) -> None:
         ["git", "-C", str(repo), "clean", "-ffdx", "-q"],
         capture_output=True,
         text=True,
+        check=False,
     )
     if proc.returncode != 0:
         raise RuntimeError(
@@ -692,7 +694,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     timeout = args.timeout
     fmt = args.format
     baseline_cmd = getattr(args, "baseline_cmd", None)
-    baseline_timeout = getattr(args, "baseline_timeout", None) or timeout
+    bt = getattr(args, "baseline_timeout", None)
+    baseline_timeout = bt if bt is not None else timeout
 
     cases = load_cases(cases_dir, case_filter)
     if not cases:

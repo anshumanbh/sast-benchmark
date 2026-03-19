@@ -806,7 +806,12 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         )
         return all_errors
 
-    schema = load_schema()
+    schema_path = None
+    if args.output_dir:
+        candidate = Path(args.output_dir) / "schema" / "case.schema.json"
+        if candidate.exists():
+            schema_path = candidate
+    schema = load_schema(schema_path)
     schema_validation_enabled = True
     try:
         _get_jsonschema_validator()

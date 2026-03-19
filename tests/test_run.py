@@ -740,22 +740,7 @@ class TestRunBenchmark:
         _write_case(cases_dir, head_before)
 
         results = run_benchmark(
-            Namespace(
-                openclaw_repo=str(repo),
-                scanner_cmd=(
-                    "python3 -c "
-                    "\"import json; print(json.dumps({'findings': "
-                    "[{'path': 'src/foo.ts', 'severity': 'high', "
-                    "'cweIds': ['CWE-22']}]}))\""
-                ),
-                output=str(tmp_path / "results.json"),
-                cases_dir=str(cases_dir),
-                timeout=10,
-                format="auto",
-                filter=None,
-                baseline_cmd=None,
-                baseline_timeout=None,
-            )
+            _benchmark_args(tmp_path, repo, cases_dir, _simple_scanner_cmd())
         )
 
         assert results["results"][0]["detected"] is True
@@ -782,16 +767,11 @@ class TestRunBenchmark:
         _write_case(cases_dir, head)
 
         results = run_benchmark(
-            Namespace(
-                openclaw_repo=str(repo),
-                scanner_cmd='python3 -c "import sys; print(\'not-json\'); sys.exit(2)"',
-                output=str(tmp_path / "results.json"),
-                cases_dir=str(cases_dir),
-                timeout=10,
-                format="auto",
-                filter=None,
-                baseline_cmd=None,
-                baseline_timeout=None,
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                'python3 -c "import sys; print(\'not-json\'); sys.exit(2)"',
             )
         )
 
@@ -817,21 +797,8 @@ class TestRunBenchmark:
         _write_case(cases_dir, head)
 
         results = run_benchmark(
-            Namespace(
-                openclaw_repo=str(repo),
-                scanner_cmd=(
-                    "python3 -c "
-                    "\"import json, sys; print(json.dumps({'findings': "
-                    "[{'path': 'src/foo.ts', 'severity': 'high', "
-                    "'cweIds': ['CWE-22']}]})); sys.exit(2)\""
-                ),
-                output=str(tmp_path / "results.json"),
-                cases_dir=str(cases_dir),
-                timeout=10,
-                format="auto",
-                filter=None,
-                baseline_cmd=None,
-                baseline_timeout=None,
+            _benchmark_args(
+                tmp_path, repo, cases_dir, _simple_scanner_cmd(exit_code=2)
             )
         )
 
