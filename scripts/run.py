@@ -515,6 +515,19 @@ def checkout_commit(repo: Path, sha: str) -> None:
         raise RuntimeError(f"git checkout {sha[:12]} failed: {proc.stderr.strip()}")
 
 
+def clean_worktree(repo: Path) -> None:
+    """Remove untracked files and nested repos from the worktree."""
+    proc = subprocess.run(
+        ["git", "-C", str(repo), "clean", "-ffdx", "-q"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(
+            proc.stderr.strip() or f"git clean failed ({proc.returncode})"
+        )
+
+
 def create_benchmark_worktree(repo: Path) -> BenchmarkWorktree:
     """Create a detached temp worktree so the benchmark never mutates the source checkout."""
     head_proc = subprocess.run(
@@ -617,14 +630,20 @@ def load_cases(
 # ── Reporting ─────────────────────────────────────────────────────────────────
 
 
-def print_scorecard(case_results: list[dict[str, Any]]) -> None:
+def print_scorecard(
+    case_results: list[dict[str, Any]], show_baseline: bool = False
+) -> None:
     """Print a console scorecard table."""
+    base_header = f" {'Base':>5s}" if show_baseline else ""
+    separator_width = 92 if show_baseline else 86
+
     # Header
     print(
         f"  {'Case ID':<28s} {'Class':<20s} {'Sev':<6s} "
         f"{'Result':<10s} {'Path':>4s} {'Cls':>4s} {'Sev':>4s} {'#':>4s}"
+        f"{base_header}"
     )
-    print("  " + "-" * 86)
+    print("  " + "-" * separator_width)
 
     for r in case_results:
         case_id = r["caseId"]
@@ -632,9 +651,12 @@ def print_scorecard(case_results: list[dict[str, Any]]) -> None:
         min_sev = r.get("minimumSeverity", "")
         detected = "DETECTED" if r["detected"] else "MISSED"
         err = r.get("error")
+        base_col = (
+            f" {r.get('baselineStatus', '').upper():>5s}" if show_baseline else ""
+        )
 
         if err:
-            print(f"  {case_id:<28s} {'ERROR':<20s} {'':<6s} {err}")
+            print(f"  {case_id:<28s} {'ERROR':<20s} {'':<6s} {err}{base_col}")
             continue
 
         pm = "Y" if r["pathMatch"] else "-"
@@ -644,7 +666,7 @@ def print_scorecard(case_results: list[dict[str, Any]]) -> None:
 
         print(
             f"  {case_id:<28s} {vuln_class:<20s} {min_sev:<6s} "
-            f"{detected:<10s} {pm:>4s} {cm:>4s} {sm:>4s} {fc:>4d}"
+            f"{detected:<10s} {pm:>4s} {cm:>4s} {sm:>4s} {fc:>4d}{base_col}"
         )
 
     # Summary
@@ -652,7 +674,7 @@ def print_scorecard(case_results: list[dict[str, Any]]) -> None:
     detected_count = sum(1 for r in case_results if r["detected"])
     errors = sum(1 for r in case_results if r.get("error"))
     pct = (detected_count / total * 100) if total > 0 else 0
-    print("  " + "-" * 86)
+    print("  " + "-" * separator_width)
     print(f"  Detected: {detected_count}/{total} ({pct:.1f}%)")
     if errors:
         print(f"  Errors:   {errors}")
@@ -669,6 +691,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     scanner_cmd = args.scanner_cmd
     timeout = args.timeout
     fmt = args.format
+    baseline_cmd = getattr(args, "baseline_cmd", None)
+    baseline_timeout = getattr(args, "baseline_timeout", None) or timeout
 
     cases = load_cases(cases_dir, case_filter)
     if not cases:
@@ -692,18 +716,50 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     try:
         for case in cases:
             case_id = case["id"]
+            baseline_commit = case["timeline"].get("baselineCommit")
             vuln_head = case["timeline"]["vulnerableHead"]
             expected = case["expectedOutcome"]
 
             error = None
             findings: list[Finding] = []
             scanner_exit_code: int | None = None
+            baseline_status: str | None = None
             t0 = time.monotonic()
 
             try:
-                checkout_commit(worktree.path, vuln_head)
+                clean_worktree(worktree.path)
             except RuntimeError as e:
-                error = f"checkout failed: {e}"
+                error = f"worktree cleanup failed: {e}"
+                if baseline_cmd:
+                    baseline_status = "fail"
+
+            if not error and baseline_cmd and baseline_commit:
+                baseline_status = "ok"
+                try:
+                    checkout_commit(worktree.path, baseline_commit)
+                except RuntimeError as e:
+                    error = f"baseline checkout failed: {e}"
+                    baseline_status = "fail"
+
+                if not error:
+                    _, baseline_stderr, baseline_exit = run_scanner(
+                        baseline_cmd, worktree.path, baseline_timeout
+                    )
+                    if baseline_exit == -1:
+                        error = "baseline timeout"
+                        baseline_status = "fail"
+                    elif baseline_exit != 0:
+                        error = f"baseline failed (exit code {baseline_exit})"
+                        baseline_status = "fail"
+
+                    if error and baseline_stderr.strip():
+                        error = f"{error}: {baseline_stderr.strip()}"
+
+            if not error:
+                try:
+                    checkout_commit(worktree.path, vuln_head)
+                except RuntimeError as e:
+                    error = f"checkout failed: {e}"
 
             if not error:
                 stdout, stderr, scanner_exit_code = run_scanner(
@@ -727,11 +783,13 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             result["minimumSeverity"] = expected["minimumSeverity"]
             result["scannerExitCode"] = scanner_exit_code
             result["elapsed"] = round(elapsed, 1)
+            if baseline_cmd:
+                result["baselineStatus"] = baseline_status or "skip"
             case_results.append(result)
     finally:
         cleanup_benchmark_worktree(worktree)
 
-    print_scorecard(case_results)
+    print_scorecard(case_results, show_baseline=bool(baseline_cmd))
     print()
 
     results = build_results(case_results, scanner_cmd)
@@ -794,6 +852,20 @@ def main() -> None:
         nargs="*",
         default=None,
         help="Only run specific GHSA IDs.",
+    )
+    parser.add_argument(
+        "--baseline-cmd",
+        type=str,
+        default=None,
+        help="Optional setup command to run at baselineCommit before the scanner. "
+        "Stdout is discarded; use this to warm caches or build context for "
+        "diff-aware scanners.",
+    )
+    parser.add_argument(
+        "--baseline-timeout",
+        type=int,
+        default=None,
+        help="Baseline command timeout in seconds (default: same as --timeout).",
     )
     args = parser.parse_args()
     run_benchmark(args)

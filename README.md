@@ -114,6 +114,37 @@ python3 scripts/run.py \
   --output my-results.json
 ```
 
+### Runner Options
+
+| Flag | Description |
+|------|-------------|
+| `--openclaw-repo` | Path to the local OpenClaw checkout used for commit checkouts |
+| `--scanner-cmd` | Scanner command to run in the checked-out worktree; must write SARIF or simple JSON to stdout |
+| `--format` | Force `auto`, `sarif`, or `simple` output parsing |
+| `--cases-dir` | Override the default `cases/` directory |
+| `--filter` | Run only specific GHSA IDs |
+| `--timeout` | Per-case timeout for the main scanner command |
+| `--output` | Path for the JSON results file |
+| `--baseline-cmd` | Optional setup command to run at `timeline.baselineCommit` before the vulnerable scan |
+| `--baseline-timeout` | Timeout for `--baseline-cmd` (defaults to `--timeout`) |
+
+### Diff-aware Scanners
+
+`--baseline-cmd` exists for scanners that need to warm caches, build indexes, or prepare context from the pre-vulnerability commit before scanning `vulnerableHead`.
+
+It runs a setup command at `timeline.baselineCommit`, discards that command's stdout, then checks out `timeline.vulnerableHead` and runs the main scanner command.
+
+```bash
+python3 scripts/run.py \
+  --openclaw-repo ../openclaw \
+  --scanner-cmd "my-scanner scan --json ." \
+  --baseline-cmd "my-scanner index ." \
+  --baseline-timeout 600 \
+  --format simple
+```
+
+`--baseline-cmd` does not compare baseline findings against vulnerable-scan findings. The README's earlier "baseline scan" workflow describes a larger false-positive-diffing feature that the runner still does not implement.
+
 ### Scanner Output Formats
 
 The runner accepts two output formats (auto-detected by default):
@@ -150,6 +181,8 @@ The runner writes a JSON results file (default: `results.json`) and prints a con
   --------------------------------------------------------------------------------------
   Detected: 15/24 (62.5%)
 ```
+
+When `--baseline-cmd` is provided, the scorecard adds a `Base` column that shows whether baseline setup for each case was `OK` or `FAIL`.
 
 ## Validation
 

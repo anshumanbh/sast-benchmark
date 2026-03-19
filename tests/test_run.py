@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import io
 import json
 import subprocess
 import sys
 from argparse import Namespace
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
@@ -91,14 +94,24 @@ def _init_git_repo(repo: Path) -> None:
     )
 
 
-def _write_case(cases_dir: Path, vulnerable_head: str) -> None:
-    case_dir = cases_dir / "GHSA-test-test-test"
+def _write_case(
+    cases_dir: Path,
+    vulnerable_head: str,
+    *,
+    baseline_commit: str | None = None,
+    case_id: str = "GHSA-test-test-test",
+) -> None:
+    timeline = {"vulnerableHead": vulnerable_head}
+    if baseline_commit is not None:
+        timeline["baselineCommit"] = baseline_commit
+
+    case_dir = cases_dir / case_id
     case_dir.mkdir(parents=True)
     (case_dir / "case.json").write_text(
         json.dumps(
             {
-                "id": "GHSA-test-test-test",
-                "timeline": {"vulnerableHead": vulnerable_head},
+                "id": case_id,
+                "timeline": timeline,
                 "expectedOutcome": {
                     "vulnerabilityClass": "pathtraversal",
                     "minimumSeverity": "high",
@@ -108,6 +121,59 @@ def _write_case(cases_dir: Path, vulnerable_head: str) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def _simple_scanner_cmd(
+    *,
+    path: str = "src/foo.ts",
+    severity: str = "high",
+    cwe_id: str = "CWE-22",
+    exit_code: int = 0,
+) -> str:
+    payload = json.dumps(
+        {
+            "findings": [
+                {
+                    "path": path,
+                    "severity": severity,
+                    "cweIds": [cwe_id],
+                }
+            ]
+        }
+    )
+    return (
+        "python3 -c "
+        f"'import sys; print(\"\"\"{payload}\"\"\"); sys.exit({exit_code})'"
+    )
+
+
+def _benchmark_args(
+    tmp_path: Path,
+    repo: Path,
+    cases_dir: Path,
+    scanner_cmd: str,
+    **overrides: object,
+) -> Namespace:
+    args = {
+        "openclaw_repo": str(repo),
+        "scanner_cmd": scanner_cmd,
+        "output": str(tmp_path / "results.json"),
+        "cases_dir": str(cases_dir),
+        "timeout": 10,
+        "format": "auto",
+        "filter": None,
+        "baseline_cmd": None,
+        "baseline_timeout": None,
+    }
+    args.update(overrides)
+    return Namespace(**args)
+
+
+def _run_benchmark_captured(args: Namespace) -> tuple[dict, str]:
+    stdout = io.StringIO()
+    with redirect_stdout(stdout):
+        results = run_benchmark(args)
+    return results, stdout.getvalue()
 
 
 # ── Path normalization ─────────────────────────────────────────────────────────
@@ -687,6 +753,8 @@ class TestRunBenchmark:
                 timeout=10,
                 format="auto",
                 filter=None,
+                baseline_cmd=None,
+                baseline_timeout=None,
             )
         )
 
@@ -722,6 +790,8 @@ class TestRunBenchmark:
                 timeout=10,
                 format="auto",
                 filter=None,
+                baseline_cmd=None,
+                baseline_timeout=None,
             )
         )
 
@@ -760,9 +830,520 @@ class TestRunBenchmark:
                 timeout=10,
                 format="auto",
                 filter=None,
+                baseline_cmd=None,
+                baseline_timeout=None,
             )
         )
 
         assert results["results"][0]["error"] is None
         assert results["results"][0]["detected"] is True
         assert results["results"][0]["scannerExitCode"] == 2
+
+
+class TestBaselineCmd:
+    def test_baseline_cmd_runs_at_baseline_commit(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit=baseline)
+
+        scanner_cmd = (
+            "python3 -c "
+            "\"import json, pathlib; "
+            "sha = pathlib.Path('.baseline-sha').read_text(encoding='utf-8').strip(); "
+            f"assert sha == '{baseline}'; "
+            "print(json.dumps({'findings': "
+            "[{'path': 'src/foo.ts', 'severity': 'high', 'cweIds': ['CWE-22']}]}))\""
+        )
+
+        results = run_benchmark(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                scanner_cmd,
+                baseline_cmd="git rev-parse HEAD > .baseline-sha",
+                baseline_timeout=10,
+            )
+        )
+
+        assert results["results"][0]["detected"] is True
+        assert results["results"][0]["error"] is None
+        assert results["results"][0]["baselineStatus"] == "ok"
+
+    def test_baseline_cmd_stdout_discarded(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit=baseline)
+
+        baseline_cmd = (
+            "python3 -c "
+            '\'print("baseline stdout that should be ignored")\''
+        )
+
+        results = run_benchmark(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                baseline_cmd=baseline_cmd,
+                baseline_timeout=10,
+            )
+        )
+
+        assert results["results"][0]["detected"] is True
+        assert results["results"][0]["error"] is None
+        assert results["results"][0]["findingCount"] == 1
+        assert results["results"][0]["baselineStatus"] == "ok"
+
+    def test_baseline_cmd_nonzero_exit_records_failure(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit=baseline)
+
+        results = run_benchmark(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                baseline_cmd=(
+                    'python3 -c "import sys; '
+                    "print('baseline boom', file=sys.stderr); sys.exit(1)\""
+                ),
+                baseline_timeout=10,
+            )
+        )
+
+        assert results["results"][0]["baselineStatus"] == "fail"
+        assert results["results"][0]["scannerExitCode"] is None
+        assert (
+            results["results"][0]["error"]
+            == "baseline failed (exit code 1): baseline boom"
+        )
+
+    def test_baseline_cmd_timeout_records_error(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit=baseline)
+
+        results = run_benchmark(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                baseline_cmd='python3 -c "import time; time.sleep(2)"',
+                baseline_timeout=1,
+            )
+        )
+
+        assert results["results"][0]["baselineStatus"] == "fail"
+        assert results["results"][0]["scannerExitCode"] is None
+        assert results["results"][0]["error"] == "baseline timeout"
+
+    def test_baseline_cmd_checkout_failure_records_error(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit="0" * 40)
+
+        results = run_benchmark(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                baseline_cmd="echo baseline",
+                baseline_timeout=10,
+            )
+        )
+
+        assert results["results"][0]["baselineStatus"] == "fail"
+        assert results["results"][0]["scannerExitCode"] is None
+        assert "baseline checkout failed" in results["results"][0]["error"]
+
+    def test_no_baseline_cmd_skips_baseline(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit=baseline)
+
+        results = run_benchmark(
+            _benchmark_args(tmp_path, repo, cases_dir, _simple_scanner_cmd())
+        )
+
+        assert results["results"][0]["detected"] is True
+        assert results["results"][0]["error"] is None
+        assert "baselineStatus" not in results["results"][0]
+
+    def test_untracked_files_cleaned_between_cases(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        phase = repo / "phase.txt"
+
+        phase.write_text("first-baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "phase.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "first baseline"],
+            check=True,
+        )
+        first_baseline = _git(repo, "rev-parse", "HEAD")
+
+        phase.write_text("first-vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "first vulnerable"],
+            check=True,
+        )
+        first_vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        phase.write_text("second-baseline\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "second baseline"],
+            check=True,
+        )
+        second_baseline = _git(repo, "rev-parse", "HEAD")
+
+        phase.write_text("second-vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "second vulnerable"],
+            check=True,
+        )
+        second_vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(
+            cases_dir,
+            first_vulnerable,
+            baseline_commit=first_baseline,
+            case_id="GHSA-aaaa-aaaa-aaaa",
+        )
+        _write_case(
+            cases_dir,
+            second_vulnerable,
+            baseline_commit=second_baseline,
+            case_id="GHSA-bbbb-bbbb-bbbb",
+        )
+
+        baseline_cmd = (
+            "python3 - <<'PY'\n"
+            "import pathlib\n"
+            "import subprocess\n"
+            "import sys\n"
+            "\n"
+            "phase = pathlib.Path('phase.txt').read_text(encoding='utf-8').strip()\n"
+            "marker = pathlib.Path('.marker')\n"
+            "subrepo = pathlib.Path('subrepo')\n"
+            "\n"
+            "if phase == 'first-baseline':\n"
+            "    marker.write_text('marker', encoding='utf-8')\n"
+            "    subprocess.run(['git', 'init', '-q', 'subrepo'], check=True)\n"
+            "elif phase == 'second-baseline':\n"
+            "    if marker.exists() or subrepo.exists():\n"
+            "        print('leaked artifacts', file=sys.stderr)\n"
+            "        sys.exit(1)\n"
+            "else:\n"
+            "    print(f'unexpected phase: {phase}', file=sys.stderr)\n"
+            "    sys.exit(1)\n"
+            "PY"
+        )
+
+        results = run_benchmark(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                baseline_cmd=baseline_cmd,
+                baseline_timeout=10,
+            )
+        )
+
+        assert [r["baselineStatus"] for r in results["results"]] == ["ok", "ok"]
+        assert [r["detected"] for r in results["results"]] == [True, True]
+
+    def test_scorecard_shows_baseline_column(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit=baseline)
+
+        _, stdout = _run_benchmark_captured(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                baseline_cmd="echo baseline",
+                baseline_timeout=10,
+            )
+        )
+
+        case_line = next(
+            line for line in stdout.splitlines() if "GHSA-test-test-test" in line
+        )
+        assert "Base" in stdout
+        assert "OK" in case_line
+
+    def test_scorecard_hides_baseline_column(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable)
+
+        _, stdout = _run_benchmark_captured(
+            _benchmark_args(tmp_path, repo, cases_dir, _simple_scanner_cmd())
+        )
+
+        assert "Base" not in stdout
+
+    def test_scorecard_baseline_fail_on_error_row(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit="0" * 40)
+
+        _, stdout = _run_benchmark_captured(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                baseline_cmd="echo baseline",
+                baseline_timeout=10,
+            )
+        )
+
+        case_line = next(
+            line for line in stdout.splitlines() if "GHSA-test-test-test" in line
+        )
+        assert "FAIL" in case_line
+
+    def test_scorecard_baseline_ok_on_scanner_error_row(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit=baseline)
+
+        _, stdout = _run_benchmark_captured(
+            _benchmark_args(
+                tmp_path,
+                repo,
+                cases_dir,
+                'python3 -c "print(\'not-json\')"',
+                baseline_cmd="echo baseline",
+                baseline_timeout=10,
+            )
+        )
+
+        case_line = next(
+            line for line in stdout.splitlines() if "GHSA-test-test-test" in line
+        )
+        assert "OK" in case_line
+
+    def test_cleanup_failure_skips_baseline_and_scanner(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(cases_dir, vulnerable, baseline_commit=baseline)
+
+        with patch("run.clean_worktree", side_effect=RuntimeError("boom")):
+            with patch("run.run_scanner") as run_scanner_mock:
+                results = run_benchmark(
+                    _benchmark_args(
+                        tmp_path,
+                        repo,
+                        cases_dir,
+                        _simple_scanner_cmd(),
+                        baseline_cmd="echo baseline",
+                        baseline_timeout=10,
+                    )
+                )
+
+        assert results["results"][0]["baselineStatus"] == "fail"
+        assert results["results"][0]["scannerExitCode"] is None
+        assert "worktree cleanup failed: boom" in results["results"][0]["error"]
+        run_scanner_mock.assert_not_called()
