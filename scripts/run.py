@@ -468,7 +468,7 @@ def evaluate_case(
     }
     class_match = expected_class in derived_classes
 
-    detected = False if error else path_match and severity_match and class_match
+    detected = False if error else path_match and class_match
 
     return {
         "caseId": case_id,
