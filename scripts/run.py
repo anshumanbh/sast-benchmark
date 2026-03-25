@@ -463,7 +463,7 @@ def evaluate_case(
     severe_relevant = [f for f in relevant if severity_gte(f.severity, min_severity)]
     derived_classes = {
         mapped_class
-        for f in severe_relevant
+        for f in relevant
         for mapped_class in _vuln_classes_from_cwes(f.cwe_ids)
     }
     class_match = expected_class in derived_classes
