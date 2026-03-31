@@ -182,7 +182,7 @@ class TestSchemaValidation:
 
     def test_invalid_vulnerability_class(self, schema):
         case = _minimal_case()
-        case["expectedOutcome"]["vulnerabilityClass"] = "xss"
+        case["expectedOutcome"]["vulnerabilityClass"] = "not-a-class"
         errors = validate_case_against_schema(case, schema)
         assert len(errors) > 0
 
@@ -638,6 +638,60 @@ class TestStrictValidation:
 
         assert errors == []
         assert "Skipping schema validation" in captured.err
+
+    def test_run_validation_supports_non_openclaw_repo_mapping(self, tmp_path: Path):
+        repo = tmp_path / "ghost"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("introducing change\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "introduce vuln"],
+            check=True,
+        )
+        intro = _git(repo, "rev-parse", "HEAD")
+
+        case = _minimal_case(
+            {
+                "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-test-test-test",
+                "repository": "TryGhost/Ghost",
+                "timeline": {
+                    "baselineCommit": baseline,
+                    "introducingCommits": [
+                        {
+                            "sha": intro,
+                            "authoredAt": "2026-01-12T01:16:39Z",
+                            "subject": "feat: introduce vulnerability",
+                        }
+                    ],
+                    "vulnerableHead": intro,
+                },
+            }
+        )
+        case_dir = tmp_path / "cases" / case["id"]
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        _write_manifest(tmp_path, _manifest_entry(case))
+
+        errors = run_validation(
+            Namespace(
+                openclaw_repo=None,
+                repo=[f"TryGhost/Ghost={repo}"],
+                strict=False,
+                output_dir=str(tmp_path),
+            )
+        )
+
+        assert errors == []
 
     def test_run_validation_reports_semantic_shape_error_when_schema_missing(
         self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]

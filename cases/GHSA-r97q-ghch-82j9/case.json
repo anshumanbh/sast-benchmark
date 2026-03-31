@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-r97q-ghch-82j9",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-r97q-ghch-82j9",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "Information disclosure of private API fields",
+    "severity": "high",
+    "publishedAt": "2023-05-03T12:55:49Z",
+    "description": "Filtering on Ghost's public content API endpoints could reveal private fields through brute-force probing. The issue affected Ghost versions below v5.46.1 and was fixed in v5.46.1.",
+    "cweIds": [],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+      "score": 7.5
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "< 5.46.1",
+        "patchedVersions": "5.46.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "acd1a7fd69bad92cae6113543c0ec7352999ad09",
+    "introducingCommits": [
+      {
+        "sha": "7b761a87515a01da9126e1bdabb891a8826123c1",
+        "authoredAt": "2019-08-09T19:41:24+05:30",
+        "subject": "\ud83d\udca1 Added canary api endpoint"
+      }
+    ],
+    "vulnerableHead": "7b761a87515a01da9126e1bdabb891a8826123c1",
+    "notes": "The canary content API endpoints added public filtering paths that later proved capable of disclosing private fields via crafted filter expressions."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "secretdisclosure",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "core/server/api/canary/authors-public.js",
+      "core/server/api/canary/pages-public.js",
+      "core/server/api/canary/posts-public.js"
+    ],
+    "description": "Scanner should detect secretdisclosure when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=acd1a7fd69bad92cae6113543c0ec7352999ad09 intro=7b761a87515a01da9126e1bdabb891a8826123c1",
+        "ancestor": "acd1a7fd69bad92cae6113543c0ec7352999ad09",
+        "descendant": "7b761a87515a01da9126e1bdabb891a8826123c1"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=7b761a87515a01da9126e1bdabb891a8826123c1 vulnerable_head=7b761a87515a01da9126e1bdabb891a8826123c1",
+        "ancestor": "7b761a87515a01da9126e1bdabb891a8826123c1",
+        "descendant": "7b761a87515a01da9126e1bdabb891a8826123c1"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=acd1a7fd69bad92cae6113543c0ec7352999ad09 vulnerable_head=7b761a87515a01da9126e1bdabb891a8826123c1",
+        "ancestor": "acd1a7fd69bad92cae6113543c0ec7352999ad09",
+        "descendant": "7b761a87515a01da9126e1bdabb891a8826123c1"
+      }
+    ]
+  }
+}

@@ -1,25 +1,26 @@
 # OpenClaw Advisory Benchmark
 
-24 real-world [OpenClaw](https://github.com/openclaw/openclaw) security advisories (GHSAs) packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
+33 real-world security advisories from [OpenClaw](https://github.com/openclaw/openclaw) and [Ghost](https://github.com/TryGhost/Ghost), packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
 
 ## Quick Start
 
 ```bash
-# 1. Clone the openclaw repo (needed for checkout)
+# 1. Clone the repos you want to benchmark
 git clone https://github.com/openclaw/openclaw.git ../openclaw
+git clone https://github.com/TryGhost/Ghost.git ../ghost
 
 # 2. Pick a case
-cat cases/GHSA-qrq5-wjgg-rvqw/case.json | jq '.timeline.vulnerableHead'
+cat cases/GHSA-w52v-v783-gw97/case.json | jq '{repository, vulnerableHead: .timeline.vulnerableHead}'
 
-# 3. Checkout the vulnerable commit
-cd ../openclaw
+# 3. Checkout the vulnerable commit in the matching repo
+cd ../ghost
 git checkout <vulnerableHead>
 
 # 4. Run your scanner
 your-scanner scan .
 
 # 5. Compare results against expectedOutcome
-cat ../openclaw-advisory-benchmark/cases/GHSA-qrq5-wjgg-rvqw/case.json | jq '.expectedOutcome'
+cat ../openclaw-advisory-benchmark/cases/GHSA-w52v-v783-gw97/case.json | jq '.expectedOutcome'
 ```
 
 ## Benchmarking Workflow
@@ -76,11 +77,14 @@ Validation checks these summary fields against the corresponding `case.json`.
 | `brokenauthz` | Broken authorization / privilege escalation |
 | `commandinjection` | Command injection / argument injection |
 | `codeexec` | Arbitrary code execution |
+| `csrf` | Cross-site request forgery / request-origin binding failure |
 | `pathtraversal` | Path traversal / directory traversal |
 | `sandboxescape` | Sandbox escape / isolation bypass |
 | `secretdisclosure` | Secret / credential disclosure |
+| `sqlinjection` | SQL injection |
 | `ssrf` | Server-side request forgery |
 | `abuse` | Resource exhaustion / denial of service |
+| `xss` | Cross-site scripting |
 
 ## Running the Benchmark
 
@@ -89,26 +93,29 @@ The runner automates the full loop: checkout each vulnerable commit, run your sc
 If the scanner emits parseable SARIF/simple JSON, the benchmark evaluates that output even when the scanner exits non-zero. This accommodates tools that use exit status to signal findings.
 
 ```bash
-# Run with a SARIF-producing scanner
+# Run with SARIF against both OpenClaw and Ghost cases
 python3 scripts/run.py \
-  --openclaw-repo ../openclaw \
+  --repo openclaw/openclaw=../openclaw \
+  --repo TryGhost/Ghost=../ghost \
   --scanner-cmd "semgrep scan --sarif ."
 
 # Run with a custom JSON-producing scanner
 python3 scripts/run.py \
-  --openclaw-repo ../openclaw \
+  --repo openclaw/openclaw=../openclaw \
+  --repo TryGhost/Ghost=../ghost \
   --scanner-cmd "my-scanner scan --json ." \
   --format simple
 
 # Run a subset of cases
 python3 scripts/run.py \
-  --openclaw-repo ../openclaw \
+  --repo TryGhost/Ghost=../ghost \
   --scanner-cmd "semgrep scan --sarif ." \
-  --filter GHSA-qrq5-wjgg-rvqw GHSA-4rj2-gpmh-qq5x
+  --filter GHSA-w52v-v783-gw97 GHSA-cgc2-rcrh-qr5x
 
 # Custom timeout and output path
 python3 scripts/run.py \
-  --openclaw-repo ../openclaw \
+  --repo openclaw/openclaw=../openclaw \
+  --repo TryGhost/Ghost=../ghost \
   --scanner-cmd "codeql database analyze ." \
   --timeout 600 \
   --output my-results.json
@@ -118,7 +125,8 @@ python3 scripts/run.py \
 
 | Flag | Description |
 |------|-------------|
-| `--openclaw-repo` | Path to the local OpenClaw checkout used for commit checkouts |
+| `--repo` | `OWNER/NAME=PATH` mapping from case repository to local git checkout; repeat for multiple repos |
+| `--openclaw-repo` | Legacy alias for `--repo openclaw/openclaw=PATH` |
 | `--scanner-cmd` | Scanner command to run in the checked-out worktree; must write SARIF or simple JSON to stdout |
 | `--format` | Force `auto`, `sarif`, or `simple` output parsing |
 | `--cases-dir` | Override the default `cases/` directory |
@@ -136,7 +144,8 @@ It runs a setup command at `timeline.baselineCommit`, discards that command's st
 
 ```bash
 python3 scripts/run.py \
-  --openclaw-repo ../openclaw \
+  --repo openclaw/openclaw=../openclaw \
+  --repo TryGhost/Ghost=../ghost \
   --scanner-cmd "my-scanner scan --json ." \
   --baseline-cmd "my-scanner index ." \
   --baseline-timeout 600 \
@@ -196,11 +205,16 @@ python3 scripts/validate.py --strict
 
 # Semantic validation (commit SHAs resolve, ancestry checks pass in git history)
 # If jsonschema is missing, schema checks are skipped with a warning.
-python3 scripts/validate.py --openclaw-repo ../openclaw
+python3 scripts/validate.py \
+  --repo openclaw/openclaw=../openclaw \
+  --repo TryGhost/Ghost=../ghost
 
 # Full validation (strict metadata + semantic git checks)
 # If jsonschema is missing, schema checks are skipped with a warning.
-python3 scripts/validate.py --openclaw-repo ../openclaw --strict
+python3 scripts/validate.py \
+  --repo openclaw/openclaw=../openclaw \
+  --repo TryGhost/Ghost=../ghost \
+  --strict
 ```
 
 ## Outcome Matching Criteria

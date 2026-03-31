@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-w52v-v783-gw97",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-w52v-v783-gw97",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "SQL injection in Content API",
+    "severity": "critical",
+    "publishedAt": "2026-02-16T18:04:35Z",
+    "description": "Ghost's Content API exposed an unauthenticated SQL injection that could read arbitrary database data. The issue affected Ghost v3.24.0 through v6.19.0 and was fixed in v6.19.1.",
+    "cweIds": [
+      "CWE-89"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:L",
+      "score": 9.4
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "<= 6.19.0",
+        "patchedVersions": "6.19.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "fe962345afb5c9d31e59bf12f441e07dbd1eb4c6",
+    "introducingCommits": [
+      {
+        "sha": "d6267340a13ed7c78c66c27c78ecd819bbd94576",
+        "authoredAt": "2020-07-10T18:33:00+12:00",
+        "subject": "Updated Content API resource ordering to be same as slugs in filter"
+      }
+    ],
+    "vulnerableHead": "d6267340a13ed7c78c66c27c78ecd819bbd94576",
+    "notes": "Slug filter ordering was added by concatenating attacker-controlled slug values into a raw SQL CASE expression."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "sqlinjection",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "core/server/api/canary/utils/serializers/input/utils/slug-filter-order.js"
+    ],
+    "description": "Scanner should detect sqlinjection when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=fe962345afb5c9d31e59bf12f441e07dbd1eb4c6 intro=d6267340a13ed7c78c66c27c78ecd819bbd94576",
+        "ancestor": "fe962345afb5c9d31e59bf12f441e07dbd1eb4c6",
+        "descendant": "d6267340a13ed7c78c66c27c78ecd819bbd94576"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=d6267340a13ed7c78c66c27c78ecd819bbd94576 vulnerable_head=d6267340a13ed7c78c66c27c78ecd819bbd94576",
+        "ancestor": "d6267340a13ed7c78c66c27c78ecd819bbd94576",
+        "descendant": "d6267340a13ed7c78c66c27c78ecd819bbd94576"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=fe962345afb5c9d31e59bf12f441e07dbd1eb4c6 vulnerable_head=d6267340a13ed7c78c66c27c78ecd819bbd94576",
+        "ancestor": "fe962345afb5c9d31e59bf12f441e07dbd1eb4c6",
+        "descendant": "d6267340a13ed7c78c66c27c78ecd819bbd94576"
+      }
+    ]
+  }
+}

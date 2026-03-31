@@ -100,6 +100,7 @@ def _write_case(
     *,
     baseline_commit: str | None = None,
     case_id: str = "GHSA-test-test-test",
+    repository: str = "openclaw/openclaw",
 ) -> None:
     timeline = {"vulnerableHead": vulnerable_head}
     if baseline_commit is not None:
@@ -111,6 +112,7 @@ def _write_case(
         json.dumps(
             {
                 "id": case_id,
+                "repository": repository,
                 "timeline": timeline,
                 "expectedOutcome": {
                     "vulnerabilityClass": "pathtraversal",
@@ -149,13 +151,14 @@ def _simple_scanner_cmd(
 
 def _benchmark_args(
     tmp_path: Path,
-    repo: Path,
+    source_repo: Path,
     cases_dir: Path,
     scanner_cmd: str,
     **overrides: object,
 ) -> Namespace:
     args = {
-        "openclaw_repo": str(repo),
+        "openclaw_repo": str(source_repo),
+        "repo": None,
         "scanner_cmd": scanner_cmd,
         "output": str(tmp_path / "results.json"),
         "cases_dir": str(cases_dir),
@@ -805,6 +808,69 @@ class TestRunBenchmark:
         assert results["results"][0]["error"] is None
         assert results["results"][0]["detected"] is True
         assert results["results"][0]["scannerExitCode"] == 2
+
+    def test_selects_worktree_from_case_repository(self, tmp_path: Path):
+        openclaw_repo = tmp_path / "openclaw"
+        openclaw_repo.mkdir()
+        _init_git_repo(openclaw_repo)
+        (openclaw_repo / "tracked.txt").write_text("openclaw\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(openclaw_repo), "add", "tracked.txt"], check=True
+        )
+        subprocess.run(
+            ["git", "-C", str(openclaw_repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        openclaw_head = _git(openclaw_repo, "rev-parse", "HEAD")
+
+        ghost_repo = tmp_path / "ghost"
+        ghost_repo.mkdir()
+        _init_git_repo(ghost_repo)
+        (ghost_repo / "tracked.txt").write_text("ghost\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(ghost_repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(ghost_repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        ghost_head = _git(ghost_repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(
+            cases_dir,
+            openclaw_head,
+            case_id="GHSA-aaaa-aaaa-aaaa",
+            repository="openclaw/openclaw",
+        )
+        _write_case(
+            cases_dir,
+            ghost_head,
+            case_id="GHSA-bbbb-bbbb-bbbb",
+            repository="TryGhost/Ghost",
+        )
+
+        results = run_benchmark(
+            _benchmark_args(
+                tmp_path,
+                openclaw_repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                openclaw_repo=None,
+                repo=[
+                    f"openclaw/openclaw={openclaw_repo}",
+                    f"TryGhost/Ghost={ghost_repo}",
+                ],
+            )
+        )
+
+        assert [result["caseId"] for result in results["results"]] == [
+            "GHSA-aaaa-aaaa-aaaa",
+            "GHSA-bbbb-bbbb-bbbb",
+        ]
+        assert [result["repository"] for result in results["results"]] == [
+            "openclaw/openclaw",
+            "TryGhost/Ghost",
+        ]
+        assert [result["detected"] for result in results["results"]] == [True, True]
 
 
 class TestBaselineCmd:

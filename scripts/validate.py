@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Validate openclaw-advisory-benchmark case files.
+"""Validate advisory benchmark case files.
 
 Structural validation: JSON Schema conformance, manifest consistency, no duplicates.
-Semantic validation (with --openclaw-repo): commit SHAs resolve, ancestry checks pass.
+Semantic validation (with --repo): commit SHAs resolve, ancestry checks pass.
 Strict mode (--strict): all cases must have verification.status == "pass" with high confidence.
 """
 
@@ -52,6 +52,42 @@ REQUIRED_ANCESTRY_CHECK_NAMES = (
     "intro_ancestor_of_vulnerable_head",
     "baseline_ancestor_of_vulnerable_head",
 )
+
+
+def normalize_repository_id(repository: str) -> str:
+    """Normalize a repository ID for case-insensitive matching."""
+    return repository.strip().lower()
+
+
+def parse_repo_mappings(
+    repo_specs: list[str] | None, openclaw_repo: str | None = None
+) -> dict[str, Path]:
+    """Parse --repo OWNER/NAME=PATH arguments into a repository map."""
+    raw_specs = list(repo_specs or [])
+    if openclaw_repo:
+        raw_specs.append(f"openclaw/openclaw={openclaw_repo}")
+
+    repo_mappings: dict[str, Path] = {}
+    for spec in raw_specs:
+        repository, separator, repo_path = spec.partition("=")
+        repository = repository.strip()
+        repo_path = repo_path.strip()
+        if separator != "=" or not repository or not repo_path:
+            raise ValueError(
+                f"invalid --repo value {spec!r}; expected OWNER/NAME=/path/to/repo"
+            )
+
+        normalized = normalize_repository_id(repository)
+        resolved_path = Path(repo_path).resolve()
+        existing = repo_mappings.get(normalized)
+        if existing and existing != resolved_path:
+            raise ValueError(
+                f"repository {repository!r} was configured multiple times "
+                f"with different paths: {existing} and {resolved_path}"
+            )
+        repo_mappings[normalized] = resolved_path
+
+    return repo_mappings
 
 
 def _case_id(case: Any, fallback: str = "unknown") -> str:
@@ -380,7 +416,7 @@ def validate_ancestry(
 
 
 def validate_case_semantic(case: Any, repo: Path) -> list[ValidationError]:
-    """Run semantic validation requiring the openclaw repo."""
+    """Run semantic validation requiring the source repo checkout."""
     if not isinstance(case, dict):
         return [
             ValidationError(
@@ -793,6 +829,13 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
     all_errors: list[ValidationError] = []
     cases_dir = Path(args.output_dir) / "cases" if args.output_dir else CASES_DIR
     manifest_path = Path(args.output_dir) / "manifest.json" if args.output_dir else MANIFEST_PATH
+    try:
+        repo_mappings = parse_repo_mappings(
+            getattr(args, "repo", None), getattr(args, "openclaw_repo", None)
+        )
+    except ValueError as exc:
+        return [ValidationError("args", "repo", str(exc))]
+    semantic_validation_enabled = bool(repo_mappings)
 
     # Load manifest
     if not manifest_path.exists():
@@ -831,7 +874,7 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         _get_jsonschema_validator()
     except RuntimeError as exc:
         schema_validation_enabled = False
-        if args.openclaw_repo or args.strict:
+        if semantic_validation_enabled or args.strict:
             print(
                 f"WARNING: {exc}. Skipping schema validation.",
                 file=sys.stderr,
@@ -882,9 +925,29 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
             all_errors.extend(validate_case_against_schema(case, schema))
 
         # Semantic validation
-        if args.openclaw_repo:
-            repo = Path(args.openclaw_repo).resolve()
-            all_errors.extend(validate_case_semantic(case, repo))
+        if semantic_validation_enabled:
+            case_repository = _non_empty_string(case.get("repository"))
+            if case_repository is None:
+                all_errors.append(
+                    ValidationError(
+                        case_id if isinstance(case_id, str) else dir_name,
+                        "semantic",
+                        "repository must be a non-empty string",
+                    )
+                )
+            else:
+                repo = repo_mappings.get(normalize_repository_id(case_repository))
+                if repo is None:
+                    all_errors.append(
+                        ValidationError(
+                            case_id if isinstance(case_id, str) else dir_name,
+                            "semantic",
+                            f"no local repo configured for {case_repository!r}; "
+                            f"pass --repo {case_repository}=<path>",
+                        )
+                    )
+                else:
+                    all_errors.extend(validate_case_semantic(case, repo))
 
         # Strict validation
         if args.strict:
@@ -907,7 +970,14 @@ def main() -> None:
         "--openclaw-repo",
         type=str,
         default=None,
-        help="Path to local OpenClaw git checkout for semantic validation",
+        help="Legacy alias for --repo openclaw/openclaw=PATH.",
+    )
+    parser.add_argument(
+        "--repo",
+        action="append",
+        default=None,
+        metavar="OWNER/NAME=PATH",
+        help="Map a case repository to a local git checkout. Repeat for multiple repos.",
     )
     parser.add_argument(
         "--strict",
