@@ -10,17 +10,17 @@ git clone https://github.com/openclaw/openclaw.git ../openclaw
 git clone https://github.com/TryGhost/Ghost.git ../ghost
 
 # 2. Pick a case
-cat cases/GHSA-w52v-v783-gw97/case.json | jq '{repository, vulnerableHead: .timeline.vulnerableHead}'
+cat cases/GHSA-3c6h-g97w-fg78/case.json | jq '{repository, vulnerableHead: .timeline.vulnerableHead}'
 
 # 3. Checkout the vulnerable commit in the matching repo
-cd ../ghost
+cd ../openclaw
 git checkout <vulnerableHead>
 
 # 4. Run your scanner
 your-scanner scan .
 
 # 5. Compare results against expectedOutcome
-cat ../openclaw-advisory-benchmark/cases/GHSA-w52v-v783-gw97/case.json | jq '.expectedOutcome'
+cat ../openclaw-advisory-benchmark/cases/GHSA-3c6h-g97w-fg78/case.json | jq '.expectedOutcome'
 ```
 
 ## Benchmarking Workflow
@@ -31,7 +31,7 @@ For each case in `cases/GHSA-*/case.json`:
 2. **Vulnerable scan** — checkout `timeline.vulnerableHead`, scan. Compare results against `expectedOutcome`:
    - Does the scanner report a finding with a matching `vulnerabilityClass`?
    - Does at least one finding path overlap with `expectedPaths`?
-   - Is the reported severity >= `minimumSeverity`?
+   - Does the finding also meet `minimumSeverity`? The runner records this separately as `severityMatch`, but detection is based on path + class.
 
 ## Case Schema (`case.json`)
 
@@ -39,6 +39,7 @@ Each case directory contains a single `case.json` with these sections:
 
 | Section | Description |
 |---------|-------------|
+| `repository` | Canonical source repository ID (`OWNER/NAME`) used by the runner and validator to select the right local checkout |
 | `advisory` | Title, severity, CVSS, CWEs, affected package ranges from the GHSA |
 | `timeline` | Baseline commit, introducing commit(s), vulnerable head |
 | `expectedOutcome` | Vulnerability class, minimum severity, expected file paths, description |
@@ -177,6 +178,8 @@ The runner accepts two output formats (auto-detected by default):
 
 `expectedOutcome.vulnerabilityClass` is matched from the finding's CWE metadata. Findings without CWE/class metadata cannot satisfy the class-match requirement.
 
+Some checked-in cases intentionally keep `advisory.cweIds` empty because the upstream GHSA did not publish CWE metadata, and the benchmark does not synthesize replacement advisory CWEs. Those cases still define an expected benchmark class in `expectedOutcome.vulnerabilityClass`, but scanners must emit their own CWE metadata for the runner to award a class match.
+
 ### Results
 
 The runner writes a JSON results file (default: `results.json`) and prints a console scorecard:
@@ -192,6 +195,8 @@ The runner writes a JSON results file (default: `results.json`) and prints a con
 ```
 
 When `--baseline-cmd` is provided, the scorecard adds a `Base` column that shows whether baseline setup for each case was `OK` or `FAIL`.
+
+Each entry in the JSON results payload includes the case `repository` alongside `caseId`, `detected`, `pathMatch`, `classMatch`, `severityMatch`, and scanner metadata.
 
 ## Validation
 
@@ -224,4 +229,6 @@ A scanner "detects" a case when scanning `vulnerableHead` if:
 1. **Class match** — reported vulnerability class matches `expectedOutcome.vulnerabilityClass`
    - For SARIF/simple JSON inputs, this is derived from the finding's CWE metadata.
 2. **Path overlap** — at least one finding path overlaps with `expectedOutcome.expectedPaths`
-3. **Severity floor** — reported severity >= `expectedOutcome.minimumSeverity`
+3. **Severity floor** — reported severity >= `expectedOutcome.minimumSeverity`, recorded as `severityMatch` but not required for detection
+
+The runner evaluates severity and class matching only across findings on matching paths. Class matching is derived from all relevant findings on those paths, even when the matching finding is below the configured severity floor.

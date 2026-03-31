@@ -11,6 +11,8 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from run import (
@@ -620,10 +622,10 @@ class TestEvaluateCase:
         assert result["detected"] is False
         assert result["pathMatch"] is False
 
-    def test_severity_too_low(self):
+    def test_severity_too_low_does_not_block_detection(self):
         findings = [_finding(path="src/foo.ts", severity="medium", cwe_ids=["CWE-78"])]
         result = evaluate_case("GHSA-test-test-test", findings, self._expected())
-        assert result["detected"] is False
+        assert result["detected"] is True
         assert result["severityMatch"] is False
 
     def test_class_mismatch(self):
@@ -684,6 +686,16 @@ class TestEvaluateCase:
         result = evaluate_case("GHSA-test-test-test", findings, self._expected())
         assert result["detected"] is True
 
+    def test_class_match_uses_all_relevant_findings_not_only_severe_ones(self):
+        findings = [
+            _finding(path="src/foo.ts", severity="medium", cwe_ids=["CWE-78"]),
+            _finding(path="src/foo.ts", severity="high", cwe_ids=["CWE-999"]),
+        ]
+        result = evaluate_case("GHSA-test-test-test", findings, self._expected())
+        assert result["detected"] is True
+        assert result["classMatch"] is True
+        assert result["severityMatch"] is True
+
     def test_empty_expected_paths_treated_as_match(self):
         findings = [_finding(path="src/anything.ts", severity="high", cwe_ids=["CWE-78"])]
         result = evaluate_case(
@@ -723,6 +735,29 @@ class TestBuildResults:
 
 
 class TestRunBenchmark:
+    def test_conflicting_openclaw_repo_and_repo_mapping_exits(self, tmp_path: Path):
+        openclaw_repo = tmp_path / "openclaw"
+        openclaw_repo.mkdir()
+        alternate_repo = tmp_path / "openclaw-alt"
+        alternate_repo.mkdir()
+        cases_dir = tmp_path / "cases"
+        cases_dir.mkdir()
+
+        args = _benchmark_args(
+            tmp_path,
+            openclaw_repo,
+            cases_dir,
+            _simple_scanner_cmd(),
+            repo=[f"openclaw/openclaw={alternate_repo}"],
+        )
+
+        with patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            with pytest.raises(SystemExit) as excinfo:
+                run_benchmark(args)
+
+        assert excinfo.value.code == 2
+        assert "configured multiple times with different paths" in stderr.getvalue()
+
     def test_uses_temp_worktree_and_preserves_source_repo(self, tmp_path: Path):
         repo = tmp_path / "repo"
         repo.mkdir()

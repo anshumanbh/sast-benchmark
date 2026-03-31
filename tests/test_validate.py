@@ -256,6 +256,28 @@ class TestSchemaValidation:
         errors = validate_case_against_schema(case, schema)
         assert len(errors) > 0
 
+    def test_checked_in_cases_all_include_valid_repository_field(self, schema):
+        cases_dir = Path(__file__).resolve().parents[1] / "cases"
+        case_paths = sorted(cases_dir.glob("GHSA-*/case.json"))
+
+        invalid_repositories: dict[str, list[str] | str] = {}
+        for case_path in case_paths:
+            case = json.loads(case_path.read_text(encoding="utf-8"))
+            repository = case.get("repository")
+            if not isinstance(repository, str) or not repository:
+                invalid_repositories[case_path.parent.name] = "missing repository"
+                continue
+
+            repo_errors = [
+                error.message
+                for error in validate_case_against_schema(case, schema)
+                if "$.repository" in error.message
+            ]
+            if repo_errors:
+                invalid_repositories[case_path.parent.name] = repo_errors
+
+        assert invalid_repositories == {}
+
     def test_missing_jsonschema_returns_validation_error(self, monkeypatch, schema):
         def _raise() -> None:
             raise RuntimeError(
@@ -692,6 +714,28 @@ class TestStrictValidation:
         )
 
         assert errors == []
+
+    def test_run_validation_rejects_conflicting_openclaw_repo_and_repo_mapping(
+        self, tmp_path: Path
+    ):
+        openclaw_repo = tmp_path / "openclaw"
+        openclaw_repo.mkdir()
+        alternate_repo = tmp_path / "openclaw-alt"
+        alternate_repo.mkdir()
+
+        errors = run_validation(
+            Namespace(
+                openclaw_repo=str(openclaw_repo),
+                repo=[f"openclaw/openclaw={alternate_repo}"],
+                strict=False,
+                output_dir=str(tmp_path),
+            )
+        )
+
+        assert len(errors) == 1
+        assert errors[0].case_id == "args"
+        assert errors[0].check == "repo"
+        assert "configured multiple times with different paths" in errors[0].message
 
     def test_run_validation_reports_semantic_shape_error_when_schema_missing(
         self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]

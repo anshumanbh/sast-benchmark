@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from repositories import normalize_repository_id, parse_repo_configs
+
 
 class ValidationError:
     """A single validation error."""
@@ -52,42 +54,6 @@ REQUIRED_ANCESTRY_CHECK_NAMES = (
     "intro_ancestor_of_vulnerable_head",
     "baseline_ancestor_of_vulnerable_head",
 )
-
-
-def normalize_repository_id(repository: str) -> str:
-    """Normalize a repository ID for case-insensitive matching."""
-    return repository.strip().lower()
-
-
-def parse_repo_mappings(
-    repo_specs: list[str] | None, openclaw_repo: str | None = None
-) -> dict[str, Path]:
-    """Parse --repo OWNER/NAME=PATH arguments into a repository map."""
-    raw_specs = list(repo_specs or [])
-    if openclaw_repo:
-        raw_specs.append(f"openclaw/openclaw={openclaw_repo}")
-
-    repo_mappings: dict[str, Path] = {}
-    for spec in raw_specs:
-        repository, separator, repo_path = spec.partition("=")
-        repository = repository.strip()
-        repo_path = repo_path.strip()
-        if separator != "=" or not repository or not repo_path:
-            raise ValueError(
-                f"invalid --repo value {spec!r}; expected OWNER/NAME=/path/to/repo"
-            )
-
-        normalized = normalize_repository_id(repository)
-        resolved_path = Path(repo_path).resolve()
-        existing = repo_mappings.get(normalized)
-        if existing and existing != resolved_path:
-            raise ValueError(
-                f"repository {repository!r} was configured multiple times "
-                f"with different paths: {existing} and {resolved_path}"
-            )
-        repo_mappings[normalized] = resolved_path
-
-    return repo_mappings
 
 
 def _case_id(case: Any, fallback: str = "unknown") -> str:
@@ -830,12 +796,12 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
     cases_dir = Path(args.output_dir) / "cases" if args.output_dir else CASES_DIR
     manifest_path = Path(args.output_dir) / "manifest.json" if args.output_dir else MANIFEST_PATH
     try:
-        repo_mappings = parse_repo_mappings(
+        repo_configs = parse_repo_configs(
             getattr(args, "repo", None), getattr(args, "openclaw_repo", None)
         )
     except ValueError as exc:
         return [ValidationError("args", "repo", str(exc))]
-    semantic_validation_enabled = bool(repo_mappings)
+    semantic_validation_enabled = bool(repo_configs)
 
     # Load manifest
     if not manifest_path.exists():
@@ -936,8 +902,8 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
                     )
                 )
             else:
-                repo = repo_mappings.get(normalize_repository_id(case_repository))
-                if repo is None:
+                repo_config = repo_configs.get(normalize_repository_id(case_repository))
+                if repo_config is None:
                     all_errors.append(
                         ValidationError(
                             case_id if isinstance(case_id, str) else dir_name,
@@ -947,7 +913,7 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
                         )
                     )
                 else:
-                    all_errors.extend(validate_case_semantic(case, repo))
+                    all_errors.extend(validate_case_semantic(case, repo_config.path))
 
         # Strict validation
         if args.strict:

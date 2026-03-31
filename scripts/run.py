@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin
 
+from repositories import RepositoryConfig, normalize_repository_id, parse_repo_configs
 from taxonomy import CWE_TO_VULN_CLASS
 
 
@@ -50,14 +51,6 @@ class BenchmarkWorktree:
     source_repo: Path
     path: Path
     tempdir: tempfile.TemporaryDirectory
-
-
-@dataclasses.dataclass(frozen=True)
-class RepositoryConfig:
-    """A repository checkout that can satisfy benchmark cases."""
-
-    repository: str
-    path: Path
 
 
 # ── Constants ──────────────────────────────────────────────────────────────────
@@ -95,42 +88,6 @@ def normalize_path(path: str) -> str:
     while path.startswith("./"):
         path = path[2:]
     return path
-
-
-def normalize_repository_id(repository: str) -> str:
-    """Normalize a repository ID for case-insensitive matching."""
-    return repository.strip().lower()
-
-
-def parse_repo_configs(
-    repo_specs: list[str] | None, openclaw_repo: str | None = None
-) -> dict[str, RepositoryConfig]:
-    """Parse --repo OWNER/NAME=PATH arguments into a repository map."""
-    raw_specs = list(repo_specs or [])
-    if openclaw_repo:
-        raw_specs.append(f"openclaw/openclaw={openclaw_repo}")
-
-    repo_configs: dict[str, RepositoryConfig] = {}
-    for spec in raw_specs:
-        repository, separator, repo_path = spec.partition("=")
-        repository = repository.strip()
-        repo_path = repo_path.strip()
-        if separator != "=" or not repository or not repo_path:
-            raise ValueError(
-                f"invalid --repo value {spec!r}; expected OWNER/NAME=/path/to/repo"
-            )
-
-        normalized = normalize_repository_id(repository)
-        config = RepositoryConfig(repository=repository, path=Path(repo_path).resolve())
-        existing = repo_configs.get(normalized)
-        if existing and existing.path != config.path:
-            raise ValueError(
-                f"repository {repository!r} was configured multiple times "
-                f"with different paths: {existing.path} and {config.path}"
-            )
-        repo_configs[normalized] = config
-
-    return repo_configs
 
 
 # ── Severity ───────────────────────────────────────────────────────────────────
@@ -466,7 +423,9 @@ def evaluate_case(
 ) -> dict[str, Any]:
     """Evaluate findings against a case's expectedOutcome.
 
-    Detection requires: path overlap AND severity >= minimum AND class match.
+    Detection requires: path overlap AND class match.
+    Severity is tracked separately via severityMatch but does not gate
+    detection.
     Class match requires at least one relevant finding to map to the expected
     vulnerability class.
     Path match defaults to True if expectedPaths is empty.
@@ -502,17 +461,16 @@ def evaluate_case(
     # Severity matching — at least one relevant finding meets the threshold
     severity_match = any(severity_gte(f.severity, min_severity) for f in relevant)
 
-    # Class matching — require at least one relevant+severe finding to map to
-    # the expected vulnerability class.
-    severe_relevant = [f for f in relevant if severity_gte(f.severity, min_severity)]
+    # Class matching — derive from all relevant findings on matching paths,
+    # regardless of severity.
     derived_classes = {
         mapped_class
-        for f in severe_relevant
+        for f in relevant
         for mapped_class in _vuln_classes_from_cwes(f.cwe_ids)
     }
     class_match = expected_class in derived_classes
 
-    detected = False if error else path_match and severity_match and class_match
+    detected = False if error else path_match and class_match
 
     return {
         "caseId": case_id,
