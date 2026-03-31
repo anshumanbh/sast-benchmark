@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Run the OpenClaw Advisory Benchmark against a security scanner.
+"""Run the advisory benchmark against a security scanner.
 
-For each case, checks out the vulnerable commit in the openclaw repo,
+For each case, checks out the vulnerable commit in the configured source repo,
 runs the scanner, and compares findings against expected outcomes.
 
 Usage:
     python3 scripts/run.py \\
-        --openclaw-repo ../openclaw \\
+        --repo openclaw/openclaw=../openclaw \\
         --scanner-cmd "semgrep scan --sarif ." \\
         --output results.json
 """
@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin
 
+from repositories import RepositoryConfig, normalize_repository_id, parse_repo_configs
 from taxonomy import CWE_TO_VULN_CLASS
 
 
@@ -422,7 +423,9 @@ def evaluate_case(
 ) -> dict[str, Any]:
     """Evaluate findings against a case's expectedOutcome.
 
-    Detection requires: path overlap AND severity >= minimum AND class match.
+    Detection requires: path overlap AND class match.
+    Severity is tracked separately via severityMatch but does not gate
+    detection.
     Class match requires at least one relevant finding to map to the expected
     vulnerability class.
     Path match defaults to True if expectedPaths is empty.
@@ -458,9 +461,8 @@ def evaluate_case(
     # Severity matching — at least one relevant finding meets the threshold
     severity_match = any(severity_gte(f.severity, min_severity) for f in relevant)
 
-    # Class matching — require at least one relevant+severe finding to map to
-    # the expected vulnerability class.
-    severe_relevant = [f for f in relevant if severity_gte(f.severity, min_severity)]
+    # Class matching — derive from all relevant findings on matching paths,
+    # regardless of severity.
     derived_classes = {
         mapped_class
         for f in relevant
@@ -505,7 +507,7 @@ def build_results(
 
 
 def checkout_commit(repo: Path, sha: str) -> None:
-    """Check out a commit in the openclaw repo."""
+    """Check out a commit in the worktree repo."""
     proc = subprocess.run(
         ["git", "-C", str(repo), "checkout", sha, "--force", "--quiet"],
         capture_output=True,
@@ -541,7 +543,7 @@ def create_benchmark_worktree(repo: Path) -> BenchmarkWorktree:
     if head_proc.returncode != 0:
         raise RuntimeError(f"git rev-parse HEAD failed: {head_proc.stderr.strip()}")
 
-    tempdir = tempfile.TemporaryDirectory(prefix="openclaw-benchmark-")
+    tempdir = tempfile.TemporaryDirectory(prefix="advisory-benchmark-")
     worktree_path = Path(tempdir.name) / "repo"
     add_proc = subprocess.run(
         [
@@ -698,7 +700,24 @@ def print_scorecard(
 
 def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     """Run the full benchmark."""
-    repo = Path(args.openclaw_repo).resolve()
+    try:
+        repo_configs = parse_repo_configs(
+            getattr(args, "repo", None), getattr(args, "openclaw_repo", None)
+        )
+    except ValueError as exc:
+        print(f"Invalid repository configuration: {exc}", file=sys.stderr)
+        sys.exit(2)
+
+    # Defensive guard for tests and other direct callers; main() already enforces
+    # this for the normal CLI path.
+    if not repo_configs:
+        print(
+            "At least one repository is required. Pass --repo OWNER/NAME=/path "
+            "or --openclaw-repo /path.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     cases_dir = Path(args.cases_dir).resolve() if args.cases_dir else None
     case_filter = args.filter if args.filter else None
     scanner_cmd = args.scanner_cmd
@@ -713,16 +732,60 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         print("No cases found.", file=sys.stderr)
         sys.exit(1)
 
+    invalid_case_repositories = [
+        case.get("id", "<unknown>")
+        for case in cases
+        if not isinstance(case.get("repository"), str) or not case["repository"].strip()
+    ]
+    if invalid_case_repositories:
+        invalid_list = ", ".join(sorted(str(case_id) for case_id in invalid_case_repositories))
+        print(
+            f"Cases missing a valid repository field: {invalid_list}. "
+            "Run scripts/validate.py to fix case metadata before benchmarking.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    case_repositories = sorted(
+        {case["repository"] for case in cases}
+    )
+    missing_repositories = [
+        repository
+        for repository in case_repositories
+        if normalize_repository_id(repository) not in repo_configs
+    ]
+    if missing_repositories:
+        missing_list = ", ".join(missing_repositories)
+        configured_list = ", ".join(
+            config.repository for config in repo_configs.values()
+        ) or "<none>"
+        print(
+            f"Missing local checkouts for case repositories: {missing_list}. "
+            f"Configured repositories: {configured_list}.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    worktrees: dict[str, BenchmarkWorktree] = {}
     try:
-        worktree = create_benchmark_worktree(repo)
-    except RuntimeError as exc:
+        for repository in case_repositories:
+            config = repo_configs[normalize_repository_id(repository)]
+            worktrees[normalize_repository_id(repository)] = create_benchmark_worktree(
+                config.path
+            )
+    except (RuntimeError, OSError) as exc:
+        for worktree in worktrees.values():
+            cleanup_benchmark_worktree(worktree)
         print(f"Failed to prepare benchmark worktree: {exc}", file=sys.stderr)
         sys.exit(1)
 
     print(f"  Scanner:   {scanner_cmd}")
-    print(f"  Repo:      {repo}")
-    print(f"  Worktree:  {worktree.path}")
     print(f"  Cases:     {len(cases)}")
+    print("  Repos:")
+    for repository in case_repositories:
+        config = repo_configs[normalize_repository_id(repository)]
+        worktree = worktrees[normalize_repository_id(repository)]
+        print(f"    {repository}: {config.path} -> {worktree.path}")
     print()
 
     case_results: list[dict[str, Any]] = []
@@ -730,6 +793,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     try:
         for case in cases:
             case_id = case["id"]
+            repository = case["repository"]
+            worktree = worktrees[normalize_repository_id(repository)]
             baseline_commit = case["timeline"].get("baselineCommit")
             vuln_head = case["timeline"]["vulnerableHead"]
             expected = case["expectedOutcome"]
@@ -793,6 +858,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
 
             elapsed = time.monotonic() - t0
             result = evaluate_case(case_id, findings, expected, error=error)
+            result["repository"] = repository
             result["vulnerabilityClass"] = expected["vulnerabilityClass"]
             result["minimumSeverity"] = expected["minimumSeverity"]
             result["scannerExitCode"] = scanner_exit_code
@@ -801,7 +867,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                 result["baselineStatus"] = baseline_status or "skip"
             case_results.append(result)
     finally:
-        cleanup_benchmark_worktree(worktree)
+        for worktree in worktrees.values():
+            cleanup_benchmark_worktree(worktree)
 
     print_scorecard(case_results, show_baseline=bool(baseline_cmd))
     print()
@@ -820,13 +887,20 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run the openclaw-advisory-benchmark against a security scanner."
+        description="Run the advisory benchmark against a security scanner."
     )
     parser.add_argument(
         "--openclaw-repo",
         type=str,
-        required=True,
-        help="Path to local openclaw git checkout.",
+        default=None,
+        help="Legacy alias for --repo openclaw/openclaw=PATH.",
+    )
+    parser.add_argument(
+        "--repo",
+        action="append",
+        default=None,
+        metavar="OWNER/NAME=PATH",
+        help="Map a case repository to a local git checkout. Repeat for multiple repos.",
     )
     parser.add_argument(
         "--scanner-cmd",
@@ -882,6 +956,10 @@ def main() -> None:
         help="Baseline command timeout in seconds (default: same as --timeout).",
     )
     args = parser.parse_args()
+    if not args.repo and not args.openclaw_repo:
+        parser.error(
+            "at least one --repo OWNER/NAME=PATH or --openclaw-repo PATH is required"
+        )
     run_benchmark(args)
 
 

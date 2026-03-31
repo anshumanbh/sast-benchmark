@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-cgc2-rcrh-qr5x",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-cgc2-rcrh-qr5x",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "Remote Code Execution via Malicious Themes",
+    "severity": "high",
+    "publishedAt": "2026-03-02T15:45:46Z",
+    "description": "Specially crafted malicious themes could execute arbitrary code on the server running Ghost. The issue affected Ghost v0.7.2 through v6.19.0 and was fixed in v6.19.1.",
+    "cweIds": [
+      "CWE-74"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:H/PR:H/UI:R/S:C/C:H/I:H/A:H",
+      "score": 7.7
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "<= 6.19.0",
+        "patchedVersions": "6.19.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "64d9ce44cfe5465474897eb51c0008895861a216",
+    "introducingCommits": [
+      {
+        "sha": "994a20cf8b37f95c13f616b6bb3a7948e327f33a",
+        "authoredAt": "2015-10-22T11:12:21+01:00",
+        "subject": "Add path resolution to get helper"
+      }
+    ],
+    "vulnerableHead": "994a20cf8b37f95c13f616b6bb3a7948e327f33a",
+    "notes": "Theme helper path resolution introduced attacker-controlled property traversal in the get helper, which later enabled malicious themes to reach server-side code execution."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "codeexec",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "core/server/helpers/get.js"
+    ],
+    "description": "Scanner should detect codeexec when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=64d9ce44cfe5465474897eb51c0008895861a216 intro=994a20cf8b37f95c13f616b6bb3a7948e327f33a",
+        "ancestor": "64d9ce44cfe5465474897eb51c0008895861a216",
+        "descendant": "994a20cf8b37f95c13f616b6bb3a7948e327f33a"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=994a20cf8b37f95c13f616b6bb3a7948e327f33a vulnerable_head=994a20cf8b37f95c13f616b6bb3a7948e327f33a",
+        "ancestor": "994a20cf8b37f95c13f616b6bb3a7948e327f33a",
+        "descendant": "994a20cf8b37f95c13f616b6bb3a7948e327f33a"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=64d9ce44cfe5465474897eb51c0008895861a216 vulnerable_head=994a20cf8b37f95c13f616b6bb3a7948e327f33a",
+        "ancestor": "64d9ce44cfe5465474897eb51c0008895861a216",
+        "descendant": "994a20cf8b37f95c13f616b6bb3a7948e327f33a"
+      }
+    ]
+  }
+}

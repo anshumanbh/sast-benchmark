@@ -9,11 +9,15 @@ import sys
 from argparse import Namespace
 from contextlib import redirect_stdout
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from run import (
+    BenchmarkWorktree,
     Finding,
     extract_cwe_ids,
     normalize_path,
@@ -100,6 +104,7 @@ def _write_case(
     *,
     baseline_commit: str | None = None,
     case_id: str = "GHSA-test-test-test",
+    repository: str = "openclaw/openclaw",
 ) -> None:
     timeline = {"vulnerableHead": vulnerable_head}
     if baseline_commit is not None:
@@ -111,6 +116,7 @@ def _write_case(
         json.dumps(
             {
                 "id": case_id,
+                "repository": repository,
                 "timeline": timeline,
                 "expectedOutcome": {
                     "vulnerabilityClass": "pathtraversal",
@@ -149,13 +155,13 @@ def _simple_scanner_cmd(
 
 def _benchmark_args(
     tmp_path: Path,
-    repo: Path,
+    source_repo: Path,
     cases_dir: Path,
     scanner_cmd: str,
     **overrides: object,
 ) -> Namespace:
     args = {
-        "openclaw_repo": str(repo),
+        "repo": None,
         "scanner_cmd": scanner_cmd,
         "output": str(tmp_path / "results.json"),
         "cases_dir": str(cases_dir),
@@ -166,6 +172,8 @@ def _benchmark_args(
         "baseline_timeout": None,
     }
     args.update(overrides)
+    if "openclaw_repo" not in overrides:
+        args["openclaw_repo"] = None if args["repo"] is not None else str(source_repo)
     return Namespace(**args)
 
 
@@ -617,10 +625,10 @@ class TestEvaluateCase:
         assert result["detected"] is False
         assert result["pathMatch"] is False
 
-    def test_severity_too_low(self):
+    def test_severity_too_low_does_not_block_detection(self):
         findings = [_finding(path="src/foo.ts", severity="medium", cwe_ids=["CWE-78"])]
         result = evaluate_case("GHSA-test-test-test", findings, self._expected())
-        assert result["detected"] is False
+        assert result["detected"] is True
         assert result["severityMatch"] is False
 
     def test_class_mismatch(self):
@@ -681,6 +689,16 @@ class TestEvaluateCase:
         result = evaluate_case("GHSA-test-test-test", findings, self._expected())
         assert result["detected"] is True
 
+    def test_class_match_uses_all_relevant_findings_not_only_severe_ones(self):
+        findings = [
+            _finding(path="src/foo.ts", severity="medium", cwe_ids=["CWE-78"]),
+            _finding(path="src/foo.ts", severity="high", cwe_ids=["CWE-999"]),
+        ]
+        result = evaluate_case("GHSA-test-test-test", findings, self._expected())
+        assert result["detected"] is True
+        assert result["classMatch"] is True
+        assert result["severityMatch"] is True
+
     def test_empty_expected_paths_treated_as_match(self):
         findings = [_finding(path="src/anything.ts", severity="high", cwe_ids=["CWE-78"])]
         result = evaluate_case(
@@ -720,6 +738,117 @@ class TestBuildResults:
 
 
 class TestRunBenchmark:
+    def test_conflicting_openclaw_repo_and_repo_mapping_exits(self, tmp_path: Path):
+        openclaw_repo = tmp_path / "openclaw"
+        openclaw_repo.mkdir()
+        alternate_repo = tmp_path / "openclaw-alt"
+        alternate_repo.mkdir()
+        cases_dir = tmp_path / "cases"
+        cases_dir.mkdir()
+
+        args = _benchmark_args(
+            tmp_path,
+            openclaw_repo,
+            cases_dir,
+            _simple_scanner_cmd(),
+            openclaw_repo=str(openclaw_repo),
+            repo=[f"openclaw/openclaw={alternate_repo}"],
+        )
+
+        with patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            with pytest.raises(SystemExit) as excinfo:
+                run_benchmark(args)
+
+        assert excinfo.value.code == 2
+        assert "configured multiple times with different paths" in stderr.getvalue()
+
+    def test_missing_repository_in_case_exits_cleanly(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+        tracked = repo / "tracked.txt"
+        tracked.write_text("committed\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        head = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        case_dir = cases_dir / "GHSA-test-test-test"
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(
+            json.dumps(
+                {
+                    "id": "GHSA-test-test-test",
+                    "timeline": {"vulnerableHead": head},
+                    "expectedOutcome": {
+                        "vulnerabilityClass": "pathtraversal",
+                        "minimumSeverity": "high",
+                        "expectedPaths": ["src/foo.ts"],
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        args = _benchmark_args(tmp_path, repo, cases_dir, _simple_scanner_cmd())
+        with patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            with pytest.raises(SystemExit) as excinfo:
+                run_benchmark(args)
+
+        assert excinfo.value.code == 1
+        assert "missing a valid repository field" in stderr.getvalue().lower()
+
+    def test_worktree_creation_cleanup_runs_for_non_runtime_errors(self, tmp_path: Path):
+        cases_dir = tmp_path / "cases"
+        _write_case(
+            cases_dir,
+            "a" * 40,
+            case_id="GHSA-aaaa-aaaa-aaaa",
+            repository="openclaw/openclaw",
+        )
+        _write_case(
+            cases_dir,
+            "b" * 40,
+            case_id="GHSA-bbbb-bbbb-bbbb",
+            repository="TryGhost/Ghost",
+        )
+
+        first_worktree = BenchmarkWorktree(
+            source_repo=tmp_path / "openclaw",
+            path=tmp_path / "tmp-worktree",
+            tempdir=TemporaryDirectory(dir=tmp_path),
+        )
+        args = _benchmark_args(
+            tmp_path,
+            tmp_path / "openclaw",
+            cases_dir,
+            _simple_scanner_cmd(),
+            openclaw_repo=None,
+            repo=[
+                f"openclaw/openclaw={tmp_path / 'openclaw'}",
+                f"TryGhost/Ghost={tmp_path / 'ghost'}",
+            ],
+        )
+
+        with (
+            patch(
+                "run.create_benchmark_worktree",
+                side_effect=[first_worktree, OSError("disk full")],
+            ),
+            patch("run.cleanup_benchmark_worktree") as cleanup_worktree,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            with pytest.raises(SystemExit) as excinfo:
+                run_benchmark(args)
+
+        first_worktree.tempdir.cleanup()
+        assert excinfo.value.code == 1
+        cleanup_worktree.assert_called_once_with(first_worktree)
+        assert "failed to prepare benchmark worktree: disk full" in stderr.getvalue().lower()
+
     def test_uses_temp_worktree_and_preserves_source_repo(self, tmp_path: Path):
         repo = tmp_path / "repo"
         repo.mkdir()
@@ -805,6 +934,69 @@ class TestRunBenchmark:
         assert results["results"][0]["error"] is None
         assert results["results"][0]["detected"] is True
         assert results["results"][0]["scannerExitCode"] == 2
+
+    def test_selects_worktree_from_case_repository(self, tmp_path: Path):
+        openclaw_repo = tmp_path / "openclaw"
+        openclaw_repo.mkdir()
+        _init_git_repo(openclaw_repo)
+        (openclaw_repo / "tracked.txt").write_text("openclaw\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(openclaw_repo), "add", "tracked.txt"], check=True
+        )
+        subprocess.run(
+            ["git", "-C", str(openclaw_repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        openclaw_head = _git(openclaw_repo, "rev-parse", "HEAD")
+
+        ghost_repo = tmp_path / "ghost"
+        ghost_repo.mkdir()
+        _init_git_repo(ghost_repo)
+        (ghost_repo / "tracked.txt").write_text("ghost\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(ghost_repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(ghost_repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        ghost_head = _git(ghost_repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(
+            cases_dir,
+            openclaw_head,
+            case_id="GHSA-aaaa-aaaa-aaaa",
+            repository="openclaw/openclaw",
+        )
+        _write_case(
+            cases_dir,
+            ghost_head,
+            case_id="GHSA-bbbb-bbbb-bbbb",
+            repository="TryGhost/Ghost",
+        )
+
+        results = run_benchmark(
+            _benchmark_args(
+                tmp_path,
+                openclaw_repo,
+                cases_dir,
+                _simple_scanner_cmd(),
+                openclaw_repo=None,
+                repo=[
+                    f"openclaw/openclaw={openclaw_repo}",
+                    f"TryGhost/Ghost={ghost_repo}",
+                ],
+            )
+        )
+
+        assert [result["caseId"] for result in results["results"]] == [
+            "GHSA-aaaa-aaaa-aaaa",
+            "GHSA-bbbb-bbbb-bbbb",
+        ]
+        assert [result["repository"] for result in results["results"]] == [
+            "openclaw/openclaw",
+            "TryGhost/Ghost",
+        ]
+        assert [result["detected"] for result in results["results"]] == [True, True]
 
 
 class TestBaselineCmd:

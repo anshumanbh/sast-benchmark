@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-gv6q-2m97-882h",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-gv6q-2m97-882h",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "XSS via malicious Portal preview links",
+    "severity": "high",
+    "publishedAt": "2026-01-27T12:28:29Z",
+    "description": "A crafted Portal preview link could execute JavaScript in the context of an authenticated staff user or member, potentially leading to account takeover. The issue affected Ghost v5.43.0 through v5.120.4, Ghost v6.0.0 through v6.14.0, and the vulnerable Portal package ranges listed below.",
+    "cweIds": [
+      "CWE-79"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+      "score": 8.8
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "5.43.0-5.120.4, 6.0.0-6.14.0",
+        "patchedVersions": "5.121.0, 6.15.0"
+      },
+      {
+        "ecosystem": "npm",
+        "name": "@tryghost/portal",
+        "vulnerableRange": "2.29.1-2.51.4, 2.52.0-2.57.0",
+        "patchedVersions": "2.51.5, 2.57.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "5dc0e92dc2aa2b2b59ddc06dd7df56861ed54fb8",
+    "introducingCommits": [
+      {
+        "sha": "024d43478a52178e7d20187e4c081fd5296910ae",
+        "authoredAt": "2023-04-06T18:56:32+02:00",
+        "subject": "Fixed text not displaying when checkbox is disabled"
+      }
+    ],
+    "vulnerableHead": "024d43478a52178e7d20187e4c081fd5296910ae",
+    "notes": "Portal signup terms rendering introduced a dangerouslySetInnerHTML sink for previewable portal content."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "xss",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "ghost/portal/src/components/pages/SignupPage.js"
+    ],
+    "description": "Scanner should detect xss when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=5dc0e92dc2aa2b2b59ddc06dd7df56861ed54fb8 intro=024d43478a52178e7d20187e4c081fd5296910ae",
+        "ancestor": "5dc0e92dc2aa2b2b59ddc06dd7df56861ed54fb8",
+        "descendant": "024d43478a52178e7d20187e4c081fd5296910ae"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=024d43478a52178e7d20187e4c081fd5296910ae vulnerable_head=024d43478a52178e7d20187e4c081fd5296910ae",
+        "ancestor": "024d43478a52178e7d20187e4c081fd5296910ae",
+        "descendant": "024d43478a52178e7d20187e4c081fd5296910ae"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=5dc0e92dc2aa2b2b59ddc06dd7df56861ed54fb8 vulnerable_head=024d43478a52178e7d20187e4c081fd5296910ae",
+        "ancestor": "5dc0e92dc2aa2b2b59ddc06dd7df56861ed54fb8",
+        "descendant": "024d43478a52178e7d20187e4c081fd5296910ae"
+      }
+    ]
+  }
+}

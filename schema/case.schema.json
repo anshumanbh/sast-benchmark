@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/openclaw/openclaw-advisory-benchmark/schema/case.schema.json",
-  "title": "OpenClaw Advisory Benchmark Case",
-  "description": "Schema for a single advisory benchmark case used to test security scanners against real-world OpenClaw GHSA advisories.",
+  "$id": "https://github.com/anshumanbh/openclaw-advisory-benchmark/schema/case.schema.json",
+  "title": "Advisory Benchmark Case",
+  "description": "Schema for a single advisory benchmark case used to test security scanners against real-world GHSA advisories.",
   "type": "object",
   "required": [
     "schemaVersion",
@@ -33,7 +33,7 @@
     },
     "repository": {
       "type": "string",
-      "const": "openclaw/openclaw",
+      "pattern": "^[A-Za-z0-9_.-]+\\/[A-Za-z0-9_.-]+$",
       "description": "GitHub owner/repo."
     },
     "advisory": {
@@ -161,11 +161,14 @@
             "brokenauthz",
             "commandinjection",
             "codeexec",
+            "csrf",
             "pathtraversal",
             "sandboxescape",
             "secretdisclosure",
+            "sqlinjection",
             "ssrf",
-            "abuse"
+            "abuse",
+            "xss"
           ],
           "description": "High-level vulnerability taxonomy class."
         },

@@ -182,7 +182,7 @@ class TestSchemaValidation:
 
     def test_invalid_vulnerability_class(self, schema):
         case = _minimal_case()
-        case["expectedOutcome"]["vulnerabilityClass"] = "xss"
+        case["expectedOutcome"]["vulnerabilityClass"] = "not-a-class"
         errors = validate_case_against_schema(case, schema)
         assert len(errors) > 0
 
@@ -255,6 +255,28 @@ class TestSchemaValidation:
         case["extraField"] = "should fail"
         errors = validate_case_against_schema(case, schema)
         assert len(errors) > 0
+
+    def test_checked_in_cases_all_include_valid_repository_field(self, schema):
+        cases_dir = Path(__file__).resolve().parents[1] / "cases"
+        case_paths = sorted(cases_dir.glob("GHSA-*/case.json"))
+
+        invalid_repositories: dict[str, list[str] | str] = {}
+        for case_path in case_paths:
+            case = json.loads(case_path.read_text(encoding="utf-8"))
+            repository = case.get("repository")
+            if not isinstance(repository, str) or not repository:
+                invalid_repositories[case_path.parent.name] = "missing repository"
+                continue
+
+            repo_errors = [
+                error.message
+                for error in validate_case_against_schema(case, schema)
+                if "$.repository" in error.message
+            ]
+            if repo_errors:
+                invalid_repositories[case_path.parent.name] = repo_errors
+
+        assert invalid_repositories == {}
 
     def test_missing_jsonschema_returns_validation_error(self, monkeypatch, schema):
         def _raise() -> None:
@@ -367,6 +389,52 @@ class TestManifestConsistency:
 
         assert any("severity missing from manifest entry" in error.message for error in errors)
         assert any("title missing from manifest entry" in error.message for error in errors)
+
+    def test_manifest_repositories_must_cover_loaded_case_repositories(self):
+        openclaw_case = _minimal_case()
+        ghost_case = _minimal_case(
+            {
+                "id": "GHSA-ghost-ghost-ghost",
+                "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-ghost-ghost-ghost",
+                "repository": "TryGhost/Ghost",
+            }
+        )
+        manifest = {
+            "repositories": ["openclaw/openclaw"],
+            "caseCount": 2,
+            "cases": [
+                _manifest_entry(openclaw_case),
+                _manifest_entry(ghost_case),
+            ],
+        }
+
+        errors = validate_manifest_consistency(
+            manifest,
+            [openclaw_case["id"], ghost_case["id"]],
+            [openclaw_case, ghost_case],
+        )
+
+        assert any(
+            "TryGhost/Ghost" in error.message
+            and "missing from manifest.repositories" in error.message
+            for error in errors
+        )
+
+    def test_manifest_repositories_reject_unused_entries(self):
+        case = _minimal_case()
+        manifest = {
+            "repositories": ["openclaw/openclaw", "TryGhost/Ghost"],
+            "caseCount": 1,
+            "cases": [_manifest_entry(case)],
+        }
+
+        errors = validate_manifest_consistency(manifest, [case["id"]], [case])
+
+        assert any(
+            "TryGhost/Ghost" in error.message
+            and "no loaded case uses it" in error.message
+            for error in errors
+        )
 
 
 class TestNoDuplicateIds:
@@ -638,6 +706,82 @@ class TestStrictValidation:
 
         assert errors == []
         assert "Skipping schema validation" in captured.err
+
+    def test_run_validation_supports_non_openclaw_repo_mapping(self, tmp_path: Path):
+        repo = tmp_path / "ghost"
+        repo.mkdir()
+        _init_git_repo(repo)
+
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("introducing change\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "introduce vuln"],
+            check=True,
+        )
+        intro = _git(repo, "rev-parse", "HEAD")
+
+        case = _minimal_case(
+            {
+                "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-test-test-test",
+                "repository": "TryGhost/Ghost",
+                "timeline": {
+                    "baselineCommit": baseline,
+                    "introducingCommits": [
+                        {
+                            "sha": intro,
+                            "authoredAt": "2026-01-12T01:16:39Z",
+                            "subject": "feat: introduce vulnerability",
+                        }
+                    ],
+                    "vulnerableHead": intro,
+                },
+            }
+        )
+        case_dir = tmp_path / "cases" / case["id"]
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(json.dumps(case), encoding="utf-8")
+        _write_manifest(tmp_path, _manifest_entry(case))
+
+        errors = run_validation(
+            Namespace(
+                openclaw_repo=None,
+                repo=[f"TryGhost/Ghost={repo}"],
+                strict=False,
+                output_dir=str(tmp_path),
+            )
+        )
+
+        assert errors == []
+
+    def test_run_validation_rejects_conflicting_openclaw_repo_and_repo_mapping(
+        self, tmp_path: Path
+    ):
+        openclaw_repo = tmp_path / "openclaw"
+        openclaw_repo.mkdir()
+        alternate_repo = tmp_path / "openclaw-alt"
+        alternate_repo.mkdir()
+
+        errors = run_validation(
+            Namespace(
+                openclaw_repo=str(openclaw_repo),
+                repo=[f"openclaw/openclaw={alternate_repo}"],
+                strict=False,
+                output_dir=str(tmp_path),
+            )
+        )
+
+        assert len(errors) == 1
+        assert errors[0].case_id == "args"
+        assert errors[0].check == "repo"
+        assert "configured multiple times with different paths" in errors[0].message
 
     def test_run_validation_reports_semantic_shape_error_when_schema_missing(
         self, monkeypatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]

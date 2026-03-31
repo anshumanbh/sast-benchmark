@@ -20,6 +20,8 @@ CWE_TO_VULN_CLASS: dict[str, list[str]] = {
     "CWE-184": ["commandinjection"],
     "CWE-367": ["commandinjection"],
     "CWE-426": ["commandinjection"],
+    # sqlinjection
+    "CWE-89": ["sqlinjection"],
     # ssrf
     "CWE-918": ["ssrf"],
     # codeexec
@@ -36,13 +38,18 @@ CWE_TO_VULN_CLASS: dict[str, list[str]] = {
     "CWE-862": ["brokenauthz"],
     "CWE-269": ["brokenauthz", "sandboxescape"],
     "CWE-285": ["brokenauthz"],
+    "CWE-284": ["brokenauthz"],
     # secretdisclosure
     "CWE-200": ["secretdisclosure"],
     "CWE-522": ["secretdisclosure"],
     "CWE-116": ["secretdisclosure"],
+    # csrf
+    "CWE-352": ["csrf"],
     # sandboxescape
     "CWE-265": ["sandboxescape"],
     "CWE-693": ["sandboxescape"],
     # abuse
     "CWE-400": ["abuse"],
+    # xss
+    "CWE-79": ["xss"],
 }

@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-9gh8-wp53-ccc6",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-9gh8-wp53-ccc6",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "Unauthorized Newsletter Modification",
+    "severity": "high",
+    "publishedAt": "2022-11-28T15:06:43Z",
+    "description": "Members could modify newsletter settings they were not meant to control because of a validation gap for nested objects in the Members API. The issue affected Ghost v4.46.0 through v4.48.7 and Ghost v5.0.0 through v5.22.6, and was fixed in v4.48.8 and v5.22.7.",
+    "cweIds": [
+      "CWE-284"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:H/A:N",
+      "score": 8.5
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "5.0.0 - 5.22.6",
+        "patchedVersions": "5.22.7"
+      },
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "4.46.0 - 4.48.7",
+        "patchedVersions": "4.48.8"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "ad226f85b3cb7cf9b5e7020d1acf2903dd612391",
+    "introducingCommits": [
+      {
+        "sha": "b3ed0422655c8f7372261fd1e1ec232dfa090af1",
+        "authoredAt": "2022-04-04T20:07:26+05:30",
+        "subject": "Allowed updating newsletter data for a member"
+      }
+    ],
+    "vulnerableHead": "b3ed0422655c8f7372261fd1e1ec232dfa090af1",
+    "notes": "Members API updates started accepting nested newsletters data without the stricter validation later added by the fix."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "ghost/members-api/lib/repositories/member.js"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=ad226f85b3cb7cf9b5e7020d1acf2903dd612391 intro=b3ed0422655c8f7372261fd1e1ec232dfa090af1",
+        "ancestor": "ad226f85b3cb7cf9b5e7020d1acf2903dd612391",
+        "descendant": "b3ed0422655c8f7372261fd1e1ec232dfa090af1"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=b3ed0422655c8f7372261fd1e1ec232dfa090af1 vulnerable_head=b3ed0422655c8f7372261fd1e1ec232dfa090af1",
+        "ancestor": "b3ed0422655c8f7372261fd1e1ec232dfa090af1",
+        "descendant": "b3ed0422655c8f7372261fd1e1ec232dfa090af1"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=ad226f85b3cb7cf9b5e7020d1acf2903dd612391 vulnerable_head=b3ed0422655c8f7372261fd1e1ec232dfa090af1",
+        "ancestor": "ad226f85b3cb7cf9b5e7020d1acf2903dd612391",
+        "descendant": "b3ed0422655c8f7372261fd1e1ec232dfa090af1"
+      }
+    ]
+  }
+}

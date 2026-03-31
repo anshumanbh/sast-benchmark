@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-9fgx-q25h-jxrg",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-9fgx-q25h-jxrg",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "DOM XSS in Theme Preview",
+    "severity": "high",
+    "publishedAt": "2021-04-29T11:19:15Z",
+    "description": "An unused theme-preview endpoint in Ghost Admin left sites vulnerable to DOM XSS that could grant untrusted users access to Ghost Admin. The issue affected Ghost v4.0.0 through v4.3.2 and was fixed in v4.3.3.",
+    "cweIds": [],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:H/A:N",
+      "score": 7.6
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": ">=4.0.0 <4.3.3",
+        "patchedVersions": "4.3.3"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "d0e0760dae009055f7ce300e68883934bf024913",
+    "introducingCommits": [
+      {
+        "sha": "a0bdba2516da3073e495ff5f089fe1742beb2537",
+        "authoredAt": "2021-02-12T16:08:55Z",
+        "subject": "\u2728 Added theme preview mode"
+      }
+    ],
+    "vulnerableHead": "a0bdba2516da3073e495ff5f089fe1742beb2537",
+    "notes": "The unused theme preview endpoint and admin preview page were introduced together, creating the DOM XSS surface removed by the patch."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "xss",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "core/server/web/admin/app.js",
+      "core/server/web/admin/preview.js",
+      "core/server/web/admin/views/preview.html"
+    ],
+    "description": "Scanner should detect xss when scanning vulnerableHead. The upstream GHSA does not publish CWE metadata for this advisory, so scanners must emit their own CWE metadata to satisfy class matching."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=d0e0760dae009055f7ce300e68883934bf024913 intro=a0bdba2516da3073e495ff5f089fe1742beb2537",
+        "ancestor": "d0e0760dae009055f7ce300e68883934bf024913",
+        "descendant": "a0bdba2516da3073e495ff5f089fe1742beb2537"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=a0bdba2516da3073e495ff5f089fe1742beb2537 vulnerable_head=a0bdba2516da3073e495ff5f089fe1742beb2537",
+        "ancestor": "a0bdba2516da3073e495ff5f089fe1742beb2537",
+        "descendant": "a0bdba2516da3073e495ff5f089fe1742beb2537"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=d0e0760dae009055f7ce300e68883934bf024913 vulnerable_head=a0bdba2516da3073e495ff5f089fe1742beb2537",
+        "ancestor": "d0e0760dae009055f7ce300e68883934bf024913",
+        "descendant": "a0bdba2516da3073e495ff5f089fe1742beb2537"
+      }
+    ]
+  }
+}

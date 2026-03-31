@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-9xg7-mwmp-xmjx",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-9xg7-mwmp-xmjx",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "Staff Token permission bypass",
+    "severity": "high",
+    "publishedAt": "2026-01-08T14:37:41Z",
+    "description": "Ghost's staff-token authentication flow could reach endpoints intended only for staff-session authentication, giving external systems broader access than intended. The issue affected Ghost v5.121.0 through v5.130.5 and Ghost v6.0.0 through v6.10.3, and was fixed in v5.130.6 and v6.11.0.",
+    "cweIds": [
+      "CWE-863"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
+      "score": 8.1
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "6.0.0 - 6.10.3",
+        "patchedVersions": "6.11.0"
+      },
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "5.121.0 - 5.130.5",
+        "patchedVersions": "5.130.6"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "191cff233473276324cbcf6b4d503425959d4f61",
+    "introducingCommits": [
+      {
+        "sha": "c82b7ed0216229a36cb0a4e101559636c681a3a2",
+        "authoredAt": "2025-05-29T10:53:57+01:00",
+        "subject": "\u2728 Changed staff token perms to match user auth (#23585)"
+      }
+    ],
+    "vulnerableHead": "c82b7ed0216229a36cb0a4e101559636c681a3a2",
+    "notes": "Admin middleware was changed so staff-token requests skipped the integration allowlist and reached session-only endpoints, subject only to a small blocklist."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "ghost/core/core/server/web/api/endpoints/admin/middleware.js"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=191cff233473276324cbcf6b4d503425959d4f61 intro=c82b7ed0216229a36cb0a4e101559636c681a3a2",
+        "ancestor": "191cff233473276324cbcf6b4d503425959d4f61",
+        "descendant": "c82b7ed0216229a36cb0a4e101559636c681a3a2"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=c82b7ed0216229a36cb0a4e101559636c681a3a2 vulnerable_head=c82b7ed0216229a36cb0a4e101559636c681a3a2",
+        "ancestor": "c82b7ed0216229a36cb0a4e101559636c681a3a2",
+        "descendant": "c82b7ed0216229a36cb0a4e101559636c681a3a2"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=191cff233473276324cbcf6b4d503425959d4f61 vulnerable_head=c82b7ed0216229a36cb0a4e101559636c681a3a2",
+        "ancestor": "191cff233473276324cbcf6b4d503425959d4f61",
+        "descendant": "c82b7ed0216229a36cb0a4e101559636c681a3a2"
+      }
+    ]
+  }
+}

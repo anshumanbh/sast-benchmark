@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-9m84-wc28-w895",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-9m84-wc28-w895",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "Incomplete CSRF protections around OTC use",
+    "severity": "high",
+    "publishedAt": "2026-03-04T17:51:38Z",
+    "description": "Ghost's OTC verification flow did not fully bind verification to the requesting session, which could make phishing-based site takeover easier in some scenarios. The issue affected Ghost v5.101.6 through v6.19.2 and was fixed in v6.19.3.",
+    "cweIds": [
+      "CWE-352"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",
+      "score": 7.5
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": ">= 5.101.6 && <= 6.19.2",
+        "patchedVersions": "6.19.3"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "51fa21324d8a0578015feab7991199203c509e4e",
+    "introducingCommits": [
+      {
+        "sha": "7a18e829c5fbbf24610baeaa4ef02079356afc30",
+        "authoredAt": "2024-10-09T13:32:16+01:00",
+        "subject": "Added endpoints for supporting 2FA"
+      }
+    ],
+    "vulnerableHead": "7a18e829c5fbbf24610baeaa4ef02079356afc30",
+    "notes": "The OTC verification endpoints and session-service flow were introduced together without binding verification codes tightly to the requesting session or origin."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "csrf",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "ghost/core/core/server/api/endpoints/session.js",
+      "ghost/core/core/server/web/api/endpoints/admin/routes.js",
+      "ghost/session-service/lib/session-service.js"
+    ],
+    "description": "Scanner should detect csrf when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=51fa21324d8a0578015feab7991199203c509e4e intro=7a18e829c5fbbf24610baeaa4ef02079356afc30",
+        "ancestor": "51fa21324d8a0578015feab7991199203c509e4e",
+        "descendant": "7a18e829c5fbbf24610baeaa4ef02079356afc30"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=7a18e829c5fbbf24610baeaa4ef02079356afc30 vulnerable_head=7a18e829c5fbbf24610baeaa4ef02079356afc30",
+        "ancestor": "7a18e829c5fbbf24610baeaa4ef02079356afc30",
+        "descendant": "7a18e829c5fbbf24610baeaa4ef02079356afc30"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=51fa21324d8a0578015feab7991199203c509e4e vulnerable_head=7a18e829c5fbbf24610baeaa4ef02079356afc30",
+        "ancestor": "51fa21324d8a0578015feab7991199203c509e4e",
+        "descendant": "7a18e829c5fbbf24610baeaa4ef02079356afc30"
+      }
+    ]
+  }
+}

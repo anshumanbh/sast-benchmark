@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-5fp7-g646-ccf4",
+  "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-5fp7-g646-ccf4",
+  "repository": "TryGhost/Ghost",
+  "advisory": {
+    "title": "Staff 2FA bypass",
+    "severity": "high",
+    "publishedAt": "2026-01-08T14:37:08Z",
+    "description": "A flaw in Ghost's 2FA mechanism allowed staff users to skip email-based 2FA. The issue affected Ghost v5.105.0 through v5.130.5 and Ghost v6.0.0 through v6.10.3, and was fixed in v5.130.6 and v6.11.0.",
+    "cweIds": [
+      "CWE-287"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
+      "score": 8.1
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "6.0.0 - 6.10.3",
+        "patchedVersions": "6.11.0"
+      },
+      {
+        "ecosystem": "npm",
+        "name": "ghost",
+        "vulnerableRange": "5.105.0 - 5.130.5",
+        "patchedVersions": "5.130.6"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "2308f6f4e18749e86a874ebadf4cf376104daae8",
+    "introducingCommits": [
+      {
+        "sha": "dd9810fc96f36af1253f715fb725d78d9f990b66",
+        "authoredAt": "2024-12-12T13:17:15+05:30",
+        "subject": "Fixed creating unverified session for reset password (#21867)"
+      }
+    ],
+    "vulnerableHead": "dd9810fc96f36af1253f715fb725d78d9f990b66",
+    "notes": "The login/session endpoint began honoring skipEmailVerification from password-reset-related flows, allowing staff sessions to bypass email 2FA."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "authbypass",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "ghost/core/core/server/api/endpoints/session.js"
+    ],
+    "description": "Scanner should detect authbypass when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=2308f6f4e18749e86a874ebadf4cf376104daae8 intro=dd9810fc96f36af1253f715fb725d78d9f990b66",
+        "ancestor": "2308f6f4e18749e86a874ebadf4cf376104daae8",
+        "descendant": "dd9810fc96f36af1253f715fb725d78d9f990b66"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=dd9810fc96f36af1253f715fb725d78d9f990b66 vulnerable_head=dd9810fc96f36af1253f715fb725d78d9f990b66",
+        "ancestor": "dd9810fc96f36af1253f715fb725d78d9f990b66",
+        "descendant": "dd9810fc96f36af1253f715fb725d78d9f990b66"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=2308f6f4e18749e86a874ebadf4cf376104daae8 vulnerable_head=dd9810fc96f36af1253f715fb725d78d9f990b66",
+        "ancestor": "2308f6f4e18749e86a874ebadf4cf376104daae8",
+        "descendant": "dd9810fc96f36af1253f715fb725d78d9f990b66"
+      }
+    ]
+  }
+}

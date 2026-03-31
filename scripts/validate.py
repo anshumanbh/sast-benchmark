@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Validate openclaw-advisory-benchmark case files.
+"""Validate advisory benchmark case files.
 
 Structural validation: JSON Schema conformance, manifest consistency, no duplicates.
-Semantic validation (with --openclaw-repo): commit SHAs resolve, ancestry checks pass.
+Semantic validation (with --repo): commit SHAs resolve, ancestry checks pass.
 Strict mode (--strict): all cases must have verification.status == "pass" with high confidence.
 """
 
@@ -17,6 +17,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+
+from repositories import normalize_repository_id, parse_repo_configs
 
 
 class ValidationError:
@@ -185,12 +187,60 @@ def validate_manifest_consistency(
             ValidationError("manifest", "manifest", "manifest.cases must be a list")
         ]
 
+    manifest_repositories_raw = manifest_obj.get("repositories")
+    manifest_repositories: dict[str, str] | None = None
+    if manifest_repositories_raw is not None:
+        manifest_repositories_list = _json_array(manifest_repositories_raw)
+        if manifest_repositories_list is None:
+            errors.append(
+                ValidationError(
+                    "manifest", "manifest", "manifest.repositories must be a list"
+                )
+            )
+        else:
+            manifest_repositories = {}
+            seen_manifest_repositories: dict[str, int] = {}
+            for index, repository in enumerate(manifest_repositories_list):
+                repository_id = _non_empty_string(repository)
+                if repository_id is None:
+                    errors.append(
+                        ValidationError(
+                            "manifest",
+                            "manifest",
+                            f"repositories[{index}] must be a non-empty string",
+                        )
+                    )
+                    continue
+
+                normalized = normalize_repository_id(repository_id)
+                first_index = seen_manifest_repositories.get(normalized)
+                if first_index is not None:
+                    errors.append(
+                        ValidationError(
+                            "manifest",
+                            "manifest",
+                            f"Duplicate manifest repository at repositories[{index}] "
+                            f"(already listed at repositories[{first_index}])",
+                        )
+                    )
+                    continue
+
+                seen_manifest_repositories[normalized] = index
+                manifest_repositories[normalized] = repository_id
+
     loaded_cases_by_id: dict[str, Any] = {}
+    case_repositories: dict[str, str] = {}
     if cases is not None:
         for case in cases:
             case_id = _case_id(case)
             if case_id != "unknown" and case_id not in loaded_cases_by_id:
                 loaded_cases_by_id[case_id] = case
+            if isinstance(case, dict):
+                repository_id = _non_empty_string(case.get("repository"))
+                if repository_id is not None:
+                    case_repositories.setdefault(
+                        normalize_repository_id(repository_id), repository_id
+                    )
 
     manifest_ids: set[str] = set()
     seen_manifest_ids: dict[str, int] = {}
@@ -257,6 +307,28 @@ def validate_manifest_consistency(
                 f"Declared caseCount={declared_count} but {actual_count} cases listed",
             )
         )
+
+    if manifest_repositories is not None and case_repositories:
+        for normalized, repository_id in sorted(case_repositories.items()):
+            if normalized not in manifest_repositories:
+                errors.append(
+                    ValidationError(
+                        "manifest",
+                        "manifest",
+                        f"repository {repository_id!r} used by case.json is missing "
+                        "from manifest.repositories",
+                    )
+                )
+        for normalized, repository_id in sorted(manifest_repositories.items()):
+            if normalized not in case_repositories:
+                errors.append(
+                    ValidationError(
+                        "manifest",
+                        "manifest",
+                        f"manifest.repositories lists {repository_id!r} but no loaded "
+                        "case uses it",
+                    )
+                )
 
     for case_id in sorted(manifest_ids & dir_ids & loaded_cases_by_id.keys()):
         manifest_case = manifest_case_by_id.get(case_id)
@@ -380,7 +452,7 @@ def validate_ancestry(
 
 
 def validate_case_semantic(case: Any, repo: Path) -> list[ValidationError]:
-    """Run semantic validation requiring the openclaw repo."""
+    """Run semantic validation requiring the source repo checkout."""
     if not isinstance(case, dict):
         return [
             ValidationError(
@@ -793,6 +865,13 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
     all_errors: list[ValidationError] = []
     cases_dir = Path(args.output_dir) / "cases" if args.output_dir else CASES_DIR
     manifest_path = Path(args.output_dir) / "manifest.json" if args.output_dir else MANIFEST_PATH
+    try:
+        repo_configs = parse_repo_configs(
+            getattr(args, "repo", None), getattr(args, "openclaw_repo", None)
+        )
+    except ValueError as exc:
+        return [ValidationError("args", "repo", str(exc))]
+    semantic_validation_enabled = bool(repo_configs)
 
     # Load manifest
     if not manifest_path.exists():
@@ -831,7 +910,7 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
         _get_jsonschema_validator()
     except RuntimeError as exc:
         schema_validation_enabled = False
-        if args.openclaw_repo or args.strict:
+        if semantic_validation_enabled or args.strict:
             print(
                 f"WARNING: {exc}. Skipping schema validation.",
                 file=sys.stderr,
@@ -882,9 +961,29 @@ def run_validation(args: argparse.Namespace) -> list[ValidationError]:
             all_errors.extend(validate_case_against_schema(case, schema))
 
         # Semantic validation
-        if args.openclaw_repo:
-            repo = Path(args.openclaw_repo).resolve()
-            all_errors.extend(validate_case_semantic(case, repo))
+        if semantic_validation_enabled:
+            case_repository = _non_empty_string(case.get("repository"))
+            if case_repository is None:
+                all_errors.append(
+                    ValidationError(
+                        case_id if isinstance(case_id, str) else dir_name,
+                        "semantic",
+                        "repository must be a non-empty string",
+                    )
+                )
+            else:
+                repo_config = repo_configs.get(normalize_repository_id(case_repository))
+                if repo_config is None:
+                    all_errors.append(
+                        ValidationError(
+                            case_id if isinstance(case_id, str) else dir_name,
+                            "semantic",
+                            f"no local repo configured for {case_repository!r}; "
+                            f"pass --repo {case_repository}=<path>",
+                        )
+                    )
+                else:
+                    all_errors.extend(validate_case_semantic(case, repo_config.path))
 
         # Strict validation
         if args.strict:
@@ -907,7 +1006,14 @@ def main() -> None:
         "--openclaw-repo",
         type=str,
         default=None,
-        help="Path to local OpenClaw git checkout for semantic validation",
+        help="Legacy alias for --repo openclaw/openclaw=PATH.",
+    )
+    parser.add_argument(
+        "--repo",
+        action="append",
+        default=None,
+        metavar="OWNER/NAME=PATH",
+        help="Map a case repository to a local git checkout. Repeat for multiple repos.",
     )
     parser.add_argument(
         "--strict",

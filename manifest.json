@@ -1,9 +1,12 @@
 {
   "name": "openclaw-advisory-benchmark",
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-03-19T05:30:58.754064Z",
-  "repository": "openclaw/openclaw",
-  "caseCount": 24,
+  "generatedAt": "2026-03-31T20:13:20Z",
+  "repositories": [
+    "openclaw/openclaw",
+    "TryGhost/Ghost"
+  ],
+  "caseCount": 33,
   "cases": [
     {
       "id": "GHSA-3c6h-g97w-fg78",
@@ -42,6 +45,16 @@
       "vulnerabilityClass": "authbypass",
       "baselineCommit": "3467b0ba074cba456cf20d2178faff96bacaeafb",
       "vulnerableHead": "42c17adb5e4d3ea1f9b1d2fd921b9abc183b79df",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-5fp7-g646-ccf4",
+      "severity": "high",
+      "title": "Staff 2FA bypass",
+      "vulnerabilityClass": "authbypass",
+      "baselineCommit": "2308f6f4e18749e86a874ebadf4cf376104daae8",
+      "vulnerableHead": "dd9810fc96f36af1253f715fb725d78d9f990b66",
       "verificationStatus": "pass",
       "confidence": "high"
     },
@@ -106,6 +119,56 @@
       "confidence": "high"
     },
     {
+      "id": "GHSA-9fgx-q25h-jxrg",
+      "severity": "high",
+      "title": "DOM XSS in Theme Preview",
+      "vulnerabilityClass": "xss",
+      "baselineCommit": "d0e0760dae009055f7ce300e68883934bf024913",
+      "vulnerableHead": "a0bdba2516da3073e495ff5f089fe1742beb2537",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-9gh8-wp53-ccc6",
+      "severity": "high",
+      "title": "Unauthorized Newsletter Modification",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "ad226f85b3cb7cf9b5e7020d1acf2903dd612391",
+      "vulnerableHead": "b3ed0422655c8f7372261fd1e1ec232dfa090af1",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-9m84-wc28-w895",
+      "severity": "high",
+      "title": "Incomplete CSRF protections around OTC use",
+      "vulnerabilityClass": "csrf",
+      "baselineCommit": "51fa21324d8a0578015feab7991199203c509e4e",
+      "vulnerableHead": "7a18e829c5fbbf24610baeaa4ef02079356afc30",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-9xg7-mwmp-xmjx",
+      "severity": "high",
+      "title": "Staff Token permission bypass",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "191cff233473276324cbcf6b4d503425959d4f61",
+      "vulnerableHead": "c82b7ed0216229a36cb0a4e101559636c681a3a2",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-cgc2-rcrh-qr5x",
+      "severity": "high",
+      "title": "Remote Code Execution via Malicious Themes",
+      "vulnerabilityClass": "codeexec",
+      "baselineCommit": "64d9ce44cfe5465474897eb51c0008895861a216",
+      "vulnerableHead": "994a20cf8b37f95c13f616b6bb3a7948e327f33a",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
       "id": "GHSA-g55j-c2v4-pjcg",
       "severity": "high",
       "title": "Unauthenticated Local RCE via WebSocket config.apply",
@@ -142,6 +205,16 @@
       "vulnerabilityClass": "commandinjection",
       "baselineCommit": "b347d5d9ccbb8ccf008c887fc03cdc3410710afd",
       "vulnerableHead": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-gv6q-2m97-882h",
+      "severity": "high",
+      "title": "XSS via malicious Portal preview links",
+      "vulnerabilityClass": "xss",
+      "baselineCommit": "5dc0e92dc2aa2b2b59ddc06dd7df56861ed54fb8",
+      "vulnerableHead": "024d43478a52178e7d20187e4c081fd5296910ae",
       "verificationStatus": "pass",
       "confidence": "high"
     },
@@ -226,6 +299,16 @@
       "confidence": "high"
     },
     {
+      "id": "GHSA-r97q-ghch-82j9",
+      "severity": "high",
+      "title": "Information disclosure of private API fields",
+      "vulnerabilityClass": "secretdisclosure",
+      "baselineCommit": "acd1a7fd69bad92cae6113543c0ec7352999ad09",
+      "vulnerableHead": "7b761a87515a01da9126e1bdabb891a8826123c1",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
       "id": "GHSA-rqpp-rjj8-7wv8",
       "severity": "critical",
       "title": "WebSocket shared-auth connections could self-declare elevated scopes",
@@ -242,6 +325,16 @@
       "vulnerabilityClass": "ssrf",
       "baselineCommit": "02842bef9179e65ac3c8174091a4facfcd0a4083",
       "vulnerableHead": "2267d58afcc70fe19408b8f0dce108c340f3426d",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-w52v-v783-gw97",
+      "severity": "critical",
+      "title": "SQL injection in Content API",
+      "vulnerabilityClass": "sqlinjection",
+      "baselineCommit": "fe962345afb5c9d31e59bf12f441e07dbd1eb4c6",
+      "vulnerableHead": "d6267340a13ed7c78c66c27c78ecd819bbd94576",
       "verificationStatus": "pass",
       "confidence": "high"
     }
