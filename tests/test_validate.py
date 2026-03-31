@@ -390,6 +390,52 @@ class TestManifestConsistency:
         assert any("severity missing from manifest entry" in error.message for error in errors)
         assert any("title missing from manifest entry" in error.message for error in errors)
 
+    def test_manifest_repositories_must_cover_loaded_case_repositories(self):
+        openclaw_case = _minimal_case()
+        ghost_case = _minimal_case(
+            {
+                "id": "GHSA-ghost-ghost-ghost",
+                "advisoryUrl": "https://github.com/TryGhost/Ghost/security/advisories/GHSA-ghost-ghost-ghost",
+                "repository": "TryGhost/Ghost",
+            }
+        )
+        manifest = {
+            "repositories": ["openclaw/openclaw"],
+            "caseCount": 2,
+            "cases": [
+                _manifest_entry(openclaw_case),
+                _manifest_entry(ghost_case),
+            ],
+        }
+
+        errors = validate_manifest_consistency(
+            manifest,
+            [openclaw_case["id"], ghost_case["id"]],
+            [openclaw_case, ghost_case],
+        )
+
+        assert any(
+            "TryGhost/Ghost" in error.message
+            and "missing from manifest.repositories" in error.message
+            for error in errors
+        )
+
+    def test_manifest_repositories_reject_unused_entries(self):
+        case = _minimal_case()
+        manifest = {
+            "repositories": ["openclaw/openclaw", "TryGhost/Ghost"],
+            "caseCount": 1,
+            "cases": [_manifest_entry(case)],
+        }
+
+        errors = validate_manifest_consistency(manifest, [case["id"]], [case])
+
+        assert any(
+            "TryGhost/Ghost" in error.message
+            and "no loaded case uses it" in error.message
+            for error in errors
+        )
+
 
 class TestNoDuplicateIds:
     def test_no_duplicates(self):

@@ -68,7 +68,7 @@ Those checks should carry machine-readable `ancestor` and `descendant` SHAs.
 - `verificationStatus`
 - `confidence`
 
-Validation checks these summary fields against the corresponding `case.json`.
+Validation checks these summary fields against the corresponding `case.json`. When `manifest.repositories` is present, validation also checks that it matches the set of repositories referenced by the loaded cases.
 
 ## Vulnerability Class Taxonomy
 
