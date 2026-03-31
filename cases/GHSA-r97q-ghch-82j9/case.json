@@ -43,7 +43,7 @@
       "core/server/api/canary/pages-public.js",
       "core/server/api/canary/posts-public.js"
     ],
-    "description": "Scanner should detect secretdisclosure when scanning vulnerableHead."
+    "description": "Scanner should detect secretdisclosure when scanning vulnerableHead. The upstream GHSA does not publish CWE metadata for this advisory, so scanners must emit their own CWE metadata to satisfy class matching."
   },
   "verification": {
     "status": "pass",

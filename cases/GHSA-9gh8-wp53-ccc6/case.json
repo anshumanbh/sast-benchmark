@@ -26,7 +26,7 @@
       {
         "ecosystem": "npm",
         "name": "ghost",
-        "vulnerableRange": "4.46.0-4.48.7",
+        "vulnerableRange": "4.46.0 - 4.48.7",
         "patchedVersions": "4.48.8"
       }
     ]

@@ -43,7 +43,7 @@
       "core/server/web/admin/preview.js",
       "core/server/web/admin/views/preview.html"
     ],
-    "description": "Scanner should detect xss when scanning vulnerableHead."
+    "description": "Scanner should detect xss when scanning vulnerableHead. The upstream GHSA does not publish CWE metadata for this advisory, so scanners must emit their own CWE metadata to satisfy class matching."
   },
   "verification": {
     "status": "pass",

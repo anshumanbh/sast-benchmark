@@ -771,7 +771,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             worktrees[normalize_repository_id(repository)] = create_benchmark_worktree(
                 config.path
             )
-    except Exception as exc:
+    except (RuntimeError, OSError) as exc:
         for worktree in worktrees.values():
             cleanup_benchmark_worktree(worktree)
         print(f"Failed to prepare benchmark worktree: {exc}", file=sys.stderr)
