@@ -161,7 +161,6 @@ def _benchmark_args(
     **overrides: object,
 ) -> Namespace:
     args = {
-        "openclaw_repo": str(source_repo),
         "repo": None,
         "scanner_cmd": scanner_cmd,
         "output": str(tmp_path / "results.json"),
@@ -173,6 +172,8 @@ def _benchmark_args(
         "baseline_timeout": None,
     }
     args.update(overrides)
+    if "openclaw_repo" not in overrides:
+        args["openclaw_repo"] = None if args["repo"] is not None else str(source_repo)
     return Namespace(**args)
 
 
@@ -750,6 +751,7 @@ class TestRunBenchmark:
             openclaw_repo,
             cases_dir,
             _simple_scanner_cmd(),
+            openclaw_repo=str(openclaw_repo),
             repo=[f"openclaw/openclaw={alternate_repo}"],
         )
 

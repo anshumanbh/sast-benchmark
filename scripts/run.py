@@ -708,6 +708,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         print(f"Invalid repository configuration: {exc}", file=sys.stderr)
         sys.exit(2)
 
+    # Defensive guard for tests and other direct callers; main() already enforces
+    # this for the normal CLI path.
     if not repo_configs:
         print(
             "At least one repository is required. Pass --repo OWNER/NAME=/path "
