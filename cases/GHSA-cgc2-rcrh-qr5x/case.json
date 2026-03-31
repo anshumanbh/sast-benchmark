@@ -8,7 +8,9 @@
     "severity": "high",
     "publishedAt": "2026-03-02T15:45:46Z",
     "description": "Specially crafted malicious themes could execute arbitrary code on the server running Ghost. The issue affected Ghost v0.7.2 through v6.19.0 and was fixed in v6.19.1.",
-    "cweIds": [],
+    "cweIds": [
+      "CWE-74"
+    ],
     "cvss": {
       "version": "3.1",
       "vectorString": "CVSS:3.1/AV:N/AC:H/PR:H/UI:R/S:C/C:H/I:H/A:H",

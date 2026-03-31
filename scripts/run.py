@@ -730,8 +730,22 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         print("No cases found.", file=sys.stderr)
         sys.exit(1)
 
+    invalid_case_repositories = [
+        case.get("id", "<unknown>")
+        for case in cases
+        if not isinstance(case.get("repository"), str) or not case["repository"].strip()
+    ]
+    if invalid_case_repositories:
+        invalid_list = ", ".join(sorted(str(case_id) for case_id in invalid_case_repositories))
+        print(
+            f"Cases missing a valid repository field: {invalid_list}. "
+            "Run scripts/validate.py to fix case metadata before benchmarking.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     case_repositories = sorted(
-        {case["repository"] for case in cases if isinstance(case.get("repository"), str)}
+        {case["repository"] for case in cases}
     )
     missing_repositories = [
         repository
@@ -757,7 +771,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             worktrees[normalize_repository_id(repository)] = create_benchmark_worktree(
                 config.path
             )
-    except RuntimeError as exc:
+    except Exception as exc:
         for worktree in worktrees.values():
             cleanup_benchmark_worktree(worktree)
         print(f"Failed to prepare benchmark worktree: {exc}", file=sys.stderr)

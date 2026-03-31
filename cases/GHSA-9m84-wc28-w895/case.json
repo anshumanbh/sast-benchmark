@@ -8,7 +8,9 @@
     "severity": "high",
     "publishedAt": "2026-03-04T17:51:38Z",
     "description": "Ghost's OTC verification flow did not fully bind verification to the requesting session, which could make phishing-based site takeover easier in some scenarios. The issue affected Ghost v5.101.6 through v6.19.2 and was fixed in v6.19.3.",
-    "cweIds": [],
+    "cweIds": [
+      "CWE-352"
+    ],
     "cvss": {
       "version": "3.1",
       "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",

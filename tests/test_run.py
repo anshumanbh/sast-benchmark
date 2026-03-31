@@ -9,6 +9,7 @@ import sys
 from argparse import Namespace
 from contextlib import redirect_stdout
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 import pytest
@@ -16,6 +17,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from run import (
+    BenchmarkWorktree,
     Finding,
     extract_cwe_ids,
     normalize_path,
@@ -757,6 +759,93 @@ class TestRunBenchmark:
 
         assert excinfo.value.code == 2
         assert "configured multiple times with different paths" in stderr.getvalue()
+
+    def test_missing_repository_in_case_exits_cleanly(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+        tracked = repo / "tracked.txt"
+        tracked.write_text("committed\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "initial"],
+            check=True,
+        )
+        head = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        case_dir = cases_dir / "GHSA-test-test-test"
+        case_dir.mkdir(parents=True)
+        (case_dir / "case.json").write_text(
+            json.dumps(
+                {
+                    "id": "GHSA-test-test-test",
+                    "timeline": {"vulnerableHead": head},
+                    "expectedOutcome": {
+                        "vulnerabilityClass": "pathtraversal",
+                        "minimumSeverity": "high",
+                        "expectedPaths": ["src/foo.ts"],
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        args = _benchmark_args(tmp_path, repo, cases_dir, _simple_scanner_cmd())
+        with patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            with pytest.raises(SystemExit) as excinfo:
+                run_benchmark(args)
+
+        assert excinfo.value.code == 1
+        assert "missing a valid repository field" in stderr.getvalue().lower()
+
+    def test_worktree_creation_cleanup_runs_for_non_runtime_errors(self, tmp_path: Path):
+        cases_dir = tmp_path / "cases"
+        _write_case(
+            cases_dir,
+            "a" * 40,
+            case_id="GHSA-aaaa-aaaa-aaaa",
+            repository="openclaw/openclaw",
+        )
+        _write_case(
+            cases_dir,
+            "b" * 40,
+            case_id="GHSA-bbbb-bbbb-bbbb",
+            repository="TryGhost/Ghost",
+        )
+
+        first_worktree = BenchmarkWorktree(
+            source_repo=tmp_path / "openclaw",
+            path=tmp_path / "tmp-worktree",
+            tempdir=TemporaryDirectory(dir=tmp_path),
+        )
+        args = _benchmark_args(
+            tmp_path,
+            tmp_path / "openclaw",
+            cases_dir,
+            _simple_scanner_cmd(),
+            openclaw_repo=None,
+            repo=[
+                f"openclaw/openclaw={tmp_path / 'openclaw'}",
+                f"TryGhost/Ghost={tmp_path / 'ghost'}",
+            ],
+        )
+
+        with (
+            patch(
+                "run.create_benchmark_worktree",
+                side_effect=[first_worktree, OSError("disk full")],
+            ),
+            patch("run.cleanup_benchmark_worktree") as cleanup_worktree,
+            patch("sys.stderr", new_callable=io.StringIO) as stderr,
+        ):
+            with pytest.raises(SystemExit) as excinfo:
+                run_benchmark(args)
+
+        first_worktree.tempdir.cleanup()
+        assert excinfo.value.code == 1
+        cleanup_worktree.assert_called_once_with(first_worktree)
+        assert "failed to prepare benchmark worktree: disk full" in stderr.getvalue().lower()
 
     def test_uses_temp_worktree_and_preserves_source_repo(self, tmp_path: Path):
         repo = tmp_path / "repo"
