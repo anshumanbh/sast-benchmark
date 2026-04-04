@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import os
 import re
 import subprocess
 import sys
@@ -600,6 +601,19 @@ def cleanup_benchmark_worktree(worktree: BenchmarkWorktree) -> None:
 
 def run_scanner(cmd: str, cwd: Path, timeout: int = 300) -> tuple[str, str, int]:
     """Run scanner command and return (stdout, stderr, returncode)."""
+    return run_scanner_with_env(cmd, cwd, timeout=timeout, extra_env=None)
+
+
+def run_scanner_with_env(
+    cmd: str,
+    cwd: Path,
+    timeout: int = 300,
+    extra_env: dict[str, str] | None = None,
+) -> tuple[str, str, int]:
+    """Run scanner command with optional extra environment variables."""
+    env = os.environ.copy()
+    if extra_env:
+        env.update(extra_env)
     try:
         proc = subprocess.run(
             cmd,
@@ -608,6 +622,7 @@ def run_scanner(cmd: str, cwd: Path, timeout: int = 300) -> tuple[str, str, int]
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=env,
         )
         return proc.stdout, proc.stderr, proc.returncode
     except subprocess.TimeoutExpired as exc:
@@ -640,6 +655,23 @@ def load_cases(
             except (json.JSONDecodeError, ValueError) as exc:
                 print(f"Skipping {d.name}: invalid case.json: {exc}", file=sys.stderr)
     return cases
+
+
+def benchmark_command_env(case: dict[str, Any], phase: str) -> dict[str, str]:
+    """Build generic benchmark environment metadata for scanner subprocesses."""
+    timeline = case.get("timeline", {})
+    env = {
+        "BENCHMARK_CASE_ID": str(case["id"]),
+        "BENCHMARK_PHASE": phase,
+        "BENCHMARK_REPOSITORY": str(case["repository"]),
+    }
+    baseline_commit = timeline.get("baselineCommit")
+    vulnerable_head = timeline.get("vulnerableHead")
+    if isinstance(baseline_commit, str) and baseline_commit:
+        env["BENCHMARK_BASELINE_COMMIT"] = baseline_commit
+    if isinstance(vulnerable_head, str) and vulnerable_head:
+        env["BENCHMARK_VULNERABLE_HEAD"] = vulnerable_head
+    return env
 
 
 # ── Reporting ─────────────────────────────────────────────────────────────────
@@ -821,8 +853,11 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                     baseline_status = "fail"
 
                 if not error:
-                    _, baseline_stderr, baseline_exit = run_scanner(
-                        baseline_cmd, worktree.path, baseline_timeout
+                    _, baseline_stderr, baseline_exit = run_scanner_with_env(
+                        baseline_cmd,
+                        worktree.path,
+                        baseline_timeout,
+                        benchmark_command_env(case, "baseline"),
                     )
                     if baseline_exit == -1:
                         error = "baseline timeout"
@@ -841,8 +876,11 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
                     error = f"checkout failed: {e}"
 
             if not error:
-                stdout, stderr, scanner_exit_code = run_scanner(
-                    scanner_cmd, worktree.path, timeout
+                stdout, stderr, scanner_exit_code = run_scanner_with_env(
+                    scanner_cmd,
+                    worktree.path,
+                    timeout,
+                    benchmark_command_env(case, "scan"),
                 )
                 if scanner_exit_code == -1:
                     error = "timeout"
