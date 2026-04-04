@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from run import (
     BenchmarkWorktree,
     Finding,
+    benchmark_command_env,
     extract_cwe_ids,
     normalize_path,
     detect_format,
@@ -737,6 +738,28 @@ class TestBuildResults:
         assert build_results([], "")["detectionRate"] == 0.0
 
 
+class TestBenchmarkCommandEnv:
+    def test_includes_case_metadata(self):
+        case = {
+            "id": "GHSA-test-test-test",
+            "repository": "openclaw/openclaw",
+            "timeline": {
+                "baselineCommit": "1" * 40,
+                "vulnerableHead": "2" * 40,
+            },
+        }
+
+        env = benchmark_command_env(case, "scan")
+
+        assert env == {
+            "BENCHMARK_CASE_ID": "GHSA-test-test-test",
+            "BENCHMARK_PHASE": "scan",
+            "BENCHMARK_REPOSITORY": "openclaw/openclaw",
+            "BENCHMARK_BASELINE_COMMIT": "1" * 40,
+            "BENCHMARK_VULNERABLE_HEAD": "2" * 40,
+        }
+
+
 class TestRunBenchmark:
     def test_conflicting_openclaw_repo_and_repo_mapping_exits(self, tmp_path: Path):
         openclaw_repo = tmp_path / "openclaw"
@@ -997,6 +1020,74 @@ class TestRunBenchmark:
             "TryGhost/Ghost",
         ]
         assert [result["detected"] for result in results["results"]] == [True, True]
+
+    def test_passes_case_metadata_to_baseline_and_scan_commands(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _init_git_repo(repo)
+        tracked = repo / "tracked.txt"
+        tracked.write_text("baseline\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "baseline"],
+            check=True,
+        )
+        baseline = _git(repo, "rev-parse", "HEAD")
+
+        tracked.write_text("vulnerable\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-qam", "vulnerable"],
+            check=True,
+        )
+        vulnerable = _git(repo, "rev-parse", "HEAD")
+
+        cases_dir = tmp_path / "cases"
+        _write_case(
+            cases_dir,
+            vulnerable,
+            baseline_commit=baseline,
+            case_id="GHSA-test-test-test",
+        )
+
+        calls: list[dict[str, str] | None] = []
+
+        def fake_run_scanner_with_env(
+            cmd: str, cwd: Path, timeout: int = 300, extra_env: dict[str, str] | None = None
+        ) -> tuple[str, str, int]:
+            calls.append(extra_env)
+            if extra_env and extra_env.get("BENCHMARK_PHASE") == "baseline":
+                return "", "", 0
+            return json.dumps({"findings": [{"path": "src/foo.ts", "severity": "high", "cweIds": ["CWE-22"]}]}), "", 0
+
+        with patch("run.run_scanner_with_env", side_effect=fake_run_scanner_with_env):
+            results = run_benchmark(
+                _benchmark_args(
+                    tmp_path,
+                    repo,
+                    cases_dir,
+                    _simple_scanner_cmd(),
+                    baseline_cmd="echo baseline",
+                    baseline_timeout=10,
+                )
+            )
+
+        assert results["results"][0]["detected"] is True
+        assert calls == [
+            {
+                "BENCHMARK_CASE_ID": "GHSA-test-test-test",
+                "BENCHMARK_PHASE": "baseline",
+                "BENCHMARK_REPOSITORY": "openclaw/openclaw",
+                "BENCHMARK_BASELINE_COMMIT": baseline,
+                "BENCHMARK_VULNERABLE_HEAD": vulnerable,
+            },
+            {
+                "BENCHMARK_CASE_ID": "GHSA-test-test-test",
+                "BENCHMARK_PHASE": "scan",
+                "BENCHMARK_REPOSITORY": "openclaw/openclaw",
+                "BENCHMARK_BASELINE_COMMIT": baseline,
+                "BENCHMARK_VULNERABLE_HEAD": vulnerable,
+            },
+        ]
 
 
 class TestBaselineCmd:
