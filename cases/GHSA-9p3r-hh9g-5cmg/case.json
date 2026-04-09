@@ -19,16 +19,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "873549c8f17be434fb8903c563f752a62c6d3a0c",
+    "baselineCommit": "33edb57e745b4e3fab788248fa8b52cbb5727062",
     "introducingCommits": [
       {
-        "sha": "7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
-        "authoredAt": "2026-03-31T09:53:32+09:00",
-        "subject": "fix(host-env): block Python package index redirection env vars (#58011)"
+        "sha": "b8bb8510a2a382632cae058200c9e90a591e1ffd",
+        "authoredAt": "2026-03-15T21:35:30-07:00",
+        "subject": "feat: move ssh sandboxing into core"
       }
     ],
     "vulnerableHead": "7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
-    "notes": "This case uses the immediate parent of fix commit 121870a08583033ed6a0ed73d9ffea32991252bb as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+    "notes": "The core remote FS bridge inherits the racy resolve-then-cat read path when SSH sandboxing moves into core. vulnerableHead stays on the last pre-fix snapshot immediately before 121870a08583033ed6a0ed73d9ffea32991252bb."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "sandboxescape",
@@ -37,11 +37,11 @@
       "src/agents/sandbox/fs-bridge-mutation-helper.ts",
       "src/agents/sandbox/remote-fs-bridge.ts"
     ],
-    "description": "Scanner should detect sandboxescape when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+    "description": "Scanner should detect sandboxescape when scanning vulnerableHead."
   },
   "verification": {
-    "status": "unverified",
-    "confidence": "low",
+    "status": "pass",
+    "confidence": "high",
     "checks": [
       {
         "name": "vulnerable_head_is_fix_parent",
@@ -49,9 +49,25 @@
         "details": "Using parent 7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d of fix commit 121870a08583033ed6a0ed73d9ffea32991252bb as the last known vulnerable commit."
       },
       {
-        "name": "baseline_precedes_vulnerable_head",
+        "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "Using direct parent 873549c8f17be434fb8903c563f752a62c6d3a0c of vulnerableHead 7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d as a temporary baseline until exact introduction mapping is completed."
+        "details": "baseline=33edb57e745b4e3fab788248fa8b52cbb5727062 intro=b8bb8510a2a382632cae058200c9e90a591e1ffd",
+        "ancestor": "33edb57e745b4e3fab788248fa8b52cbb5727062",
+        "descendant": "b8bb8510a2a382632cae058200c9e90a591e1ffd"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=b8bb8510a2a382632cae058200c9e90a591e1ffd vulnerable_head=7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
+        "ancestor": "b8bb8510a2a382632cae058200c9e90a591e1ffd",
+        "descendant": "7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=33edb57e745b4e3fab788248fa8b52cbb5727062 vulnerable_head=7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
+        "ancestor": "33edb57e745b4e3fab788248fa8b52cbb5727062",
+        "descendant": "7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d"
       }
     ]
   }

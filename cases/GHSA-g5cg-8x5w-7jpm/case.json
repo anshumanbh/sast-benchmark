@@ -19,16 +19,21 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "bd957a3a8b46976724570936bc37e052d4ec2fc5",
+    "baselineCommit": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
     "introducingCommits": [
       {
-        "sha": "91f7a6b0fd67b703897e6e307762d471ca09333d",
-        "authoredAt": "2026-03-31T09:05:34+09:00",
-        "subject": "fix(gateway): revoke active sessions on token rotation (#57646)"
+        "sha": "8fae55e8e0579881a0b5a7a936fe3054dd73228d",
+        "authoredAt": "2026-02-07T19:46:01-08:00",
+        "subject": "fix(cron): share isolated announce flow + harden cron scheduling/delivery (#11641)"
+      },
+      {
+        "sha": "60d33637d9e6e513b65f20796eb4f456bccf203b",
+        "authoredAt": "2026-03-05T16:32:42-06:00",
+        "subject": "fix(auth): grant senderIsOwner for internal channels with operator.admin scope (openclaw#35704)"
       }
     ],
     "vulnerableHead": "91f7a6b0fd67b703897e6e307762d471ca09333d",
-    "notes": "This case uses the immediate parent of fix commit a30214a624946fc5c85c9558a27c1580172374fd as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+    "notes": "The exploit condition requires both heartbeat exec-event context inheritance and internal-channel senderIsOwner escalation by operator.admin scope. vulnerableHead stays on the last pre-fix snapshot immediately before a30214a624946fc5c85c9558a27c1580172374fd."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "sandboxescape",
@@ -37,11 +42,11 @@
       "src/auto-reply/command-auth.ts",
       "src/infra/heartbeat-runner.ts"
     ],
-    "description": "Scanner should detect sandboxescape when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+    "description": "Scanner should detect sandboxescape when scanning vulnerableHead."
   },
   "verification": {
-    "status": "unverified",
-    "confidence": "low",
+    "status": "pass",
+    "confidence": "high",
     "checks": [
       {
         "name": "vulnerable_head_is_fix_parent",
@@ -49,9 +54,44 @@
         "details": "Using parent 91f7a6b0fd67b703897e6e307762d471ca09333d of fix commit a30214a624946fc5c85c9558a27c1580172374fd as the last known vulnerable commit."
       },
       {
-        "name": "baseline_precedes_vulnerable_head",
+        "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "Using direct parent bd957a3a8b46976724570936bc37e052d4ec2fc5 of vulnerableHead 91f7a6b0fd67b703897e6e307762d471ca09333d as a temporary baseline until exact introduction mapping is completed."
+        "details": "baseline=ebe57304016aaadf69c0357d49ec1e36df6a5daa earliest_intro=8fae55e8e0579881a0b5a7a936fe3054dd73228d"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=ebe57304016aaadf69c0357d49ec1e36df6a5daa intro=8fae55e8e0579881a0b5a7a936fe3054dd73228d",
+        "ancestor": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
+        "descendant": "8fae55e8e0579881a0b5a7a936fe3054dd73228d"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=ebe57304016aaadf69c0357d49ec1e36df6a5daa intro=60d33637d9e6e513b65f20796eb4f456bccf203b",
+        "ancestor": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
+        "descendant": "60d33637d9e6e513b65f20796eb4f456bccf203b"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=8fae55e8e0579881a0b5a7a936fe3054dd73228d vulnerable_head=91f7a6b0fd67b703897e6e307762d471ca09333d",
+        "ancestor": "8fae55e8e0579881a0b5a7a936fe3054dd73228d",
+        "descendant": "91f7a6b0fd67b703897e6e307762d471ca09333d"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=60d33637d9e6e513b65f20796eb4f456bccf203b vulnerable_head=91f7a6b0fd67b703897e6e307762d471ca09333d",
+        "ancestor": "60d33637d9e6e513b65f20796eb4f456bccf203b",
+        "descendant": "91f7a6b0fd67b703897e6e307762d471ca09333d"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=ebe57304016aaadf69c0357d49ec1e36df6a5daa vulnerable_head=91f7a6b0fd67b703897e6e307762d471ca09333d",
+        "ancestor": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
+        "descendant": "91f7a6b0fd67b703897e6e307762d471ca09333d"
       }
     ]
   }

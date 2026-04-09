@@ -26,16 +26,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "11d71ca35219b27d3604f99b181006d19129461e",
+    "baselineCommit": "6b2f2811dc623e5faaf2f76afaa9279637174590",
     "introducingCommits": [
       {
-        "sha": "c7134e629c917c120c79f6988b78069fda244318",
-        "authoredAt": "2026-03-20T15:32:55-05:00",
-        "subject": "LINE: harden Express webhook parsing to verified raw body (#51202)"
+        "sha": "2cdbadee1f8fcaa93302d7debbfc529e19868ea4",
+        "authoredAt": "2026-02-21T11:44:20+01:00",
+        "subject": "fix(security): block startup-file env injection across host execution paths"
       }
     ],
     "vulnerableHead": "c7134e629c917c120c79f6988b78069fda244318",
-    "notes": "This case uses the immediate parent of fix commit 7abfff756d6c68d17e21d1657bbacbaec86de232 as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+    "notes": "Host exec env sanitization first lands in 2cdbadee1f8fcaa93302d7debbfc529e19868ea4, but the override blocklist remains fail-open for multiple supply-chain redirect variables until 7abfff756d6c68d17e21d1657bbacbaec86de232."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "commandinjection",
@@ -44,11 +44,11 @@
       "src/infra/host-env-security-policy.json",
       "src/infra/host-env-security.ts"
     ],
-    "description": "Scanner should detect commandinjection when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+    "description": "Scanner should detect commandinjection when scanning vulnerableHead."
   },
   "verification": {
-    "status": "unverified",
-    "confidence": "low",
+    "status": "pass",
+    "confidence": "high",
     "checks": [
       {
         "name": "vulnerable_head_is_fix_parent",
@@ -56,9 +56,25 @@
         "details": "Using parent c7134e629c917c120c79f6988b78069fda244318 of fix commit 7abfff756d6c68d17e21d1657bbacbaec86de232 as the last known vulnerable commit."
       },
       {
-        "name": "baseline_precedes_vulnerable_head",
+        "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "Using direct parent 11d71ca35219b27d3604f99b181006d19129461e of vulnerableHead c7134e629c917c120c79f6988b78069fda244318 as a temporary baseline until exact introduction mapping is completed."
+        "details": "baseline=6b2f2811dc623e5faaf2f76afaa9279637174590 intro=2cdbadee1f8fcaa93302d7debbfc529e19868ea4",
+        "ancestor": "6b2f2811dc623e5faaf2f76afaa9279637174590",
+        "descendant": "2cdbadee1f8fcaa93302d7debbfc529e19868ea4"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=2cdbadee1f8fcaa93302d7debbfc529e19868ea4 vulnerable_head=c7134e629c917c120c79f6988b78069fda244318",
+        "ancestor": "2cdbadee1f8fcaa93302d7debbfc529e19868ea4",
+        "descendant": "c7134e629c917c120c79f6988b78069fda244318"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=6b2f2811dc623e5faaf2f76afaa9279637174590 vulnerable_head=c7134e629c917c120c79f6988b78069fda244318",
+        "ancestor": "6b2f2811dc623e5faaf2f76afaa9279637174590",
+        "descendant": "c7134e629c917c120c79f6988b78069fda244318"
       }
     ]
   }

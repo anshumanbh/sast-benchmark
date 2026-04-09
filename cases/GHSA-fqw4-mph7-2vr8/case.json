@@ -21,16 +21,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "b6f631e0457ddde3e91e4d562c83c1dacdc2ff9d",
+    "baselineCommit": "6817c0ec7b4fa830123d4f5c340f075a4bd04ee2",
     "introducingCommits": [
       {
-        "sha": "19d91aaa8f93587ea086c0b9b4673d9b7b874f74",
-        "authoredAt": "2026-03-26T02:43:15+03:00",
-        "subject": "fix: make buttons schema optional in message tool (#54418)"
+        "sha": "9165bd7f37fe1f71e57599acf4b1be12b68d17d1",
+        "authoredAt": "2026-02-22T22:11:50+01:00",
+        "subject": "fix(gateway): auto-approve loopback scope upgrades"
       }
     ],
     "vulnerableHead": "19d91aaa8f93587ea086c0b9b4673d9b7b874f74",
-    "notes": "This case uses the immediate parent of fix commit 81ebc7e0344fd19c85778e883bad45e2da972229 as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+    "notes": "Silent loopback reconnect scope upgrades start auto-approving in 9165bd7f37fe1f71e57599acf4b1be12b68d17d1. vulnerableHead stays on the last pre-fix snapshot immediately before 81ebc7e0344fd19c85778e883bad45e2da972229."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "brokenauthz",
@@ -38,11 +38,11 @@
     "expectedPaths": [
       "src/gateway/server/ws-connection/message-handler.ts"
     ],
-    "description": "Scanner should detect brokenauthz when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
   },
   "verification": {
-    "status": "unverified",
-    "confidence": "low",
+    "status": "pass",
+    "confidence": "high",
     "checks": [
       {
         "name": "vulnerable_head_is_fix_parent",
@@ -50,9 +50,25 @@
         "details": "Using parent 19d91aaa8f93587ea086c0b9b4673d9b7b874f74 of fix commit 81ebc7e0344fd19c85778e883bad45e2da972229 as the last known vulnerable commit."
       },
       {
-        "name": "baseline_precedes_vulnerable_head",
+        "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "Using direct parent b6f631e0457ddde3e91e4d562c83c1dacdc2ff9d of vulnerableHead 19d91aaa8f93587ea086c0b9b4673d9b7b874f74 as a temporary baseline until exact introduction mapping is completed."
+        "details": "baseline=6817c0ec7b4fa830123d4f5c340f075a4bd04ee2 intro=9165bd7f37fe1f71e57599acf4b1be12b68d17d1",
+        "ancestor": "6817c0ec7b4fa830123d4f5c340f075a4bd04ee2",
+        "descendant": "9165bd7f37fe1f71e57599acf4b1be12b68d17d1"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=9165bd7f37fe1f71e57599acf4b1be12b68d17d1 vulnerable_head=19d91aaa8f93587ea086c0b9b4673d9b7b874f74",
+        "ancestor": "9165bd7f37fe1f71e57599acf4b1be12b68d17d1",
+        "descendant": "19d91aaa8f93587ea086c0b9b4673d9b7b874f74"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=6817c0ec7b4fa830123d4f5c340f075a4bd04ee2 vulnerable_head=19d91aaa8f93587ea086c0b9b4673d9b7b874f74",
+        "ancestor": "6817c0ec7b4fa830123d4f5c340f075a4bd04ee2",
+        "descendant": "19d91aaa8f93587ea086c0b9b4673d9b7b874f74"
       }
     ]
   }

@@ -21,16 +21,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "756d9b57823217802b15c5b7d73a154fbd6bad85",
+    "baselineCommit": "47d1f23d5552c6ae186249e61d845e4b955486ff",
     "introducingCommits": [
       {
-        "sha": "132e45900904fc981e6ef04259eb37c72f6c165d",
-        "authoredAt": "2026-03-15T10:43:03-07:00",
-        "subject": "fix(ci): config drift found and documented"
+        "sha": "73e9e787b4df7705556f199f5f3e00580fab38c3",
+        "authoredAt": "2026-01-19T10:07:56Z",
+        "subject": "feat: unify device auth + pairing"
       }
     ],
     "vulnerableHead": "132e45900904fc981e6ef04259eb37c72f6c165d",
-    "notes": "This case uses the immediate parent of fix commit fc2d29ea926f47c428c556e92ec981441228d2a4 as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+    "notes": "The gateway RPC approval path and scope-bearing device-pairing flow land in feat: unify device auth + pairing. vulnerableHead stays on the last pre-fix snapshot immediately before fc2d29ea926f47c428c556e92ec981441228d2a4."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "brokenauthz",
@@ -39,11 +39,11 @@
       "src/gateway/server-methods/devices.ts",
       "src/infra/device-pairing.ts"
     ],
-    "description": "Scanner should detect brokenauthz when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
   },
   "verification": {
-    "status": "unverified",
-    "confidence": "low",
+    "status": "pass",
+    "confidence": "high",
     "checks": [
       {
         "name": "vulnerable_head_is_fix_parent",
@@ -51,9 +51,25 @@
         "details": "Using parent 132e45900904fc981e6ef04259eb37c72f6c165d of fix commit fc2d29ea926f47c428c556e92ec981441228d2a4 as the last known vulnerable commit."
       },
       {
-        "name": "baseline_precedes_vulnerable_head",
+        "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "Using direct parent 756d9b57823217802b15c5b7d73a154fbd6bad85 of vulnerableHead 132e45900904fc981e6ef04259eb37c72f6c165d as a temporary baseline until exact introduction mapping is completed."
+        "details": "baseline=47d1f23d5552c6ae186249e61d845e4b955486ff intro=73e9e787b4df7705556f199f5f3e00580fab38c3",
+        "ancestor": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+        "descendant": "73e9e787b4df7705556f199f5f3e00580fab38c3"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=73e9e787b4df7705556f199f5f3e00580fab38c3 vulnerable_head=132e45900904fc981e6ef04259eb37c72f6c165d",
+        "ancestor": "73e9e787b4df7705556f199f5f3e00580fab38c3",
+        "descendant": "132e45900904fc981e6ef04259eb37c72f6c165d"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=47d1f23d5552c6ae186249e61d845e4b955486ff vulnerable_head=132e45900904fc981e6ef04259eb37c72f6c165d",
+        "ancestor": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+        "descendant": "132e45900904fc981e6ef04259eb37c72f6c165d"
       }
     ]
   }

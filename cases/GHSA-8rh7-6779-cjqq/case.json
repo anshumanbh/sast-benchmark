@@ -26,16 +26,21 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "501190d2e833215366a72780146926b94c24779c",
+    "baselineCommit": "aa45f512f4bb376a060b4642b4b27b358573f710",
     "introducingCommits": [
       {
-        "sha": "79fbcfc03b07a260e7ab838e03ffe5863029f19c",
-        "authoredAt": "2026-03-25T16:17:42-05:00",
-        "subject": "fix(ci): restore main green"
+        "sha": "77b19643e2f10fa0595acafc67df147df0ca87a7",
+        "authoredAt": "2026-01-05T01:11:29+01:00",
+        "subject": "fix: load global .env fallback"
+      },
+      {
+        "sha": "97a7dcf48e1cf7e0ddb441d432d67c798f466f02",
+        "authoredAt": "2026-03-16T21:51:24+05:30",
+        "subject": "perf: reduce status json startup memory"
       }
     ],
     "vulnerableHead": "79fbcfc03b07a260e7ab838e03ffe5863029f19c",
-    "notes": "This case uses the immediate parent of fix commit 6a793248024dca7685f63bcceb64a0096fd1586d as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+    "notes": "Untrusted process-CWD .env loading first lands in src/infra/dotenv.ts and is later duplicated in src/cli/dotenv.ts. vulnerableHead stays on the last pre-fix snapshot immediately before 6a793248024dca7685f63bcceb64a0096fd1586d."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "commandinjection",
@@ -44,11 +49,11 @@
       "src/cli/dotenv.ts",
       "src/infra/dotenv.ts"
     ],
-    "description": "Scanner should detect commandinjection when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+    "description": "Scanner should detect commandinjection when scanning vulnerableHead."
   },
   "verification": {
-    "status": "unverified",
-    "confidence": "low",
+    "status": "pass",
+    "confidence": "high",
     "checks": [
       {
         "name": "vulnerable_head_is_fix_parent",
@@ -56,9 +61,44 @@
         "details": "Using parent 79fbcfc03b07a260e7ab838e03ffe5863029f19c of fix commit 6a793248024dca7685f63bcceb64a0096fd1586d as the last known vulnerable commit."
       },
       {
-        "name": "baseline_precedes_vulnerable_head",
+        "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "Using direct parent 501190d2e833215366a72780146926b94c24779c of vulnerableHead 79fbcfc03b07a260e7ab838e03ffe5863029f19c as a temporary baseline until exact introduction mapping is completed."
+        "details": "baseline=aa45f512f4bb376a060b4642b4b27b358573f710 earliest_intro=77b19643e2f10fa0595acafc67df147df0ca87a7"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=aa45f512f4bb376a060b4642b4b27b358573f710 intro=77b19643e2f10fa0595acafc67df147df0ca87a7",
+        "ancestor": "aa45f512f4bb376a060b4642b4b27b358573f710",
+        "descendant": "77b19643e2f10fa0595acafc67df147df0ca87a7"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=aa45f512f4bb376a060b4642b4b27b358573f710 intro=97a7dcf48e1cf7e0ddb441d432d67c798f466f02",
+        "ancestor": "aa45f512f4bb376a060b4642b4b27b358573f710",
+        "descendant": "97a7dcf48e1cf7e0ddb441d432d67c798f466f02"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=77b19643e2f10fa0595acafc67df147df0ca87a7 vulnerable_head=79fbcfc03b07a260e7ab838e03ffe5863029f19c",
+        "ancestor": "77b19643e2f10fa0595acafc67df147df0ca87a7",
+        "descendant": "79fbcfc03b07a260e7ab838e03ffe5863029f19c"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=97a7dcf48e1cf7e0ddb441d432d67c798f466f02 vulnerable_head=79fbcfc03b07a260e7ab838e03ffe5863029f19c",
+        "ancestor": "97a7dcf48e1cf7e0ddb441d432d67c798f466f02",
+        "descendant": "79fbcfc03b07a260e7ab838e03ffe5863029f19c"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=aa45f512f4bb376a060b4642b4b27b358573f710 vulnerable_head=79fbcfc03b07a260e7ab838e03ffe5863029f19c",
+        "ancestor": "aa45f512f4bb376a060b4642b4b27b358573f710",
+        "descendant": "79fbcfc03b07a260e7ab838e03ffe5863029f19c"
       }
     ]
   }
