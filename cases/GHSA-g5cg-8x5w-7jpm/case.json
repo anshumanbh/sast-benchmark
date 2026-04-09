@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-g5cg-8x5w-7jpm",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-g5cg-8x5w-7jpm",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Heartbeat context inheritance bypasses sandbox via senderIsOwner escalation",
+    "severity": "critical",
+    "publishedAt": "2026-03-31T21:45:36Z",
+    "description": "## Summary\n\nHeartbeat context inheritance bypasses sandbox via `senderIsOwner` escalation.\n\n## Affected Packages / Versions\n\n- Package: `openclaw` (npm)\n- Latest published npm version: `2026.3.31`\n- Vulnerable version range: `<=2026.3.28`\n- Patched versions: `>= 2026.3.31`\n- First stable tag containing the fix: `v2026.3.31`\n\n## Fix\n\nFixed by commit `a30214a624946fc5c85c9558a27c1580172374fd` (`fix(heartbeat): block owner-only auth inheritance for exec events`).\n",
+    "cweIds": [],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<=2026.3.28",
+        "patchedVersions": ">= 2026.3.31"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "bd957a3a8b46976724570936bc37e052d4ec2fc5",
+    "introducingCommits": [
+      {
+        "sha": "91f7a6b0fd67b703897e6e307762d471ca09333d",
+        "authoredAt": "2026-03-31T09:05:34+09:00",
+        "subject": "fix(gateway): revoke active sessions on token rotation (#57646)"
+      }
+    ],
+    "vulnerableHead": "91f7a6b0fd67b703897e6e307762d471ca09333d",
+    "notes": "This case uses the immediate parent of fix commit a30214a624946fc5c85c9558a27c1580172374fd as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "sandboxescape",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/auto-reply/command-auth.ts",
+      "src/infra/heartbeat-runner.ts"
+    ],
+    "description": "Scanner should detect sandboxescape when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+  },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent 91f7a6b0fd67b703897e6e307762d471ca09333d of fix commit a30214a624946fc5c85c9558a27c1580172374fd as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_precedes_vulnerable_head",
+        "pass": true,
+        "details": "Using direct parent bd957a3a8b46976724570936bc37e052d4ec2fc5 of vulnerableHead 91f7a6b0fd67b703897e6e307762d471ca09333d as a temporary baseline until exact introduction mapping is completed."
+      }
+    ]
+  }
+}

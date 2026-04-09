@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-9hjh-fr4f-gxc4",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-9hjh-fr4f-gxc4",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Gateway Backend Reconnect lets Non-Admin Operator Scopes Self-Claim operator.admin",
+    "severity": "critical",
+    "publishedAt": "2026-03-26T19:56:50Z",
+    "description": "## Summary\n\nBackend-labeled reconnects could previously self-request broader scopes and bypass pairing, allowing non-admin operators to reconnect as `operator.admin`.\n\n## Affected Packages / Versions\n\n- Package: `openclaw`\n- Affected versions: `<= 2026.3.24`\n- First patched version: `2026.3.25`\n- Latest published npm version at verification time: `2026.3.24`\n\n## Fix\n\nFixed by commit `d3d8e316bd819d3c7e34253aeb7eccb2510f5f48`, which removes the backend self-pairing skip and requires pairing when requested scopes exceed the approved baseline.\n",
+    "cweIds": [
+      "CWE-269",
+      "CWE-863"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.24",
+        "patchedVersions": "2026.3.25"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "ec2dbcff9afd8a52e00de054b506c91726d9fbbe",
+    "introducingCommits": [
+      {
+        "sha": "b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7",
+        "authoredAt": "2026-03-26T17:34:09Z",
+        "subject": "Gateway: require caller scope for subagent session deletion (#55281)"
+      }
+    ],
+    "vulnerableHead": "b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7",
+    "notes": "This case uses the immediate parent of fix commit d3d8e316bd819d3c7e34253aeb7eccb2510f5f48 as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/gateway/server/ws-connection/handshake-auth-helpers.ts",
+      "src/gateway/server/ws-connection/message-handler.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+  },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7 of fix commit d3d8e316bd819d3c7e34253aeb7eccb2510f5f48 as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_precedes_vulnerable_head",
+        "pass": true,
+        "details": "Using direct parent ec2dbcff9afd8a52e00de054b506c91726d9fbbe of vulnerableHead b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7 as a temporary baseline until exact introduction mapping is completed."
+      }
+    ]
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-hc5h-pmr3-3497",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-hc5h-pmr3-3497",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "/pair approve command path omitted caller scope subsetting and reopened device pairing escalation",
+    "severity": "critical",
+    "publishedAt": "2026-03-29T03:06:32Z",
+    "description": "## Summary\n\nThe `/pair approve` command path called device approval without forwarding caller scopes into the core approval check.\n\n## Impact\n\nA caller that held pairing privileges but not admin privileges could approve a pending device request asking for broader scopes, including admin access.\n\n## Affected Component\n\n`extensions/device-pair/index.ts, src/infra/device-pairing.ts`\n\n## Fixed Versions\n\n- Affected: `<= 2026.3.24`\n- Patched: `>= 2026.3.28`\n\n## Fix\n\nFixed by commit `4ee4960de2330b5322127f925f3687dc6f105be1` (`Pairing: forward caller scopes during approval`).\n",
+    "cweIds": [],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.24",
+        "patchedVersions": ">= 2026.3.28"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "6eb82fba3cbfd0e50b179c1fada92e1e22dce7fa",
+    "introducingCommits": [
+      {
+        "sha": "2e23d44491c621e293925c8a624f6c50c1b762fe",
+        "authoredAt": "2026-03-27T18:53:39Z",
+        "subject": "tests(feishu): reload chat tool after mock reset"
+      }
+    ],
+    "vulnerableHead": "2e23d44491c621e293925c8a624f6c50c1b762fe",
+    "notes": "This case uses the immediate parent of fix commit 4ee4960de2330b5322127f925f3687dc6f105be1 as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "extensions/device-pair/index.ts",
+      "src/infra/device-pairing.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+  },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent 2e23d44491c621e293925c8a624f6c50c1b762fe of fix commit 4ee4960de2330b5322127f925f3687dc6f105be1 as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_precedes_vulnerable_head",
+        "pass": true,
+        "details": "Using direct parent 6eb82fba3cbfd0e50b179c1fada92e1e22dce7fa of vulnerableHead 2e23d44491c621e293925c8a624f6c50c1b762fe as a temporary baseline until exact introduction mapping is completed."
+      }
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-fqw4-mph7-2vr8",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-fqw4-mph7-2vr8",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Gateway local shared-auth reconnect silently widens paired device scope from operator.read to operator.admin and reach node RCE",
+    "severity": "critical",
+    "publishedAt": "2026-03-26T19:56:51Z",
+    "description": "## Summary\n\nSilent local shared-auth reconnects could previously auto-approve `scope-upgrade` requests and widen a paired device from `operator.read` to `operator.admin`.\n\n## Affected Packages / Versions\n\n- Package: `openclaw`\n- Affected versions: `<= 2026.3.24`\n- First patched version: `2026.3.25`\n- Latest published npm version at verification time: `2026.3.24`\n\n## Fix\n\nFixed by commit `81ebc7e0344fd19c85778e883bad45e2da972229`, which blocks silent reconnect scope upgrades so widened scopes require explicit pairing approval.\n",
+    "cweIds": [
+      "CWE-863"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.24",
+        "patchedVersions": "2026.3.25"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "b6f631e0457ddde3e91e4d562c83c1dacdc2ff9d",
+    "introducingCommits": [
+      {
+        "sha": "19d91aaa8f93587ea086c0b9b4673d9b7b874f74",
+        "authoredAt": "2026-03-26T02:43:15+03:00",
+        "subject": "fix: make buttons schema optional in message tool (#54418)"
+      }
+    ],
+    "vulnerableHead": "19d91aaa8f93587ea086c0b9b4673d9b7b874f74",
+    "notes": "This case uses the immediate parent of fix commit 81ebc7e0344fd19c85778e883bad45e2da972229 as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/gateway/server/ws-connection/message-handler.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+  },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent 19d91aaa8f93587ea086c0b9b4673d9b7b874f74 of fix commit 81ebc7e0344fd19c85778e883bad45e2da972229 as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_precedes_vulnerable_head",
+        "pass": true,
+        "details": "Using direct parent b6f631e0457ddde3e91e4d562c83c1dacdc2ff9d of vulnerableHead 19d91aaa8f93587ea086c0b9b4673d9b7b874f74 as a temporary baseline until exact introduction mapping is completed."
+      }
+    ]
+  }
+}

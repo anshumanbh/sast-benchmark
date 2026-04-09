@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-9p3r-hh9g-5cmg",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-9p3r-hh9g-5cmg",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Sandbox escape via TOCTOU race in remote FS bridge readFile",
+    "severity": "critical",
+    "publishedAt": "2026-03-31T21:45:28Z",
+    "description": "## Summary\n\nSandbox escape via TOCTOU race in remote FS bridge readFile.\n\n## Affected Packages / Versions\n\n- Package: `openclaw` (npm)\n- Latest published npm version: `2026.3.31`\n- Vulnerable version range: `<=2026.3.28`\n- Patched versions: `>= 2026.3.31`\n- First stable tag containing the fix: `v2026.3.31`\n\n## Fix\n\nFixed by commit `121870a08583033ed6a0ed73d9ffea32991252bb` (`fix(sandbox): pin remote fs bridge reads`).\n",
+    "cweIds": [],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<=2026.3.28",
+        "patchedVersions": ">= 2026.3.31"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "873549c8f17be434fb8903c563f752a62c6d3a0c",
+    "introducingCommits": [
+      {
+        "sha": "7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
+        "authoredAt": "2026-03-31T09:53:32+09:00",
+        "subject": "fix(host-env): block Python package index redirection env vars (#58011)"
+      }
+    ],
+    "vulnerableHead": "7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
+    "notes": "This case uses the immediate parent of fix commit 121870a08583033ed6a0ed73d9ffea32991252bb as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "sandboxescape",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/agents/sandbox/fs-bridge-mutation-helper.ts",
+      "src/agents/sandbox/remote-fs-bridge.ts"
+    ],
+    "description": "Scanner should detect sandboxescape when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+  },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent 7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d of fix commit 121870a08583033ed6a0ed73d9ffea32991252bb as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_precedes_vulnerable_head",
+        "pass": true,
+        "details": "Using direct parent 873549c8f17be434fb8903c563f752a62c6d3a0c of vulnerableHead 7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d as a temporary baseline until exact introduction mapping is completed."
+      }
+    ]
+  }
+}

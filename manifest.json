@@ -1,12 +1,12 @@
 {
   "name": "openclaw-advisory-benchmark",
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-03-31T20:13:20Z",
+  "generatedAt": "2026-04-09T20:39:24Z",
   "repositories": [
     "openclaw/openclaw",
     "TryGhost/Ghost"
   ],
-  "caseCount": 33,
+  "caseCount": 41,
   "cases": [
     {
       "id": "GHSA-3c6h-g97w-fg78",
@@ -337,6 +337,86 @@
       "vulnerableHead": "d6267340a13ed7c78c66c27c78ecd819bbd94576",
       "verificationStatus": "pass",
       "confidence": "high"
+    },
+    {
+      "id": "GHSA-hf68-49fm-59cq",
+      "severity": "critical",
+      "title": "Gateway device.pair.approve Lets operator.pairing Escalate a New Device into operator.admin, reaching Node RCE.",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "756d9b57823217802b15c5b7d73a154fbd6bad85",
+      "vulnerableHead": "132e45900904fc981e6ef04259eb37c72f6c165d",
+      "verificationStatus": "unverified",
+      "confidence": "low"
+    },
+    {
+      "id": "GHSA-9hjh-fr4f-gxc4",
+      "severity": "critical",
+      "title": "Gateway Backend Reconnect lets Non-Admin Operator Scopes Self-Claim operator.admin",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "ec2dbcff9afd8a52e00de054b506c91726d9fbbe",
+      "vulnerableHead": "b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7",
+      "verificationStatus": "unverified",
+      "confidence": "low"
+    },
+    {
+      "id": "GHSA-fqw4-mph7-2vr8",
+      "severity": "critical",
+      "title": "Gateway local shared-auth reconnect silently widens paired device scope from operator.read to operator.admin and reach node RCE",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "b6f631e0457ddde3e91e4d562c83c1dacdc2ff9d",
+      "vulnerableHead": "19d91aaa8f93587ea086c0b9b4673d9b7b874f74",
+      "verificationStatus": "unverified",
+      "confidence": "low"
+    },
+    {
+      "id": "GHSA-hc5h-pmr3-3497",
+      "severity": "critical",
+      "title": "/pair approve command path omitted caller scope subsetting and reopened device pairing escalation",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "6eb82fba3cbfd0e50b179c1fada92e1e22dce7fa",
+      "vulnerableHead": "2e23d44491c621e293925c8a624f6c50c1b762fe",
+      "verificationStatus": "unverified",
+      "confidence": "low"
+    },
+    {
+      "id": "GHSA-8rh7-6779-cjqq",
+      "severity": "critical",
+      "title": "CWD `.env` environment variable injection bypasses host-env policy and allows config takeover",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "501190d2e833215366a72780146926b94c24779c",
+      "vulnerableHead": "79fbcfc03b07a260e7ab838e03ffe5863029f19c",
+      "verificationStatus": "unverified",
+      "confidence": "low"
+    },
+    {
+      "id": "GHSA-j7p2-qcwm-94v4",
+      "severity": "critical",
+      "title": "Incomplete host env sanitization blocklist allows supply-chain redirection via package-manager env overrides",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "11d71ca35219b27d3604f99b181006d19129461e",
+      "vulnerableHead": "c7134e629c917c120c79f6988b78069fda244318",
+      "verificationStatus": "unverified",
+      "confidence": "low"
+    },
+    {
+      "id": "GHSA-9p3r-hh9g-5cmg",
+      "severity": "critical",
+      "title": "Sandbox escape via TOCTOU race in remote FS bridge readFile",
+      "vulnerabilityClass": "sandboxescape",
+      "baselineCommit": "873549c8f17be434fb8903c563f752a62c6d3a0c",
+      "vulnerableHead": "7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
+      "verificationStatus": "unverified",
+      "confidence": "low"
+    },
+    {
+      "id": "GHSA-g5cg-8x5w-7jpm",
+      "severity": "critical",
+      "title": "Heartbeat context inheritance bypasses sandbox via senderIsOwner escalation",
+      "vulnerabilityClass": "sandboxescape",
+      "baselineCommit": "bd957a3a8b46976724570936bc37e052d4ec2fc5",
+      "vulnerableHead": "91f7a6b0fd67b703897e6e307762d471ca09333d",
+      "verificationStatus": "unverified",
+      "confidence": "low"
     }
   ]
 }

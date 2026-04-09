@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-j7p2-qcwm-94v4",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-j7p2-qcwm-94v4",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Incomplete host env sanitization blocklist allows supply-chain redirection via package-manager env overrides",
+    "severity": "critical",
+    "publishedAt": "2026-03-29T03:06:42Z",
+    "description": "## Summary\n\nHost exec env override sanitization did not fail closed for several package-manager and related redirect variables that can steer dependency fetches or startup behavior.\n\n## Impact\n\nAn approved exec request could silently redirect package resolution or runtime bootstrap to attacker-controlled infrastructure and execute trojanized content.\n\n## Affected Component\n\n`src/infra/host-env-security-policy.json, src/infra/host-env-security.ts`\n\n## Fixed Versions\n\n- Affected: `< 2026.3.22`\n- Patched: `>= 2026.3.22`\n\n## Fix\n\nFixed by commit `7abfff756d6c68d17e21d1657bbacbaec86de232` (`Exec: harden host env override handling across gateway and node`).\n",
+    "cweIds": [
+      "CWE-183"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:H",
+      "score": 9.7
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "< 2026.3.22",
+        "patchedVersions": ">= 2026.3.22"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "11d71ca35219b27d3604f99b181006d19129461e",
+    "introducingCommits": [
+      {
+        "sha": "c7134e629c917c120c79f6988b78069fda244318",
+        "authoredAt": "2026-03-20T15:32:55-05:00",
+        "subject": "LINE: harden Express webhook parsing to verified raw body (#51202)"
+      }
+    ],
+    "vulnerableHead": "c7134e629c917c120c79f6988b78069fda244318",
+    "notes": "This case uses the immediate parent of fix commit 7abfff756d6c68d17e21d1657bbacbaec86de232 as the last known vulnerable snapshot. Exact introduction commit mapping is still pending."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "commandinjection",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/infra/host-env-security-policy.json",
+      "src/infra/host-env-security.ts"
+    ],
+    "description": "Scanner should detect commandinjection when scanning vulnerableHead. This case uses the last known vulnerable pre-fix commit pending exact introduction mapping."
+  },
+  "verification": {
+    "status": "unverified",
+    "confidence": "low",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent c7134e629c917c120c79f6988b78069fda244318 of fix commit 7abfff756d6c68d17e21d1657bbacbaec86de232 as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_precedes_vulnerable_head",
+        "pass": true,
+        "details": "Using direct parent 11d71ca35219b27d3604f99b181006d19129461e of vulnerableHead c7134e629c917c120c79f6988b78069fda244318 as a temporary baseline until exact introduction mapping is completed."
+      }
+    ]
+  }
+}
