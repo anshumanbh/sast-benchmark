@@ -40,7 +40,7 @@
       }
     ],
     "vulnerableHead": "79fbcfc03b07a260e7ab838e03ffe5863029f19c",
-    "notes": "Untrusted process-CWD .env loading first lands in src/infra/dotenv.ts and is later duplicated in src/cli/dotenv.ts. vulnerableHead stays on the last pre-fix snapshot immediately before 6a793248024dca7685f63bcceb64a0096fd1586d."
+    "notes": "Untrusted process-CWD .env loading first lands in src/infra/dotenv.ts and is later duplicated in src/cli/dotenv.ts. vulnerableHead stays on the last pre-fix snapshot immediately before 6a793248024dca7685f63bcceb64a0096fd1586d. Classified as commandinjection because the injected env vars ultimately control command execution paths (e.g. PATH, shell startup), even though the CWE (426 Untrusted Search Path) is not a direct command-injection CWE."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "commandinjection",

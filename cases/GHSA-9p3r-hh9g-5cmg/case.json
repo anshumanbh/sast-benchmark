@@ -8,7 +8,9 @@
     "severity": "critical",
     "publishedAt": "2026-03-31T21:45:28Z",
     "description": "## Summary\n\nSandbox escape via TOCTOU race in remote FS bridge readFile.\n\n## Affected Packages / Versions\n\n- Package: `openclaw` (npm)\n- Latest published npm version: `2026.3.31`\n- Vulnerable version range: `<=2026.3.28`\n- Patched versions: `>= 2026.3.31`\n- First stable tag containing the fix: `v2026.3.31`\n\n## Fix\n\nFixed by commit `121870a08583033ed6a0ed73d9ffea32991252bb` (`fix(sandbox): pin remote fs bridge reads`).\n",
-    "cweIds": [],
+    "cweIds": [
+      "CWE-367"
+    ],
     "affectedPackages": [
       {
         "ecosystem": "npm",

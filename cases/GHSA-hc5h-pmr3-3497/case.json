@@ -8,7 +8,9 @@
     "severity": "critical",
     "publishedAt": "2026-03-29T03:06:32Z",
     "description": "## Summary\n\nThe `/pair approve` command path called device approval without forwarding caller scopes into the core approval check.\n\n## Impact\n\nA caller that held pairing privileges but not admin privileges could approve a pending device request asking for broader scopes, including admin access.\n\n## Affected Component\n\n`extensions/device-pair/index.ts, src/infra/device-pairing.ts`\n\n## Fixed Versions\n\n- Affected: `<= 2026.3.24`\n- Patched: `>= 2026.3.28`\n\n## Fix\n\nFixed by commit `4ee4960de2330b5322127f925f3687dc6f105be1` (`Pairing: forward caller scopes during approval`).\n",
-    "cweIds": [],
+    "cweIds": [
+      "CWE-863"
+    ],
     "affectedPackages": [
       {
         "ecosystem": "npm",

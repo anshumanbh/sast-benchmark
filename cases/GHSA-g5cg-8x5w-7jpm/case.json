@@ -8,7 +8,9 @@
     "severity": "critical",
     "publishedAt": "2026-03-31T21:45:36Z",
     "description": "## Summary\n\nHeartbeat context inheritance bypasses sandbox via `senderIsOwner` escalation.\n\n## Affected Packages / Versions\n\n- Package: `openclaw` (npm)\n- Latest published npm version: `2026.3.31`\n- Vulnerable version range: `<=2026.3.28`\n- Patched versions: `>= 2026.3.31`\n- First stable tag containing the fix: `v2026.3.31`\n\n## Fix\n\nFixed by commit `a30214a624946fc5c85c9558a27c1580172374fd` (`fix(heartbeat): block owner-only auth inheritance for exec events`).\n",
-    "cweIds": [],
+    "cweIds": [
+      "CWE-269"
+    ],
     "affectedPackages": [
       {
         "ecosystem": "npm",
