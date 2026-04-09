@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-g5cg-8x5w-7jpm",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-g5cg-8x5w-7jpm",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Heartbeat context inheritance bypasses sandbox via senderIsOwner escalation",
+    "severity": "critical",
+    "publishedAt": "2026-03-31T21:45:36Z",
+    "description": "## Summary\n\nHeartbeat context inheritance bypasses sandbox via `senderIsOwner` escalation.\n\n## Affected Packages / Versions\n\n- Package: `openclaw` (npm)\n- Latest published npm version: `2026.3.31`\n- Vulnerable version range: `<=2026.3.28`\n- Patched versions: `>= 2026.3.31`\n- First stable tag containing the fix: `v2026.3.31`\n\n## Fix\n\nFixed by commit `a30214a624946fc5c85c9558a27c1580172374fd` (`fix(heartbeat): block owner-only auth inheritance for exec events`).\n",
+    "cweIds": [
+      "CWE-269"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<=2026.3.28",
+        "patchedVersions": ">= 2026.3.31"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
+    "introducingCommits": [
+      {
+        "sha": "8fae55e8e0579881a0b5a7a936fe3054dd73228d",
+        "authoredAt": "2026-02-07T19:46:01-08:00",
+        "subject": "fix(cron): share isolated announce flow + harden cron scheduling/delivery (#11641)"
+      },
+      {
+        "sha": "60d33637d9e6e513b65f20796eb4f456bccf203b",
+        "authoredAt": "2026-03-05T16:32:42-06:00",
+        "subject": "fix(auth): grant senderIsOwner for internal channels with operator.admin scope (openclaw#35704)"
+      }
+    ],
+    "vulnerableHead": "91f7a6b0fd67b703897e6e307762d471ca09333d",
+    "notes": "The exploit condition requires both heartbeat exec-event context inheritance and internal-channel senderIsOwner escalation by operator.admin scope. vulnerableHead stays on the last pre-fix snapshot immediately before a30214a624946fc5c85c9558a27c1580172374fd."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "sandboxescape",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/auto-reply/command-auth.ts",
+      "src/infra/heartbeat-runner.ts"
+    ],
+    "description": "Scanner should detect sandboxescape when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent 91f7a6b0fd67b703897e6e307762d471ca09333d of fix commit a30214a624946fc5c85c9558a27c1580172374fd as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=ebe57304016aaadf69c0357d49ec1e36df6a5daa earliest_intro=8fae55e8e0579881a0b5a7a936fe3054dd73228d"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=ebe57304016aaadf69c0357d49ec1e36df6a5daa intro=8fae55e8e0579881a0b5a7a936fe3054dd73228d",
+        "ancestor": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
+        "descendant": "8fae55e8e0579881a0b5a7a936fe3054dd73228d"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=ebe57304016aaadf69c0357d49ec1e36df6a5daa intro=60d33637d9e6e513b65f20796eb4f456bccf203b",
+        "ancestor": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
+        "descendant": "60d33637d9e6e513b65f20796eb4f456bccf203b"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=8fae55e8e0579881a0b5a7a936fe3054dd73228d vulnerable_head=91f7a6b0fd67b703897e6e307762d471ca09333d",
+        "ancestor": "8fae55e8e0579881a0b5a7a936fe3054dd73228d",
+        "descendant": "91f7a6b0fd67b703897e6e307762d471ca09333d"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=60d33637d9e6e513b65f20796eb4f456bccf203b vulnerable_head=91f7a6b0fd67b703897e6e307762d471ca09333d",
+        "ancestor": "60d33637d9e6e513b65f20796eb4f456bccf203b",
+        "descendant": "91f7a6b0fd67b703897e6e307762d471ca09333d"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=ebe57304016aaadf69c0357d49ec1e36df6a5daa vulnerable_head=91f7a6b0fd67b703897e6e307762d471ca09333d",
+        "ancestor": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
+        "descendant": "91f7a6b0fd67b703897e6e307762d471ca09333d"
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-9hjh-fr4f-gxc4",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-9hjh-fr4f-gxc4",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Gateway Backend Reconnect lets Non-Admin Operator Scopes Self-Claim operator.admin",
+    "severity": "critical",
+    "publishedAt": "2026-03-26T19:56:50Z",
+    "description": "## Summary\n\nBackend-labeled reconnects could previously self-request broader scopes and bypass pairing, allowing non-admin operators to reconnect as `operator.admin`.\n\n## Affected Packages / Versions\n\n- Package: `openclaw`\n- Affected versions: `<= 2026.3.24`\n- First patched version: `2026.3.25`\n- Latest published npm version at verification time: `2026.3.24`\n\n## Fix\n\nFixed by commit `d3d8e316bd819d3c7e34253aeb7eccb2510f5f48`, which removes the backend self-pairing skip and requires pairing when requested scopes exceed the approved baseline.\n",
+    "cweIds": [
+      "CWE-269",
+      "CWE-863"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "<= 2026.3.24",
+        "patchedVersions": "2026.3.25"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "3002f13ca72c03dbbf16dc281956c9d7bdab1d60",
+    "introducingCommits": [
+      {
+        "sha": "e1e715c53de41986a01d811e4ca89e6b8fca3662",
+        "authoredAt": "2026-03-01T21:46:33-08:00",
+        "subject": "fix(gateway): skip device pairing for local backend self-connections (#30801)"
+      }
+    ],
+    "vulnerableHead": "b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7",
+    "notes": "The backend reconnect bypass is introduced when local backend self-connections start skipping pairing. vulnerableHead stays on the last pre-fix snapshot immediately before d3d8e316bd819d3c7e34253aeb7eccb2510f5f48."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/gateway/server/ws-connection/handshake-auth-helpers.ts",
+      "src/gateway/server/ws-connection/message-handler.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7 of fix commit d3d8e316bd819d3c7e34253aeb7eccb2510f5f48 as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=3002f13ca72c03dbbf16dc281956c9d7bdab1d60 intro=e1e715c53de41986a01d811e4ca89e6b8fca3662",
+        "ancestor": "3002f13ca72c03dbbf16dc281956c9d7bdab1d60",
+        "descendant": "e1e715c53de41986a01d811e4ca89e6b8fca3662"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=e1e715c53de41986a01d811e4ca89e6b8fca3662 vulnerable_head=b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7",
+        "ancestor": "e1e715c53de41986a01d811e4ca89e6b8fca3662",
+        "descendant": "b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=3002f13ca72c03dbbf16dc281956c9d7bdab1d60 vulnerable_head=b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7",
+        "ancestor": "3002f13ca72c03dbbf16dc281956c9d7bdab1d60",
+        "descendant": "b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7"
+      }
+    ]
+  }
+}

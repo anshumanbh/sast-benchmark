@@ -1,12 +1,12 @@
 {
   "name": "openclaw-advisory-benchmark",
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-03-31T20:13:20Z",
+  "generatedAt": "2026-04-09T20:39:24Z",
   "repositories": [
     "openclaw/openclaw",
     "TryGhost/Ghost"
   ],
-  "caseCount": 33,
+  "caseCount": 41,
   "cases": [
     {
       "id": "GHSA-3c6h-g97w-fg78",
@@ -335,6 +335,86 @@
       "vulnerabilityClass": "sqlinjection",
       "baselineCommit": "fe962345afb5c9d31e59bf12f441e07dbd1eb4c6",
       "vulnerableHead": "d6267340a13ed7c78c66c27c78ecd819bbd94576",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-hf68-49fm-59cq",
+      "severity": "critical",
+      "title": "Gateway device.pair.approve Lets operator.pairing Escalate a New Device into operator.admin, reaching Node RCE.",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+      "vulnerableHead": "132e45900904fc981e6ef04259eb37c72f6c165d",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-9hjh-fr4f-gxc4",
+      "severity": "critical",
+      "title": "Gateway Backend Reconnect lets Non-Admin Operator Scopes Self-Claim operator.admin",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "3002f13ca72c03dbbf16dc281956c9d7bdab1d60",
+      "vulnerableHead": "b5d785f1a59a56c3471f2cef328f7c9a6c15f3e7",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-fqw4-mph7-2vr8",
+      "severity": "critical",
+      "title": "Gateway local shared-auth reconnect silently widens paired device scope from operator.read to operator.admin and reach node RCE",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "6817c0ec7b4fa830123d4f5c340f075a4bd04ee2",
+      "vulnerableHead": "19d91aaa8f93587ea086c0b9b4673d9b7b874f74",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-hc5h-pmr3-3497",
+      "severity": "critical",
+      "title": "/pair approve command path omitted caller scope subsetting and reopened device pairing escalation",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "2f91bf550f45272c1a3567a800f4cde49c2b6b45",
+      "vulnerableHead": "2e23d44491c621e293925c8a624f6c50c1b762fe",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-8rh7-6779-cjqq",
+      "severity": "critical",
+      "title": "CWD `.env` environment variable injection bypasses host-env policy and allows config takeover",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "aa45f512f4bb376a060b4642b4b27b358573f710",
+      "vulnerableHead": "79fbcfc03b07a260e7ab838e03ffe5863029f19c",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-j7p2-qcwm-94v4",
+      "severity": "critical",
+      "title": "Incomplete host env sanitization blocklist allows supply-chain redirection via package-manager env overrides",
+      "vulnerabilityClass": "commandinjection",
+      "baselineCommit": "6b2f2811dc623e5faaf2f76afaa9279637174590",
+      "vulnerableHead": "c7134e629c917c120c79f6988b78069fda244318",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-9p3r-hh9g-5cmg",
+      "severity": "critical",
+      "title": "Sandbox escape via TOCTOU race in remote FS bridge readFile",
+      "vulnerabilityClass": "sandboxescape",
+      "baselineCommit": "33edb57e745b4e3fab788248fa8b52cbb5727062",
+      "vulnerableHead": "7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-g5cg-8x5w-7jpm",
+      "severity": "critical",
+      "title": "Heartbeat context inheritance bypasses sandbox via senderIsOwner escalation",
+      "vulnerabilityClass": "sandboxescape",
+      "baselineCommit": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
+      "vulnerableHead": "91f7a6b0fd67b703897e6e307762d471ca09333d",
       "verificationStatus": "pass",
       "confidence": "high"
     }

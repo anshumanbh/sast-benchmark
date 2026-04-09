@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-j7p2-qcwm-94v4",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-j7p2-qcwm-94v4",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Incomplete host env sanitization blocklist allows supply-chain redirection via package-manager env overrides",
+    "severity": "critical",
+    "publishedAt": "2026-03-29T03:06:42Z",
+    "description": "## Summary\n\nHost exec env override sanitization did not fail closed for several package-manager and related redirect variables that can steer dependency fetches or startup behavior.\n\n## Impact\n\nAn approved exec request could silently redirect package resolution or runtime bootstrap to attacker-controlled infrastructure and execute trojanized content.\n\n## Affected Component\n\n`src/infra/host-env-security-policy.json, src/infra/host-env-security.ts`\n\n## Fixed Versions\n\n- Affected: `< 2026.3.22`\n- Patched: `>= 2026.3.22`\n\n## Fix\n\nFixed by commit `7abfff756d6c68d17e21d1657bbacbaec86de232` (`Exec: harden host env override handling across gateway and node`).\n",
+    "cweIds": [
+      "CWE-183"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:H",
+      "score": 9.7
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "< 2026.3.22",
+        "patchedVersions": ">= 2026.3.22"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "6b2f2811dc623e5faaf2f76afaa9279637174590",
+    "introducingCommits": [
+      {
+        "sha": "2cdbadee1f8fcaa93302d7debbfc529e19868ea4",
+        "authoredAt": "2026-02-21T11:44:20+01:00",
+        "subject": "fix(security): block startup-file env injection across host execution paths"
+      }
+    ],
+    "vulnerableHead": "c7134e629c917c120c79f6988b78069fda244318",
+    "notes": "Host exec env sanitization first lands in 2cdbadee1f8fcaa93302d7debbfc529e19868ea4, but the override blocklist remains fail-open for multiple supply-chain redirect variables until 7abfff756d6c68d17e21d1657bbacbaec86de232."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "commandinjection",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/infra/host-env-security-policy.json",
+      "src/infra/host-env-security.ts"
+    ],
+    "description": "Scanner should detect commandinjection when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent c7134e629c917c120c79f6988b78069fda244318 of fix commit 7abfff756d6c68d17e21d1657bbacbaec86de232 as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=6b2f2811dc623e5faaf2f76afaa9279637174590 intro=2cdbadee1f8fcaa93302d7debbfc529e19868ea4",
+        "ancestor": "6b2f2811dc623e5faaf2f76afaa9279637174590",
+        "descendant": "2cdbadee1f8fcaa93302d7debbfc529e19868ea4"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=2cdbadee1f8fcaa93302d7debbfc529e19868ea4 vulnerable_head=c7134e629c917c120c79f6988b78069fda244318",
+        "ancestor": "2cdbadee1f8fcaa93302d7debbfc529e19868ea4",
+        "descendant": "c7134e629c917c120c79f6988b78069fda244318"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=6b2f2811dc623e5faaf2f76afaa9279637174590 vulnerable_head=c7134e629c917c120c79f6988b78069fda244318",
+        "ancestor": "6b2f2811dc623e5faaf2f76afaa9279637174590",
+        "descendant": "c7134e629c917c120c79f6988b78069fda244318"
+      }
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-hf68-49fm-59cq",
+  "advisoryUrl": "https://github.com/openclaw/openclaw/security/advisories/GHSA-hf68-49fm-59cq",
+  "repository": "openclaw/openclaw",
+  "advisory": {
+    "title": "Gateway device.pair.approve Lets operator.pairing Escalate a New Device into operator.admin, reaching Node RCE.",
+    "severity": "critical",
+    "publishedAt": "2026-03-24T17:36:58Z",
+    "description": "## Summary\n\ndevice.pair.approve allowed an operator.pairing approver to approve a pending device request for broader operator scopes than the approver actually held.\n\n## Affected Packages / Versions\n\n- Package: `openclaw` (npm)\n- Affected: `< 2026.3.22`\n- Fixed: `>= 2026.3.22`\n- Latest released tag checked: `v2026.3.23-2` (`630f1479c44f78484dfa21bb407cbe6f171dac87`)\n\n## Fix\n\nFixed by commit `fc2d29ea926f47c428c556e92ec981441228d2a4`.\n\n## Code-Level Confirmation\n\n- `src/gateway/server-methods/devices.ts` now threads caller scopes into `device.pair.approve`.\n- `src/infra/device-pairing.ts` now rejects requested operator scopes that exceed the approver-held operator scope set.\n",
+    "cweIds": [
+      "CWE-269"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "npm",
+        "name": "openclaw",
+        "vulnerableRange": "< 2026.3.22",
+        "patchedVersions": ">= 2026.3.22"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+    "introducingCommits": [
+      {
+        "sha": "73e9e787b4df7705556f199f5f3e00580fab38c3",
+        "authoredAt": "2026-01-19T10:07:56Z",
+        "subject": "feat: unify device auth + pairing"
+      }
+    ],
+    "vulnerableHead": "132e45900904fc981e6ef04259eb37c72f6c165d",
+    "notes": "The gateway RPC approval path and scope-bearing device-pairing flow land in feat: unify device auth + pairing. vulnerableHead stays on the last pre-fix snapshot immediately before fc2d29ea926f47c428c556e92ec981441228d2a4."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "critical",
+    "expectedPaths": [
+      "src/gateway/server-methods/devices.ts",
+      "src/infra/device-pairing.ts"
+    ],
+    "description": "Scanner should detect brokenauthz when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "vulnerable_head_is_fix_parent",
+        "pass": true,
+        "details": "Using parent 132e45900904fc981e6ef04259eb37c72f6c165d of fix commit fc2d29ea926f47c428c556e92ec981441228d2a4 as the last known vulnerable commit."
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=47d1f23d5552c6ae186249e61d845e4b955486ff intro=73e9e787b4df7705556f199f5f3e00580fab38c3",
+        "ancestor": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+        "descendant": "73e9e787b4df7705556f199f5f3e00580fab38c3"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=73e9e787b4df7705556f199f5f3e00580fab38c3 vulnerable_head=132e45900904fc981e6ef04259eb37c72f6c165d",
+        "ancestor": "73e9e787b4df7705556f199f5f3e00580fab38c3",
+        "descendant": "132e45900904fc981e6ef04259eb37c72f6c165d"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=47d1f23d5552c6ae186249e61d845e4b955486ff vulnerable_head=132e45900904fc981e6ef04259eb37c72f6c165d",
+        "ancestor": "47d1f23d5552c6ae186249e61d845e4b955486ff",
+        "descendant": "132e45900904fc981e6ef04259eb37c72f6c165d"
+      }
+    ]
+  }
+}
