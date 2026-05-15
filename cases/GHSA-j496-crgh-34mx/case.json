@@ -10,7 +10,8 @@
     "description": "ibc-go advisory ASA-2024-007 covers a reentrancy condition in the IBC core timeout message handler. A malicious CosmWasm contract can recursively invoke MsgTimeout from within its OnTimeout callback before the original packet commitment is deleted, which on ibc-hooks-wrapped ICS-20 chains can result in unauthorized token minting or fund loss from escrow accounts. The fix in v4.6.0, v5.4.0, v6.3.0, v7.4.0, and v8.2.0 deletes the packet commitment before invoking the application callback in modules/core/keeper/msg_server.go.",
     "cweIds": [
       "CWE-696",
-      "CWE-841"
+      "CWE-841",
+      "CWE-863"
     ],
     "affectedPackages": [
       {

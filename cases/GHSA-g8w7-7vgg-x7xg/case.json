@@ -9,7 +9,8 @@
     "publishedAt": "2024-08-21T00:00:00Z",
     "description": "wasmd advisory CWA-2024-005 covers an uncontrolled-recursion / stack-overflow condition in the x/wasm message dispatch path. Deeply nested submessage chains could exhaust the Go stack and crash the node. The fix introduces a recursion depth limit (max call depth) in the handler plugin and keeper configuration. Affects wasmd >= 0.50.0 < 0.53.0 and < 0.46.0; fixed in 0.53.0 and 0.46.0.",
     "cweIds": [
-      "CWE-674"
+      "CWE-674",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

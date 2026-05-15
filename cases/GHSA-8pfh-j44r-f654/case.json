@@ -9,7 +9,8 @@
     "publishedAt": "2025-10-21T00:00:00Z",
     "description": "Cosmos EVM advisory GHSA-8pfh-j44r-f654 covers a critical vulnerability affecting both static and dynamic precompiles. Specific technical details were withheld at disclosure to give chains time to upgrade. Affected versions are v0.3.0, v0.3.1, v0.4.0, and v0.4.1; fixed in v0.3.2, v0.4.2, and v0.5.0. The v0.4.1..v0.4.2 patch is a single 'Merge commit from fork' commit that touches precompile handler files (precompiles/common/precompile.go, precompiles/distribution/distribution.go, precompiles/gov/gov.go, precompiles/ics20/ics20.go, precompiles/slashing/slashing.go, precompiles/staking/staking.go, evmd/precompiles.go, x/vm/keeper/static_precompiles.go, x/vm/statedb/statedb.go).",
     "cweIds": [
-      "CWE-841"
+      "CWE-841",
+      "CWE-863"
     ],
     "affectedPackages": [
       {

@@ -9,7 +9,8 @@
     "publishedAt": "2025-03-12T00:00:00Z",
     "description": "ibc-go advisory ISA-2025-001 extends the protections introduced by ASA-2025-004 (which was scoped to the transfer module) to all IBC applications. A non-deterministic JSON unmarshalling bug in IBC acknowledgement processing in modules/core/04-channel/keeper/packet.go can produce divergent acknowledgement bytes across nodes and halt the chain. Any party that can open an IBC channel can introduce the failing state. Fixed in v7.10.0 and v8.7.0.",
     "cweIds": [
-      "CWE-502"
+      "CWE-502",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

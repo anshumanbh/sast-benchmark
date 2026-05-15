@@ -529,7 +529,7 @@
       "title": "ISA-2025-005: Integer Overflow in Cosmos SDK",
       "vulnerabilityClass": "abuse",
       "baselineCommit": "1279da53ea62c4676bdcd1eeab32858644cf2cdb",
-      "vulnerableHead": "7b9d2ff98d02bd5a7edd3b153dd577819cc1d777",
+      "vulnerableHead": "e265bb9b42308dc70743b6200a70db9aafb70527",
       "verificationStatus": "pass",
       "confidence": "high"
     },

@@ -4,12 +4,13 @@
   "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-c32p-wcqj-j677",
   "repository": "cometbft/cometbft",
   "advisory": {
-    "title": "CSA-2026-001: Tachyon — BFT Time inconsistency allows faulty process to arbitrarily increase block time",
+    "title": "CSA-2026-001: Tachyon \u2014 BFT Time inconsistency allows faulty process to arbitrarily increase block time",
     "severity": "critical",
     "publishedAt": "2026-01-23T15:00:00Z",
     "description": "CometBFT consensus-level advisory CSA-2026-001 ('Tachyon') covers an inconsistency between commit-signature verification and block-time derivation in BFT Time. The bug breaks the guarantee that a faulty process cannot arbitrarily increase the Time value of a block. Validators and any protocol consuming block timestamps are affected. The v0.38.20..v0.38.21 patch (commit c56d64ec5) modifies state/validation.go, state/state.go, state/execution.go, and types/validation.go. Affects <=v0.38.20 and <=v0.37.17; fixed in v0.38.21 and v0.37.18.",
     "cweIds": [
-      "CWE-345"
+      "CWE-345",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

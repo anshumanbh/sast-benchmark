@@ -4,12 +4,13 @@
   "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-p7mv-53f2-4cwj",
   "repository": "cometbft/cometbft",
   "advisory": {
-    "title": "ASA-2024-011: Vote Extensions — Panic when receiving a Pre-commit with invalid data",
+    "title": "ASA-2024-011: Vote Extensions \u2014 Panic when receiving a Pre-commit with invalid data",
     "severity": "high",
     "publishedAt": "2024-11-06T00:00:00Z",
     "description": "CometBFT advisory ASA-2024-011 covers a panic in vote-extension handling on ABCI 2.0 chains. A peer running modified code can craft a Vote message with an invalid ValidatorIndex; the receiver dereferences the validator set with the bad index without bounds-checking, panicking the consensus reactor. The v0.38.14..v0.38.15 patch (commit 3a023da3a) adds index validation in consensus/state.go and a new error in consensus/errors.go. Affects v0.38.x < v0.38.15 (and unreleased v1.x/main); fixed in v0.38.15.",
     "cweIds": [
-      "CWE-129"
+      "CWE-129",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

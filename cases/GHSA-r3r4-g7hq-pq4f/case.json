@@ -9,7 +9,8 @@
     "publishedAt": "2025-02-03T00:00:00Z",
     "description": "CometBFT advisory ASA-2025-002 covers missing validation that Part.Index equals Part.Proof.Index in block-part dissemination. A malicious peer can submit parts with mismatched indices, causing peers to disseminate invalid data and block reception of correct parts, potentially stalling the network. The v0.38.16..v0.38.17 patch (commit 415c0da22) modifies types/part_set.go to verify Part.Index matches Part.Proof.Index. Affects <=v0.38.16 and v1.0.0; fixed in v0.38.17 and v1.0.1.",
     "cweIds": [
-      "CWE-20"
+      "CWE-20",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

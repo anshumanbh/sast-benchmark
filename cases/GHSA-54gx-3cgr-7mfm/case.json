@@ -9,7 +9,8 @@
     "publishedAt": "2026-03-09T00:00:00Z",
     "description": "Cosmos EVM ICS20 precompile contains a state-handling flaw across nested EVM execution paths. State updates from recursive precompile calls were not reflected in the outer execution context, allowing a transaction to spend the same token balance multiple times via nested ICS20 precompile calls. The bug was exploited on the Saga network for roughly $7M before mitigation. Fixed in v0.6.0 by reworking state consistency in precompiles/ics20/ics20.go and precompiles/ics20/tx.go.",
     "cweIds": [
-      "CWE-841"
+      "CWE-841",
+      "CWE-863"
     ],
     "affectedPackages": [
       {

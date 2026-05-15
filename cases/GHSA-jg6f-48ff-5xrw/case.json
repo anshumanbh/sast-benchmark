@@ -9,7 +9,8 @@
     "publishedAt": "2025-02-27T00:00:00Z",
     "description": "ibc-go advisory ASA-2025-004 covers a non-deterministic JSON unmarshalling bug in IBC acknowledgement processing in the transfer module. Different nodes can derive different acknowledgement bytes from the same packet, producing non-determinism that can halt the chain. Any party that can open an IBC channel can introduce the failing state. The fix in v7.9.2 and v8.6.1 restricts acknowledgement decoding in modules/apps/transfer/ibc_module.go to deterministic parsing.",
     "cweIds": [
-      "CWE-502"
+      "CWE-502",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

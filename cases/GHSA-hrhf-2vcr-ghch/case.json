@@ -9,7 +9,8 @@
     "publishedAt": "2025-10-14T00:00:00Z",
     "description": "CometBFT advisory ASA-2025-003 covers insufficient validation of BitArray payloads received from peers. Messages with mismatched Elems and Bits values can be processed and gossiped before local validation rejects them, propagating an invalid state and cascading node panics. The v0.38.18..v0.38.19 patch (commit be5677c3e) adds a ValidateBasic for BitArray and protective guards on BitArray methods in libs/bits/bit_array.go, plus message validation in consensus/reactor.go. Affects <=v0.38.18 and <=v0.37.15; fixed in v0.38.19 and v0.37.16.",
     "cweIds": [
-      "CWE-20"
+      "CWE-20",
+      "CWE-400"
     ],
     "affectedPackages": [
       {
@@ -45,7 +46,7 @@
       "libs/bits/bit_array.go",
       "consensus/reactor.go"
     ],
-    "description": "Scanner should flag insufficient validation on BitArray messages in libs/bits/bit_array.go and consensus/reactor.go — a peer can deliver a BitArray where len(Elems) does not match Bits, causing panics on BitArray methods that propagate through the network."
+    "description": "Scanner should flag insufficient validation on BitArray messages in libs/bits/bit_array.go and consensus/reactor.go \u2014 a peer can deliver a BitArray where len(Elems) does not match Bits, causing panics on BitArray methods that propagate through the network."
   },
   "verification": {
     "status": "pass",

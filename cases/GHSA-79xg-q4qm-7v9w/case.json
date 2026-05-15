@@ -7,9 +7,10 @@
     "title": "CWA-2025-006: Improper error handling may lead to IBC channel opening despite error",
     "severity": "high",
     "publishedAt": "2025-06-10T00:00:00Z",
-    "description": "wasmd advisory CWA-2025-006 covers an improper-error-handling bug in the IBC channel handshake path that could allow an IBC channel to be opened despite the wasm contract returning an error. The patch reworks error handling in x/wasm/keeper/relay.go and x/wasm/keeper/msg_dispatcher.go. Affects 0.60.0 and the 0.51.0–0.55.0 range; fixed in 0.60.1, 0.55.1, 0.54.1, and 0.53.3.",
+    "description": "wasmd advisory CWA-2025-006 covers an improper-error-handling bug in the IBC channel handshake path that could allow an IBC channel to be opened despite the wasm contract returning an error. The patch reworks error handling in x/wasm/keeper/relay.go and x/wasm/keeper/msg_dispatcher.go. Affects 0.60.0 and the 0.51.0\u20130.55.0 range; fixed in 0.60.1, 0.55.1, 0.54.1, and 0.53.3.",
     "cweIds": [
-      "CWE-755"
+      "CWE-755",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

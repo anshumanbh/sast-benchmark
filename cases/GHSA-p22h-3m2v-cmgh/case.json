@@ -9,7 +9,8 @@
     "publishedAt": "2025-07-08T00:00:00Z",
     "description": "Cosmos SDK advisory ISA-2025-005 covers an integer overflow in the x/distribution module's validator rewards path. A malicious deposit into the validator rewards pool can trigger an integer overflow that halts the chain. The v0.50.13..v0.50.14 patch is a single-file fix to x/distribution/keeper/msg_server.go. Affects <v0.50.14 and <v0.53.3; fixed in v0.50.14 and v0.53.3.",
     "cweIds": [
-      "CWE-190"
+      "CWE-190",
+      "CWE-400"
     ],
     "affectedPackages": [
       {
@@ -35,8 +36,8 @@
         "subject": "Refactor x/distribution according to ADR 031 (#7524)"
       }
     ],
-    "vulnerableHead": "7b9d2ff98d02bd5a7edd3b153dd577819cc1d777",
-    "notes": "vulnerableHead is the v0.50.13 release commit, the last vulnerable release before the v0.50.14 patch. The v0.50.13..v0.50.14 patch is a single-file modification of x/distribution/keeper/msg_server.go. The introducing commit is the refactor that established msg_server.go in its current form for the distribution module."
+    "vulnerableHead": "e265bb9b42308dc70743b6200a70db9aafb70527",
+    "notes": "vulnerableHead is the v0.53.2 release commit, the most recent vulnerable release in the advisory range (>=0.53.0,<=0.53.2 on the v0.53 line) before the v0.53.3 patch. The patch is a single-file modification of x/distribution/keeper/msg_server.go on both the v0.50 and v0.53 release lines. The introducing commit is the refactor that established msg_server.go in its current form for the distribution module."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -58,7 +59,7 @@
       {
         "name": "vulnerable_head_in_advisory_range",
         "pass": true,
-        "details": "vulnerableHead is the v0.50.13 release commit, the latest tag in the <0.50.14 vulnerable range on the v0.50 line."
+        "details": "vulnerableHead is the v0.53.2 release commit, the latest tag in the >=0.53.0,<=0.53.2 vulnerable range on the v0.53 line (newer than the v0.50 line's last vulnerable tag v0.50.13)."
       },
       {
         "name": "baseline_is_parent_of_earliest_intro",
@@ -77,14 +78,14 @@
         "pass": true,
         "details": "intro=bf7165414da38896444b8a221de921d3c870238f vulnerable_head=7b9d2ff98d02bd5a7edd3b153dd577819cc1d777",
         "ancestor": "bf7165414da38896444b8a221de921d3c870238f",
-        "descendant": "7b9d2ff98d02bd5a7edd3b153dd577819cc1d777"
+        "descendant": "e265bb9b42308dc70743b6200a70db9aafb70527"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
         "details": "baseline=1279da53ea62c4676bdcd1eeab32858644cf2cdb vulnerable_head=7b9d2ff98d02bd5a7edd3b153dd577819cc1d777",
         "ancestor": "1279da53ea62c4676bdcd1eeab32858644cf2cdb",
-        "descendant": "7b9d2ff98d02bd5a7edd3b153dd577819cc1d777"
+        "descendant": "e265bb9b42308dc70743b6200a70db9aafb70527"
       }
     ]
   }

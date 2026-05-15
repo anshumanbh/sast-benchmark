@@ -7,9 +7,10 @@
     "title": "ASA-2025-003: Groups module can halt chain when handling a malicious proposal",
     "severity": "high",
     "publishedAt": "2025-02-20T00:00:00Z",
-    "description": "Cosmos SDK advisory ASA-2025-003 covers a divide-by-zero condition in the x/group module that halts the chain when a malicious proposal is processed. Any user with access to the groups module can introduce the failing state. The v0.50.11..v0.50.12 patch modifies x/group/keeper/msg_server.go and x/group/types.go to validate the divisor path. Affects v0.47.0–v0.47.15 and v0.50.0–v0.50.11; fixed in v0.47.16 and v0.50.12.",
+    "description": "Cosmos SDK advisory ASA-2025-003 covers a divide-by-zero condition in the x/group module that halts the chain when a malicious proposal is processed. Any user with access to the groups module can introduce the failing state. The v0.50.11..v0.50.12 patch modifies x/group/keeper/msg_server.go and x/group/types.go to validate the divisor path. Affects v0.47.0\u2013v0.47.15 and v0.50.0\u2013v0.50.11; fixed in v0.47.16 and v0.50.12.",
     "cweIds": [
-      "CWE-369"
+      "CWE-369",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

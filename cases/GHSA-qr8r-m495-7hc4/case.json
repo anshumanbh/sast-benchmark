@@ -9,7 +9,8 @@
     "publishedAt": "2024-01-18T00:00:00Z",
     "description": "CometBFT advisory ASA-2024-001 covers a chain-halt condition in validation of the VoteExtensionsEnableHeight consensus parameter. A governance proposal modifying this parameter on an ABCI 2.0 chain can trip the validator on the new value and panic the node. The v0.38.2..v0.38.3 patch (commit 5fbc97378, 'Merge pull request from GHSA-qr8r-m495-7hc4') strengthens validation in types/params.go. Affects v0.38.0, v0.38.1, v0.38.2; fixed in v0.38.3.",
     "cweIds": [
-      "CWE-20"
+      "CWE-20",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

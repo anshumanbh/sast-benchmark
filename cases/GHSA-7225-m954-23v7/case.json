@@ -9,7 +9,8 @@
     "publishedAt": "2024-11-20T00:00:00Z",
     "description": "Cosmos SDK advisory ASA-2024-010 covers an integer-overflow / mismatched-bit-length validation bug in cosmossdk.io/math. sdk.Int and sdk.Dec use different bit-length limits; cross-using them can trigger a panic. Modules and chains consuming this library (including IBC-Go and tokenfactory) are affected. Fixed in math/v1.4.0 by aligning the bit-length validation across math/dec.go, math/int.go, and math/uint.go. Affects cosmossdk.io/math <=v1.3.0.",
     "cweIds": [
-      "CWE-190"
+      "CWE-190",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

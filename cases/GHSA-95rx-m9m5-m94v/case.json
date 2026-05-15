@@ -7,9 +7,10 @@
     "title": "ASA-2024-006: ValidateVoteExtensions helper function may allow incorrect voting power assumptions",
     "severity": "high",
     "publishedAt": "2024-03-12T00:00:00Z",
-    "description": "Cosmos SDK advisory ASA-2024-006 covers a missing-validation bug in the default ValidateVoteExtensions helper in baseapp. The helper infers total voting power from VoteExtension data injected by the proposer, allowing a malicious proposer to manipulate validator voting power assumptions in dependent modules. The fix in v0.50.5 (commit 4467110df4 'Merge pull request from GHSA-95rx-m9m5-m94v') validates the ExtendedCommit against the LastCommit so voting power is reconciled against the state machine. Affects v0.50.0–v0.50.4; fixed in v0.50.5.",
+    "description": "Cosmos SDK advisory ASA-2024-006 covers a missing-validation bug in the default ValidateVoteExtensions helper in baseapp. The helper infers total voting power from VoteExtension data injected by the proposer, allowing a malicious proposer to manipulate validator voting power assumptions in dependent modules. The fix in v0.50.5 (commit 4467110df4 'Merge pull request from GHSA-95rx-m9m5-m94v') validates the ExtendedCommit against the LastCommit so voting power is reconciled against the state machine. Affects v0.50.0\u2013v0.50.4; fixed in v0.50.5.",
     "cweIds": [
-      "CWE-20"
+      "CWE-20",
+      "CWE-863"
     ],
     "cvss": {
       "version": "3.1",
