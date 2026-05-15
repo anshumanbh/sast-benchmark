@@ -76,14 +76,14 @@
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=bf7165414da38896444b8a221de921d3c870238f vulnerable_head=7b9d2ff98d02bd5a7edd3b153dd577819cc1d777",
+        "details": "intro=bf7165414da38896444b8a221de921d3c870238f vulnerable_head=e265bb9b42308dc70743b6200a70db9aafb70527",
         "ancestor": "bf7165414da38896444b8a221de921d3c870238f",
         "descendant": "e265bb9b42308dc70743b6200a70db9aafb70527"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=1279da53ea62c4676bdcd1eeab32858644cf2cdb vulnerable_head=7b9d2ff98d02bd5a7edd3b153dd577819cc1d777",
+        "details": "baseline=1279da53ea62c4676bdcd1eeab32858644cf2cdb vulnerable_head=e265bb9b42308dc70743b6200a70db9aafb70527",
         "ancestor": "1279da53ea62c4676bdcd1eeab32858644cf2cdb",
         "descendant": "e265bb9b42308dc70743b6200a70db9aafb70527"
       }
