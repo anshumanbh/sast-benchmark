@@ -68,7 +68,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "high",
+    "confidence": "medium",
     "checks": [
       {
         "name": "advisory_published",
