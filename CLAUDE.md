@@ -29,8 +29,16 @@ tests/                   — pytest tests (run with: python3 -m pytest tests/)
    ```bash
    git clone https://github.com/TryGhost/Ghost.git ../ghost
    ```
-3. The scanner must be installed and available on PATH.
-4. The scanner must produce **SARIF 2.1.0** or simple JSON on **stdout**.
+3. If you want to run the Cosmos ecosystem cases, clone the upstream repos:
+   ```bash
+   git clone https://github.com/cosmos/cosmos-sdk.git    ../cosmos-sdk
+   git clone https://github.com/CosmWasm/wasmd.git       ../wasmd
+   git clone https://github.com/cosmos/ibc-go.git        ../ibc-go
+   git clone https://github.com/cosmos/evm.git           ../cosmos-evm
+   git clone https://github.com/cometbft/cometbft.git    ../cometbft
+   ```
+4. The scanner must be installed and available on PATH.
+5. The scanner must produce **SARIF 2.1.0** or simple JSON on **stdout**.
 
 ### Command
 
@@ -38,6 +46,11 @@ tests/                   — pytest tests (run with: python3 -m pytest tests/)
 python3 scripts/run.py \
   --repo openclaw/openclaw=../openclaw \
   --repo TryGhost/Ghost=../ghost \
+  --repo cosmos/cosmos-sdk=../cosmos-sdk \
+  --repo CosmWasm/wasmd=../wasmd \
+  --repo cosmos/ibc-go=../ibc-go \
+  --repo cosmos/evm=../cosmos-evm \
+  --repo cometbft/cometbft=../cometbft \
   --scanner-cmd "<scanner command that outputs SARIF to stdout>"
 ```
 
@@ -100,7 +113,16 @@ The scorecard shows per-case results, repository, and an overall detection rate.
 - Tests: `python3 -m pytest tests/`
 - Validation: `python3 scripts/validate.py`
 - Semantic validation:
-  `python3 scripts/validate.py --repo openclaw/openclaw=../openclaw --repo TryGhost/Ghost=../ghost`
+  ```bash
+  python3 scripts/validate.py \
+    --repo openclaw/openclaw=../openclaw \
+    --repo TryGhost/Ghost=../ghost \
+    --repo cosmos/cosmos-sdk=../cosmos-sdk \
+    --repo CosmWasm/wasmd=../wasmd \
+    --repo cosmos/ibc-go=../ibc-go \
+    --repo cosmos/evm=../cosmos-evm \
+    --repo cometbft/cometbft=../cometbft
+  ```
 
 ## Key conventions
 
