@@ -1,6 +1,6 @@
 # SAST Benchmark
 
-43 real-world security advisories from [OpenClaw](https://github.com/openclaw/openclaw), [Ghost](https://github.com/TryGhost/Ghost), and [Cosmos SDK](https://github.com/cosmos/cosmos-sdk), packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
+61 real-world security advisories from [OpenClaw](https://github.com/openclaw/openclaw), [Ghost](https://github.com/TryGhost/Ghost), and the Cosmos ecosystem ([cosmos-sdk](https://github.com/cosmos/cosmos-sdk), [wasmd](https://github.com/CosmWasm/wasmd), [ibc-go](https://github.com/cosmos/ibc-go), [cosmos/evm](https://github.com/cosmos/evm), [cometbft](https://github.com/cometbft/cometbft)), packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
 
 Detection note: benchmark detection is based on path match + class match. Severity is still recorded as `severityMatch`, but it no longer gates whether a case counts as detected.
 
