@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-23px-mw2p-46qm",
+  "advisoryUrl": "https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-23px-mw2p-46qm",
+  "repository": "cosmos/cosmos-sdk",
+  "advisory": {
+    "title": "Cosmos-SDK Cosmovisor component may be vulnerable to denial of service",
+    "severity": "medium",
+    "publishedAt": "2023-09-06T20:49:54Z",
+    "description": "Unsupported Cosmovisor versions before v1.0.0, distributed with Cosmos SDK releases before 0.46, could be driven into denial of service and, when automatic binary downloads were enabled, a potential remote code execution path. This advisory maps to HackerOne report 2094056, RCE and DoS in Cosmovisor, reported to the Cosmos Bug Bounty Program.",
+    "cweIds": [
+      "CWE-94"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "cosmos",
+        "name": "Cosmovisor",
+        "vulnerableRange": "Cosmovisor < v1.0.0, distributed with Cosmos SDK < 0.46",
+        "patchedVersions": "Cosmovisor >= v1.0.0"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": "< 0.46",
+        "patchedVersions": "0.46"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "8f51c150dea3a259d49a36c7cf2388d8471edecf",
+    "introducingCommits": [
+      {
+        "sha": "bf0142b272d20abc397fa86c6c68f7311d2a6d61",
+        "authoredAt": "2020-08-19T17:58:43+02:00",
+        "subject": "Merge cosmosd (#6820)"
+      }
+    ],
+    "vulnerableHead": "40bb2f4f9abbf30419a9b51d3ff153d215fff2e4",
+    "notes": "The original Cosmovisor merge introduced stdout scanning for UPGRADE NEEDED messages plus DAEMON_ALLOW_DOWNLOAD_BINARIES-driven fetching. The vulnerableHead is the cosmovisor/v0.1.0 release commit, which is in the advisory's affected < v1.0.0 range. The cosmovisor/v1.0.0 line rewrote the scanner around upgrade-info.json file watching and removed the built-code upgradeRegex/NEEDED-at stdout trigger."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "codeexec",
+    "minimumSeverity": "medium",
+    "expectedPaths": [
+      "cosmovisor/scanner.go",
+      "cosmovisor/upgrade.go"
+    ],
+    "description": "Scanner should detect that Cosmovisor trusts upgrade instructions discovered through daemon output and can download and execute upgrade binaries when DAEMON_ALLOW_DOWNLOAD_BINARIES is enabled."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "hackerone_report_maps_to_advisory",
+        "pass": true,
+        "details": "HackerOne report 2094056 is titled RCE and DoS in Cosmovisor, and GHSA-23px-mw2p-46qm is the Cosmos SDK repository advisory for Cosmovisor denial of service and potential RCE reported to the Cosmos Bug Bounty Program."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the cosmovisor/v0.1.0 release commit, and GHSA-23px-mw2p-46qm lists Cosmovisor < v1.0.0 / Cosmos SDK < 0.46 as affected."
+      },
+      {
+        "name": "patched_release_removes_stdout_scanner",
+        "pass": true,
+        "details": "cosmovisor/v1.0.0 scanner.go uses upgrade-info.json file watching, while the vulnerable release contains upgradeRegex matching UPGRADE NEEDED lines from daemon output."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=8f51c150dea3a259d49a36c7cf2388d8471edecf earliest_intro=bf0142b272d20abc397fa86c6c68f7311d2a6d61"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=8f51c150dea3a259d49a36c7cf2388d8471edecf intro=bf0142b272d20abc397fa86c6c68f7311d2a6d61",
+        "ancestor": "8f51c150dea3a259d49a36c7cf2388d8471edecf",
+        "descendant": "bf0142b272d20abc397fa86c6c68f7311d2a6d61"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=bf0142b272d20abc397fa86c6c68f7311d2a6d61 vulnerable_head=40bb2f4f9abbf30419a9b51d3ff153d215fff2e4",
+        "ancestor": "bf0142b272d20abc397fa86c6c68f7311d2a6d61",
+        "descendant": "40bb2f4f9abbf30419a9b51d3ff153d215fff2e4"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=8f51c150dea3a259d49a36c7cf2388d8471edecf vulnerable_head=40bb2f4f9abbf30419a9b51d3ff153d215fff2e4",
+        "ancestor": "8f51c150dea3a259d49a36c7cf2388d8471edecf",
+        "descendant": "40bb2f4f9abbf30419a9b51d3ff153d215fff2e4"
+      }
+    ]
+  }
+}

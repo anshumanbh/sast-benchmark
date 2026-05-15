@@ -1,13 +1,13 @@
 {
   "name": "openclaw-advisory-benchmark",
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-05-15T11:32:14Z",
+  "generatedAt": "2026-05-15T11:54:58Z",
   "repositories": [
     "openclaw/openclaw",
     "TryGhost/Ghost",
     "cosmos/cosmos-sdk"
   ],
-  "caseCount": 42,
+  "caseCount": 43,
   "cases": [
     {
       "id": "GHSA-3c6h-g97w-fg78",
@@ -426,6 +426,16 @@
       "vulnerabilityClass": "abuse",
       "baselineCommit": "fec35777f9646c162b79e98409179e374374e6e0",
       "vulnerableHead": "98164408932ee74369b7ce18aa13bb1a1a6ba76b",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-23px-mw2p-46qm",
+      "severity": "medium",
+      "title": "Cosmos-SDK Cosmovisor component may be vulnerable to denial of service",
+      "vulnerabilityClass": "codeexec",
+      "baselineCommit": "8f51c150dea3a259d49a36c7cf2388d8471edecf",
+      "vulnerableHead": "40bb2f4f9abbf30419a9b51d3ff153d215fff2e4",
       "verificationStatus": "pass",
       "confidence": "high"
     }
