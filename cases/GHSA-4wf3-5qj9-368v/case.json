@@ -28,16 +28,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "3f3220762a884f209c4be637d928516ae7983ace",
+    "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
     "introducingCommits": [
       {
-        "sha": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
-        "authoredAt": "2021-03-05T14:26:35+01:00",
-        "subject": "Add \"modules\" top level directory (#14)"
+        "sha": "09646a012aba42575ed8ea66c91811f04aebcae6",
+        "authoredAt": "2021-02-22T15:34:34+01:00",
+        "subject": "Initial Setup + Protobuf files (#2)"
       }
     ],
     "vulnerableHead": "59987d52d959dc5876ffd4f307c9b33a52a43748",
-    "notes": "vulnerableHead is the v8.6.1 release commit, the last vulnerable release before v8.7.0 (the ISA-2025-001 patched version). v8.6.1 already contains the ASA-2025-004 transfer-module fix but still has the non-deterministic decoding path in modules/core/04-channel/keeper/packet.go. The introducing commit is the original commit that established the modules/ directory tree where packet.go lives; the v8.6.1..v8.7.0 patch modifies packet.go to extend deterministic acknowledgement handling to all applications."
+    "notes": "vulnerableHead is the v8.6.1 release commit, the last vulnerable release before v8.7.0 (the ISA-2025-001 patched version). v8.6.1 already contains the ASA-2025-004 transfer-module fix but still has the non-deterministic acknowledgement-decoding path in modules/core/04-channel/keeper/packet.go. The vulnerable pattern (AcknowledgePacket accepting `acknowledgement []byte` and forwarding it to VerifyPacketAcknowledgement without a marshal-equality check) has been present since the initial setup commit 09646a01 (\"Initial Setup + Protobuf files (#2)\"); confidence is medium because there is no discrete bug-introducing commit \u2014 the missing validation has existed since the file was created."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -64,27 +64,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace earliest_intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67"
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 earliest_intro=09646a012aba42575ed8ea66c91811f04aebcae6"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
-        "ancestor": "3f3220762a884f209c4be637d928516ae7983ace",
-        "descendant": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67"
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 intro=09646a012aba42575ed8ea66c91811f04aebcae6",
+        "ancestor": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+        "descendant": "09646a012aba42575ed8ea66c91811f04aebcae6"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67 vulnerable_head=59987d52d959dc5876ffd4f307c9b33a52a43748",
-        "ancestor": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
+        "details": "intro=09646a012aba42575ed8ea66c91811f04aebcae6 vulnerable_head=59987d52d959dc5876ffd4f307c9b33a52a43748",
+        "ancestor": "09646a012aba42575ed8ea66c91811f04aebcae6",
         "descendant": "59987d52d959dc5876ffd4f307c9b33a52a43748"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace vulnerable_head=59987d52d959dc5876ffd4f307c9b33a52a43748",
-        "ancestor": "3f3220762a884f209c4be637d928516ae7983ace",
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 vulnerable_head=59987d52d959dc5876ffd4f307c9b33a52a43748",
+        "ancestor": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
         "descendant": "59987d52d959dc5876ffd4f307c9b33a52a43748"
       }
     ]

@@ -28,16 +28,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+    "baselineCommit": "c67cf14db1c138fedd0e5d2ae90c0cfa2b71b5f1",
     "introducingCommits": [
       {
-        "sha": "d9142662c19a151f34ff4a66d69007124051bd28",
-        "authoredAt": "2021-03-19T09:52:01+01:00",
-        "subject": "Remove internal package (#464)"
+        "sha": "305f13cc0a7997b44f4e12be801a328bacdb8afe",
+        "authoredAt": "2021-04-27T14:00:42+02:00",
+        "subject": "Submessage reply can overwrite caller response (#502)"
       }
     ],
     "vulnerableHead": "1ff818801d4aa5dd6f483571ac7a38660c59c671",
-    "notes": "vulnerableHead is the v0.52.0 release commit, the last vulnerable v0.5x release before the v0.53.0 patch. The introducing commit is the first commit that established x/wasm/keeper/handler_plugin.go (the message dispatch entry point) at its current location; both the v0.46.0 and v0.53.0 patches add a recursion depth limit in this file (handler_plugin.go and keeper.go)."
+    "notes": "vulnerableHead is the v0.52.0 release commit, the last vulnerable v0.5x release before the v0.53.0 patch. The introducing commit 305f13cc added the recursive submessage dispatcher (MessageDispatcher.DispatchSubmessages in x/wasm/keeper/msg_dispatcher.go) \u2014 the call path that re-enters contract execution without a depth cap. Both the v0.46.0 and v0.53.0 patches add a recursion depth limit (callDepthMessageHandler, checkAndIncreaseCallDepth) wrapping this dispatcher in x/wasm/keeper/handler_plugin.go and keeper.go."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -50,7 +50,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "advisory_published",
@@ -65,27 +65,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d earliest_intro=d9142662c19a151f34ff4a66d69007124051bd28"
+        "details": "baseline=c67cf14db1c138fedd0e5d2ae90c0cfa2b71b5f1 earliest_intro=305f13cc0a7997b44f4e12be801a328bacdb8afe"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d intro=d9142662c19a151f34ff4a66d69007124051bd28",
-        "ancestor": "63fe568b32ca9ea82b7bf946093223870054ff6d",
-        "descendant": "d9142662c19a151f34ff4a66d69007124051bd28"
+        "details": "baseline=c67cf14db1c138fedd0e5d2ae90c0cfa2b71b5f1 intro=305f13cc0a7997b44f4e12be801a328bacdb8afe",
+        "ancestor": "c67cf14db1c138fedd0e5d2ae90c0cfa2b71b5f1",
+        "descendant": "305f13cc0a7997b44f4e12be801a328bacdb8afe"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=d9142662c19a151f34ff4a66d69007124051bd28 vulnerable_head=1ff818801d4aa5dd6f483571ac7a38660c59c671",
-        "ancestor": "d9142662c19a151f34ff4a66d69007124051bd28",
+        "details": "intro=305f13cc0a7997b44f4e12be801a328bacdb8afe vulnerable_head=1ff818801d4aa5dd6f483571ac7a38660c59c671",
+        "ancestor": "305f13cc0a7997b44f4e12be801a328bacdb8afe",
         "descendant": "1ff818801d4aa5dd6f483571ac7a38660c59c671"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d vulnerable_head=1ff818801d4aa5dd6f483571ac7a38660c59c671",
-        "ancestor": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+        "details": "baseline=c67cf14db1c138fedd0e5d2ae90c0cfa2b71b5f1 vulnerable_head=1ff818801d4aa5dd6f483571ac7a38660c59c671",
+        "ancestor": "c67cf14db1c138fedd0e5d2ae90c0cfa2b71b5f1",
         "descendant": "1ff818801d4aa5dd6f483571ac7a38660c59c671"
       }
     ]

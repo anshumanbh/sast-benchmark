@@ -28,16 +28,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "9e6d0887574136fcde247885d7a3032d4eaa96f3",
+    "baselineCommit": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
     "introducingCommits": [
       {
-        "sha": "f82b7e2a133909e59387a39580d5dcc26922ec61",
-        "authoredAt": "2017-12-27T20:03:48-05:00",
-        "subject": "state: re-order funcs. fix tests"
+        "sha": "7b88172f41faa88107880774c338a953df7f6686",
+        "authoredAt": "2018-09-01T01:33:51+02:00",
+        "subject": "Implement BFT time (#2203)"
       }
     ],
     "vulnerableHead": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
-    "notes": "vulnerableHead is the v0.38.20 release commit, the last vulnerable v0.38 release before the v0.38.21 Tachyon patch (commit c56d64ec5). The introducing commit is the early state-package commit that established state/validation.go in its current location."
+    "notes": "vulnerableHead is the v0.38.20 release commit, the last vulnerable v0.38 release before the v0.38.21 Tachyon patch (commit c56d64ec5). The introducing commit 7b88172f (\"Implement BFT time\", 2018-09-01) added the MedianTime derivation in state/state.go whose silent-skip behaviour for unknown validators is at the heart of the divergence Tachyon patches; confidence is medium because the inconsistency between commit-signature lookup and BFT-time derivation has been present since BFT time was introduced \u2014 there is no discrete regression."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -66,27 +66,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=9e6d0887574136fcde247885d7a3032d4eaa96f3 earliest_intro=f82b7e2a133909e59387a39580d5dcc26922ec61"
+        "details": "baseline=ffe91ae9e38bba64c5ffc41871626f0a2b1fb051 earliest_intro=7b88172f41faa88107880774c338a953df7f6686"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=9e6d0887574136fcde247885d7a3032d4eaa96f3 intro=f82b7e2a133909e59387a39580d5dcc26922ec61",
-        "ancestor": "9e6d0887574136fcde247885d7a3032d4eaa96f3",
-        "descendant": "f82b7e2a133909e59387a39580d5dcc26922ec61"
+        "details": "baseline=ffe91ae9e38bba64c5ffc41871626f0a2b1fb051 intro=7b88172f41faa88107880774c338a953df7f6686",
+        "ancestor": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
+        "descendant": "7b88172f41faa88107880774c338a953df7f6686"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=f82b7e2a133909e59387a39580d5dcc26922ec61 vulnerable_head=c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
-        "ancestor": "f82b7e2a133909e59387a39580d5dcc26922ec61",
+        "details": "intro=7b88172f41faa88107880774c338a953df7f6686 vulnerable_head=c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
+        "ancestor": "7b88172f41faa88107880774c338a953df7f6686",
         "descendant": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=9e6d0887574136fcde247885d7a3032d4eaa96f3 vulnerable_head=c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
-        "ancestor": "9e6d0887574136fcde247885d7a3032d4eaa96f3",
+        "details": "baseline=ffe91ae9e38bba64c5ffc41871626f0a2b1fb051 vulnerable_head=c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
+        "ancestor": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
         "descendant": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8"
       }
     ]

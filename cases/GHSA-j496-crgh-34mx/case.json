@@ -47,16 +47,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "3f3220762a884f209c4be637d928516ae7983ace",
+    "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
     "introducingCommits": [
       {
-        "sha": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
-        "authoredAt": "2021-03-05T14:26:35+01:00",
-        "subject": "Add \"modules\" top level directory (#14)"
+        "sha": "09646a012aba42575ed8ea66c91811f04aebcae6",
+        "authoredAt": "2021-02-22T15:34:34+01:00",
+        "subject": "Initial Setup + Protobuf files (#2)"
       }
     ],
     "vulnerableHead": "a4ef5360b49ad2118e1d68f25f13935162660e0b",
-    "notes": "vulnerableHead is the v8.1.1 release commit, the last vulnerable v8.x release before the v8.2.0 patch. The v8.1.1..v8.2.0 commit '5e2e9ebc2 Merge pull request from GHSA-j496-crgh-34mx' modifies modules/core/keeper/msg_server.go to delete the packet commitment before invoking application callbacks, breaking the reentrancy window. The introducing commit is the commit that established the modules/ tree where this msg_server.go lives."
+    "notes": "vulnerableHead is the v8.1.1 release commit, the last vulnerable v8.x release before the v8.2.0 patch. The v8.1.1..v8.2.0 commit 5e2e9ebc2 (Merge pull request from GHSA-j496-crgh-34mx) modifies modules/core/keeper/msg_server.go to delete the packet commitment before invoking application callbacks, breaking the reentrancy window. The vulnerable ordering (cbs.OnTimeoutPacket invoked before k.ChannelKeeper.TimeoutExecuted) has been present in both Timeout and TimeoutOnClose since the initial setup commit 09646a01; confidence is medium because the reentrancy window has existed since file inception."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "brokenauthz",
@@ -83,27 +83,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace earliest_intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67"
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 earliest_intro=09646a012aba42575ed8ea66c91811f04aebcae6"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
-        "ancestor": "3f3220762a884f209c4be637d928516ae7983ace",
-        "descendant": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67"
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 intro=09646a012aba42575ed8ea66c91811f04aebcae6",
+        "ancestor": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+        "descendant": "09646a012aba42575ed8ea66c91811f04aebcae6"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67 vulnerable_head=a4ef5360b49ad2118e1d68f25f13935162660e0b",
-        "ancestor": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
+        "details": "intro=09646a012aba42575ed8ea66c91811f04aebcae6 vulnerable_head=a4ef5360b49ad2118e1d68f25f13935162660e0b",
+        "ancestor": "09646a012aba42575ed8ea66c91811f04aebcae6",
         "descendant": "a4ef5360b49ad2118e1d68f25f13935162660e0b"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace vulnerable_head=a4ef5360b49ad2118e1d68f25f13935162660e0b",
-        "ancestor": "3f3220762a884f209c4be637d928516ae7983ace",
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 vulnerable_head=a4ef5360b49ad2118e1d68f25f13935162660e0b",
+        "ancestor": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
         "descendant": "a4ef5360b49ad2118e1d68f25f13935162660e0b"
       }
     ]

@@ -28,16 +28,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "ab65e17185b4133e654bd972b1166d4f5421a8cc",
+    "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
     "introducingCommits": [
       {
-        "sha": "1f88b3cc82c259fde2df2af3b41a6137f9874687",
-        "authoredAt": "2021-11-03T14:44:52+01:00",
-        "subject": "chore: split transfer AppModule/IBCModule (#517)"
+        "sha": "09646a012aba42575ed8ea66c91811f04aebcae6",
+        "authoredAt": "2021-02-22T15:34:34+01:00",
+        "subject": "Initial Setup + Protobuf files (#2)"
       }
     ],
     "vulnerableHead": "91dda01659676dfc15339a196b0750b6c808af93",
-    "notes": "vulnerableHead is the v8.6.0 release commit, the last vulnerable release on the v8.x line before the v8.6.1 patch. The introducing commit is the commit that split the transfer module into its current AppModule/IBCModule layout in modules/apps/transfer/ibc_module.go, the file the v8.6.0..v8.6.1 patch modifies to deterministically decode acknowledgements."
+    "notes": "vulnerableHead is the v8.6.0 release commit, the last vulnerable release on the v8.x line before the v8.6.1 patch. The vulnerable pattern (types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack) in OnAcknowledgementPacket without DisallowUnknownFields / strict decoding) has been present in modules/apps/transfer/ibc_module.go since the initial setup commit 09646a01; confidence is medium because the non-deterministic decode has existed since file inception."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -64,27 +64,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=ab65e17185b4133e654bd972b1166d4f5421a8cc earliest_intro=1f88b3cc82c259fde2df2af3b41a6137f9874687"
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 earliest_intro=09646a012aba42575ed8ea66c91811f04aebcae6"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=ab65e17185b4133e654bd972b1166d4f5421a8cc intro=1f88b3cc82c259fde2df2af3b41a6137f9874687",
-        "ancestor": "ab65e17185b4133e654bd972b1166d4f5421a8cc",
-        "descendant": "1f88b3cc82c259fde2df2af3b41a6137f9874687"
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 intro=09646a012aba42575ed8ea66c91811f04aebcae6",
+        "ancestor": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+        "descendant": "09646a012aba42575ed8ea66c91811f04aebcae6"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=1f88b3cc82c259fde2df2af3b41a6137f9874687 vulnerable_head=91dda01659676dfc15339a196b0750b6c808af93",
-        "ancestor": "1f88b3cc82c259fde2df2af3b41a6137f9874687",
+        "details": "intro=09646a012aba42575ed8ea66c91811f04aebcae6 vulnerable_head=91dda01659676dfc15339a196b0750b6c808af93",
+        "ancestor": "09646a012aba42575ed8ea66c91811f04aebcae6",
         "descendant": "91dda01659676dfc15339a196b0750b6c808af93"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=ab65e17185b4133e654bd972b1166d4f5421a8cc vulnerable_head=91dda01659676dfc15339a196b0750b6c808af93",
-        "ancestor": "ab65e17185b4133e654bd972b1166d4f5421a8cc",
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 vulnerable_head=91dda01659676dfc15339a196b0750b6c808af93",
+        "ancestor": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
         "descendant": "91dda01659676dfc15339a196b0750b6c808af93"
       }
     ]

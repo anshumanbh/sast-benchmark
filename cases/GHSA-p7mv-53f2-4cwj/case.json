@@ -22,16 +22,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "50544c50afb60ed94665970508caca168e717221",
+    "baselineCommit": "aeec999151c294757184f5b221d28cc0486fb06b",
     "introducingCommits": [
       {
-        "sha": "d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7",
-        "authoredAt": "2014-08-10T16:35:08-07:00",
-        "subject": "saving development state..."
+        "sha": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
+        "authoredAt": "2022-12-09T22:30:37+01:00",
+        "subject": "Vote extensions: Add consensus param for extension activation logic (#9862)"
       }
     ],
     "vulnerableHead": "5544864558da838d2dfb1072929e1ee7715b497e",
-    "notes": "vulnerableHead is the v0.38.13 release commit, an unambiguously vulnerable release in the >=0.38.0,<v0.38.15 range. (v0.38.14 was released and retracted due to a non-security regression in cometbft-db; the advisory marks v0.38.15 as the recommended patched version.) The introducing commit is the early consensus-state commit that established consensus/state.go in its current location."
+    "notes": "vulnerableHead is the v0.38.13 release commit, an unambiguously vulnerable release in the >=0.38.0,<v0.38.15 range. (v0.38.14 was released and retracted due to a non-security regression in cometbft-db; the advisory marks v0.38.15 as the recommended patched version.) The introducing commit 03bdcad3 is the cherry-pick that added vote-extension handling to consensus/state.go, including the `_, val := cs.state.Validators.GetByIndex(vote.ValidatorIndex)` call followed by an unguarded val.PubKey dereference inside addVote \u2014 the precise pattern patched in v0.38.15 (commit 3a023da3a)."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -44,7 +44,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "advisory_published",
@@ -59,27 +59,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=50544c50afb60ed94665970508caca168e717221 earliest_intro=d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7"
+        "details": "baseline=aeec999151c294757184f5b221d28cc0486fb06b earliest_intro=03bdcad31e9ef8ced3683d602116f2cf30f032d8"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=50544c50afb60ed94665970508caca168e717221 intro=d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7",
-        "ancestor": "50544c50afb60ed94665970508caca168e717221",
-        "descendant": "d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7"
+        "details": "baseline=aeec999151c294757184f5b221d28cc0486fb06b intro=03bdcad31e9ef8ced3683d602116f2cf30f032d8",
+        "ancestor": "aeec999151c294757184f5b221d28cc0486fb06b",
+        "descendant": "03bdcad31e9ef8ced3683d602116f2cf30f032d8"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7 vulnerable_head=5544864558da838d2dfb1072929e1ee7715b497e",
-        "ancestor": "d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7",
+        "details": "intro=03bdcad31e9ef8ced3683d602116f2cf30f032d8 vulnerable_head=5544864558da838d2dfb1072929e1ee7715b497e",
+        "ancestor": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
         "descendant": "5544864558da838d2dfb1072929e1ee7715b497e"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=50544c50afb60ed94665970508caca168e717221 vulnerable_head=5544864558da838d2dfb1072929e1ee7715b497e",
-        "ancestor": "50544c50afb60ed94665970508caca168e717221",
+        "details": "baseline=aeec999151c294757184f5b221d28cc0486fb06b vulnerable_head=5544864558da838d2dfb1072929e1ee7715b497e",
+        "ancestor": "aeec999151c294757184f5b221d28cc0486fb06b",
         "descendant": "5544864558da838d2dfb1072929e1ee7715b497e"
       }
     ]

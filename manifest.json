@@ -448,27 +448,27 @@
       "severity": "high",
       "title": "CWA-2025-006: Improper error handling may lead to IBC channel opening despite error",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+      "baselineCommit": "c7ba88f81d6391197e5da983cc1cfb7f2a282021",
       "vulnerableHead": "0ad43c79dcfc080765d0eb1b571a5dee81b798d0",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-g8w7-7vgg-x7xg",
       "severity": "high",
       "title": "CWA-2024-005: Stackoverflow in wasmd",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+      "baselineCommit": "c67cf14db1c138fedd0e5d2ae90c0cfa2b71b5f1",
       "vulnerableHead": "1ff818801d4aa5dd6f483571ac7a38660c59c671",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-jg6f-48ff-5xrw",
       "severity": "critical",
       "title": "ASA-2025-004: Non-deterministic JSON Unmarshalling of IBC Acknowledgement can result in a chain halt",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "ab65e17185b4133e654bd972b1166d4f5421a8cc",
+      "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
       "vulnerableHead": "91dda01659676dfc15339a196b0750b6c808af93",
       "verificationStatus": "pass",
       "confidence": "medium"
@@ -478,7 +478,7 @@
       "severity": "critical",
       "title": "ISA-2025-001: Non-deterministic JSON Unmarshalling of IBC Acknowledgement can result in a chain halt",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "3f3220762a884f209c4be637d928516ae7983ace",
+      "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
       "vulnerableHead": "59987d52d959dc5876ffd4f307c9b33a52a43748",
       "verificationStatus": "pass",
       "confidence": "medium"
@@ -488,7 +488,7 @@
       "severity": "critical",
       "title": "ASA-2024-007: Potential Reentrancy using Timeout Callbacks in ibc-hooks",
       "vulnerabilityClass": "brokenauthz",
-      "baselineCommit": "3f3220762a884f209c4be637d928516ae7983ace",
+      "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
       "vulnerableHead": "a4ef5360b49ad2118e1d68f25f13935162660e0b",
       "verificationStatus": "pass",
       "confidence": "medium"
@@ -578,7 +578,7 @@
       "severity": "critical",
       "title": "CSA-2026-001: Tachyon \u2014 BFT Time inconsistency allows faulty process to arbitrarily increase block time",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "9e6d0887574136fcde247885d7a3032d4eaa96f3",
+      "baselineCommit": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
       "vulnerableHead": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
       "verificationStatus": "pass",
       "confidence": "medium"
@@ -588,7 +588,7 @@
       "severity": "high",
       "title": "ASA-2025-003: Invalid BitArray handling can lead to network halt",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "7e022112462f3ac2efe6ef7dc9d6ca05e985cdae",
+      "baselineCommit": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
       "vulnerableHead": "5344a6e3bd806ba352b89f600c7f19c139442117",
       "verificationStatus": "pass",
       "confidence": "medium"
@@ -598,7 +598,7 @@
       "severity": "high",
       "title": "ASA-2025-002: Malicious peer can stall network by disseminating seemingly valid block parts",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "513decfc5a646efe1042f3d50a8289d193fbddd1",
+      "baselineCommit": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
       "vulnerableHead": "84f981e934707c40c5e1e2520b3a54a4ba02e295",
       "verificationStatus": "pass",
       "confidence": "medium"
@@ -608,20 +608,20 @@
       "severity": "high",
       "title": "ASA-2024-011: Vote Extensions \u2014 Panic when receiving a Pre-commit with invalid data",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "50544c50afb60ed94665970508caca168e717221",
+      "baselineCommit": "aeec999151c294757184f5b221d28cc0486fb06b",
       "vulnerableHead": "5544864558da838d2dfb1072929e1ee7715b497e",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-qr8r-m495-7hc4",
       "severity": "high",
       "title": "ASA-2024-001: Validation of VoteExtensionsEnableHeight can cause chain halt",
       "vulnerabilityClass": "abuse",
-      "baselineCommit": "14abdd57f3f8091d9e5855dc0c6e27f6973284d0",
+      "baselineCommit": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
       "vulnerableHead": "2aacfbe9832d35942413251ef11394970e5c4942",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     }
   ]
 }

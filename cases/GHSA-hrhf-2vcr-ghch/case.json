@@ -28,16 +28,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "7e022112462f3ac2efe6ef7dc9d6ca05e985cdae",
+    "baselineCommit": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
     "introducingCommits": [
       {
-        "sha": "7b52f51700de3384cef814fce1d114130f13d03f",
-        "authoredAt": "2019-12-12T09:33:27+01:00",
-        "subject": "libs/common: Refactor libs/common 5 (#4240)"
+        "sha": "f6cde44febface61b3d5bc777a549636350b82ff",
+        "authoredAt": "2024-04-24T14:49:08+08:00",
+        "subject": "perf(internal/bits): Significantly speedup bitArray.PickRandom (backport #2841) (#2886)"
       }
     ],
     "vulnerableHead": "5344a6e3bd806ba352b89f600c7f19c139442117",
-    "notes": "vulnerableHead is the v0.38.18 release commit, the last vulnerable v0.38 release before the v0.38.19 patch. The introducing commit is the libs/common refactor that established the current libs/bits/bit_array.go file."
+    "notes": "vulnerableHead is the v0.38.18 release commit, the last vulnerable v0.38 release before the v0.38.19 patch. The introducing commit f6cde44f (\"perf(internal/bits): Significantly speedup bitArray.PickRandom\", 2024-04-24) reworked getNumTrueIndices / getNthTrueIndex in libs/bits/bit_array.go and broadened the surface where a Bits / len(Elems) mismatch can panic; confidence is medium because the underlying missing ValidateBasic on BitArray has been present since the file was created."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -65,27 +65,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=7e022112462f3ac2efe6ef7dc9d6ca05e985cdae earliest_intro=7b52f51700de3384cef814fce1d114130f13d03f"
+        "details": "baseline=a9e045ba38db01a0fbc81eeabca6516d3f603ad5 earliest_intro=f6cde44febface61b3d5bc777a549636350b82ff"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=7e022112462f3ac2efe6ef7dc9d6ca05e985cdae intro=7b52f51700de3384cef814fce1d114130f13d03f",
-        "ancestor": "7e022112462f3ac2efe6ef7dc9d6ca05e985cdae",
-        "descendant": "7b52f51700de3384cef814fce1d114130f13d03f"
+        "details": "baseline=a9e045ba38db01a0fbc81eeabca6516d3f603ad5 intro=f6cde44febface61b3d5bc777a549636350b82ff",
+        "ancestor": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
+        "descendant": "f6cde44febface61b3d5bc777a549636350b82ff"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=7b52f51700de3384cef814fce1d114130f13d03f vulnerable_head=5344a6e3bd806ba352b89f600c7f19c139442117",
-        "ancestor": "7b52f51700de3384cef814fce1d114130f13d03f",
+        "details": "intro=f6cde44febface61b3d5bc777a549636350b82ff vulnerable_head=5344a6e3bd806ba352b89f600c7f19c139442117",
+        "ancestor": "f6cde44febface61b3d5bc777a549636350b82ff",
         "descendant": "5344a6e3bd806ba352b89f600c7f19c139442117"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=7e022112462f3ac2efe6ef7dc9d6ca05e985cdae vulnerable_head=5344a6e3bd806ba352b89f600c7f19c139442117",
-        "ancestor": "7e022112462f3ac2efe6ef7dc9d6ca05e985cdae",
+        "details": "baseline=a9e045ba38db01a0fbc81eeabca6516d3f603ad5 vulnerable_head=5344a6e3bd806ba352b89f600c7f19c139442117",
+        "ancestor": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
         "descendant": "5344a6e3bd806ba352b89f600c7f19c139442117"
       }
     ]

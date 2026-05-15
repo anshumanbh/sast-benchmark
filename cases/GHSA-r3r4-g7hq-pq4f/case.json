@@ -28,16 +28,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "513decfc5a646efe1042f3d50a8289d193fbddd1",
+    "baselineCommit": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
     "introducingCommits": [
       {
-        "sha": "87e1f76324bc915004538cb3a7d2070d4ce94ae2",
-        "authoredAt": "2015-03-22T19:00:08-07:00",
-        "subject": "tendermint/block -> tendermint/types and tendermint/blockchain"
+        "sha": "fb91ef7462b421349a56c32733724d920fce3ad4",
+        "authoredAt": "2018-11-01T07:07:18+01:00",
+        "subject": "validate reactor messages (#2711)"
       }
     ],
     "vulnerableHead": "84f981e934707c40c5e1e2520b3a54a4ba02e295",
-    "notes": "vulnerableHead is the v0.38.16 release commit, the last vulnerable v0.38 release before the v0.38.17 patch. The introducing commit is the original commit that established the tendermint/types tree (now cometbft types) where part_set.go lives."
+    "notes": "vulnerableHead is the v0.38.16 release commit, the last vulnerable v0.38 release before the v0.38.17 patch. The introducing commit fb91ef74 (\"validate reactor messages\", 2018-11-01) added Part.ValidateBasic in types/part_set.go \u2014 the function the v0.38.17 patch extends with the missing `int64(part.Index) != part.Proof.Index` equality check; confidence is medium because the missing check has been absent since ValidateBasic was first written."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -64,27 +64,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=513decfc5a646efe1042f3d50a8289d193fbddd1 earliest_intro=87e1f76324bc915004538cb3a7d2070d4ce94ae2"
+        "details": "baseline=a22c962e28053f9f51d71d3394e0c62bf551fb99 earliest_intro=fb91ef7462b421349a56c32733724d920fce3ad4"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=513decfc5a646efe1042f3d50a8289d193fbddd1 intro=87e1f76324bc915004538cb3a7d2070d4ce94ae2",
-        "ancestor": "513decfc5a646efe1042f3d50a8289d193fbddd1",
-        "descendant": "87e1f76324bc915004538cb3a7d2070d4ce94ae2"
+        "details": "baseline=a22c962e28053f9f51d71d3394e0c62bf551fb99 intro=fb91ef7462b421349a56c32733724d920fce3ad4",
+        "ancestor": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
+        "descendant": "fb91ef7462b421349a56c32733724d920fce3ad4"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=87e1f76324bc915004538cb3a7d2070d4ce94ae2 vulnerable_head=84f981e934707c40c5e1e2520b3a54a4ba02e295",
-        "ancestor": "87e1f76324bc915004538cb3a7d2070d4ce94ae2",
+        "details": "intro=fb91ef7462b421349a56c32733724d920fce3ad4 vulnerable_head=84f981e934707c40c5e1e2520b3a54a4ba02e295",
+        "ancestor": "fb91ef7462b421349a56c32733724d920fce3ad4",
         "descendant": "84f981e934707c40c5e1e2520b3a54a4ba02e295"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=513decfc5a646efe1042f3d50a8289d193fbddd1 vulnerable_head=84f981e934707c40c5e1e2520b3a54a4ba02e295",
-        "ancestor": "513decfc5a646efe1042f3d50a8289d193fbddd1",
+        "details": "baseline=a22c962e28053f9f51d71d3394e0c62bf551fb99 vulnerable_head=84f981e934707c40c5e1e2520b3a54a4ba02e295",
+        "ancestor": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
         "descendant": "84f981e934707c40c5e1e2520b3a54a4ba02e295"
       }
     ]

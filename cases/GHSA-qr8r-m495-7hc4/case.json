@@ -22,16 +22,16 @@
     ]
   },
   "timeline": {
-    "baselineCommit": "14abdd57f3f8091d9e5855dc0c6e27f6973284d0",
+    "baselineCommit": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
     "introducingCommits": [
       {
-        "sha": "2b6db268cfb1cacfe8fb70347f68a8622c87fb50",
-        "authoredAt": "2017-09-12T15:20:19-04:00",
-        "subject": "genesis json tests and mv ConsensusParams to types"
+        "sha": "0bc5399249f6f014947ce5e79a54cadc44ae8f28",
+        "authoredAt": "2022-12-13T12:05:15+01:00",
+        "subject": "Vote extensions: add proto fields for enabling extensions (#9865)"
       }
     ],
     "vulnerableHead": "2aacfbe9832d35942413251ef11394970e5c4942",
-    "notes": "vulnerableHead is the v0.38.2 release commit, the last vulnerable v0.38 release before the v0.38.3 patch. The introducing commit is the early commit that established ConsensusParams in types/params.go, the file the GHSA-qr8r patch updates."
+    "notes": "vulnerableHead is the v0.38.2 release commit, the last vulnerable v0.38 release before the v0.38.3 patch. The introducing commit 0bc53992 added the original ValidateUpdate logic on ConsensusParams for VoteExtensionsEnableHeight \u2014 missing the negative-value check, missing the nil-`updated` guard, and with an incomplete state machine that allows the parameter to be disabled at a past height. The GHSA-qr8r patch (5fbc97378) rewrites exactly the function this commit introduced in types/params.go."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -43,7 +43,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "advisory_published",
@@ -58,27 +58,27 @@
       {
         "name": "baseline_is_parent_of_earliest_intro",
         "pass": true,
-        "details": "baseline=14abdd57f3f8091d9e5855dc0c6e27f6973284d0 earliest_intro=2b6db268cfb1cacfe8fb70347f68a8622c87fb50"
+        "details": "baseline=03bdcad31e9ef8ced3683d602116f2cf30f032d8 earliest_intro=0bc5399249f6f014947ce5e79a54cadc44ae8f28"
       },
       {
         "name": "baseline_ancestor_of_intro",
         "pass": true,
-        "details": "baseline=14abdd57f3f8091d9e5855dc0c6e27f6973284d0 intro=2b6db268cfb1cacfe8fb70347f68a8622c87fb50",
-        "ancestor": "14abdd57f3f8091d9e5855dc0c6e27f6973284d0",
-        "descendant": "2b6db268cfb1cacfe8fb70347f68a8622c87fb50"
+        "details": "baseline=03bdcad31e9ef8ced3683d602116f2cf30f032d8 intro=0bc5399249f6f014947ce5e79a54cadc44ae8f28",
+        "ancestor": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
+        "descendant": "0bc5399249f6f014947ce5e79a54cadc44ae8f28"
       },
       {
         "name": "intro_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "intro=2b6db268cfb1cacfe8fb70347f68a8622c87fb50 vulnerable_head=2aacfbe9832d35942413251ef11394970e5c4942",
-        "ancestor": "2b6db268cfb1cacfe8fb70347f68a8622c87fb50",
+        "details": "intro=0bc5399249f6f014947ce5e79a54cadc44ae8f28 vulnerable_head=2aacfbe9832d35942413251ef11394970e5c4942",
+        "ancestor": "0bc5399249f6f014947ce5e79a54cadc44ae8f28",
         "descendant": "2aacfbe9832d35942413251ef11394970e5c4942"
       },
       {
         "name": "baseline_ancestor_of_vulnerable_head",
         "pass": true,
-        "details": "baseline=14abdd57f3f8091d9e5855dc0c6e27f6973284d0 vulnerable_head=2aacfbe9832d35942413251ef11394970e5c4942",
-        "ancestor": "14abdd57f3f8091d9e5855dc0c6e27f6973284d0",
+        "details": "baseline=03bdcad31e9ef8ced3683d602116f2cf30f032d8 vulnerable_head=2aacfbe9832d35942413251ef11394970e5c4942",
+        "ancestor": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
         "descendant": "2aacfbe9832d35942413251ef11394970e5c4942"
       }
     ]
