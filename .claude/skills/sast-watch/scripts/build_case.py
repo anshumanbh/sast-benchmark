@@ -82,7 +82,7 @@ def build_case(
         if c.get("cwe_id")
     ]
     cwe_ids = apply_cwe_bridge(cwe_ids, vulnerability_class)
-    severity = (advisory.get("severity") or "").lower() or "high"
+    severity = (advisory.get("severity") or "").lower()
     title = advisory.get("summary") or advisory["ghsa_id"]
     description = (
         advisory.get("description")
