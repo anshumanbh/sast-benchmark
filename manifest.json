@@ -1,12 +1,13 @@
 {
   "name": "openclaw-advisory-benchmark",
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-04-09T20:39:24Z",
+  "generatedAt": "2026-05-15T11:32:14Z",
   "repositories": [
     "openclaw/openclaw",
-    "TryGhost/Ghost"
+    "TryGhost/Ghost",
+    "cosmos/cosmos-sdk"
   ],
-  "caseCount": 41,
+  "caseCount": 42,
   "cases": [
     {
       "id": "GHSA-3c6h-g97w-fg78",
@@ -415,6 +416,16 @@
       "vulnerabilityClass": "sandboxescape",
       "baselineCommit": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
       "vulnerableHead": "91f7a6b0fd67b703897e6e307762d471ca09333d",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-47ww-ff84-4jrg",
+      "severity": "high",
+      "title": "Cosmos SDK: x/group can halt when erroring in EndBlocker",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "fec35777f9646c162b79e98409179e374374e6e0",
+      "vulnerableHead": "98164408932ee74369b7ce18aa13bb1a1a6ba76b",
       "verificationStatus": "pass",
       "confidence": "high"
     }

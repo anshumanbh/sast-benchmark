@@ -1,6 +1,6 @@
 # OpenClaw Advisory Benchmark
 
-33 real-world security advisories from [OpenClaw](https://github.com/openclaw/openclaw) and [Ghost](https://github.com/TryGhost/Ghost), packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
+42 real-world security advisories from [OpenClaw](https://github.com/openclaw/openclaw), [Ghost](https://github.com/TryGhost/Ghost), and [Cosmos SDK](https://github.com/cosmos/cosmos-sdk), packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
 
 Detection note: benchmark detection is based on path match + class match. Severity is still recorded as `severityMatch`, but it no longer gates whether a case counts as detected.
 

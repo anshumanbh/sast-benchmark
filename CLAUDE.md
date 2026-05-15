@@ -2,7 +2,7 @@
 
 ## What this repo is
 
-A benchmark for security scanners. 33 real vulnerabilities from [OpenClaw](https://github.com/openclaw/openclaw) and [Ghost](https://github.com/TryGhost/Ghost), each with the exact commit where the vulnerability was introduced. The question: **can a scanner detect the vulnerability at that commit?**
+A benchmark for security scanners. 42 real vulnerabilities from [OpenClaw](https://github.com/openclaw/openclaw), [Ghost](https://github.com/TryGhost/Ghost), and [Cosmos SDK](https://github.com/cosmos/cosmos-sdk), each with the exact commit where the vulnerability was introduced. The question: **can a scanner detect the vulnerability at that commit?**
 
 ## Repository structure
 

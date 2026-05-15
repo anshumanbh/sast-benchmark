@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-47ww-ff84-4jrg",
+  "advisoryUrl": "https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-47ww-ff84-4jrg",
+  "repository": "cosmos/cosmos-sdk",
+  "advisory": {
+    "title": "Cosmos SDK: x/group can halt when erroring in EndBlocker",
+    "severity": "high",
+    "publishedAt": "2025-03-12T19:28:42Z",
+    "description": "Cosmos SDK chains in unpatched releases that use the x/group module can halt when malicious proposals trigger an error in the module's end blocker. Any set of users that can interact with the groups module can introduce the failing state. This advisory maps to HackerOne report 3018307, which was reported to the Cosmos Bug Bounty Program on February 28, 2025 and resolved via GHSA-47ww-ff84-4jrg.",
+    "cweIds": [
+      "CWE-755"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": ">= 0.50.0-alpha.0, <= 0.50.12",
+        "patchedVersions": "0.50.13"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": "<= 0.47.16",
+        "patchedVersions": "0.47.17"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "fec35777f9646c162b79e98409179e374374e6e0",
+    "introducingCommits": [
+      {
+        "sha": "3495691493087969b2fc00f038000695d69e0104",
+        "authoredAt": "2021-12-10T16:32:11+05:30",
+        "subject": "feat: Add server implementation of Group module (#10570)"
+      }
+    ],
+    "vulnerableHead": "98164408932ee74369b7ce18aa13bb1a1a6ba76b",
+    "notes": "The x/group server implementation introduced the error-returning tally path in msg_server.go. GHSA-47ww-ff84-4jrg covers failures in policy.Allow/Tally during end-blocker tallying, and v0.50.12 is an advisory-listed vulnerable release immediately before the patched v0.50.13 line."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "x/group/keeper/msg_server.go"
+    ],
+    "description": "Scanner should detect denial-of-service risk from returning policy/tally errors out of the x/group end-blocker tally path when scanning vulnerableHead."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "hackerone_report_maps_to_advisory",
+        "pass": true,
+        "details": "HackerOne report 3018307 timeline says the issue was fixed in GHSA-47ww-ff84-4jrg, and the global advisory says it was reported to the Cosmos Bug Bounty Program by wbowling on February 28, 2025."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.50.12 release commit, and GHSA-47ww-ff84-4jrg lists >=0.50.0-alpha.0, <=0.50.12 as affected with 0.50.13 patched."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=fec35777f9646c162b79e98409179e374374e6e0 earliest_intro=3495691493087969b2fc00f038000695d69e0104"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=fec35777f9646c162b79e98409179e374374e6e0 intro=3495691493087969b2fc00f038000695d69e0104",
+        "ancestor": "fec35777f9646c162b79e98409179e374374e6e0",
+        "descendant": "3495691493087969b2fc00f038000695d69e0104"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=3495691493087969b2fc00f038000695d69e0104 vulnerable_head=98164408932ee74369b7ce18aa13bb1a1a6ba76b",
+        "ancestor": "3495691493087969b2fc00f038000695d69e0104",
+        "descendant": "98164408932ee74369b7ce18aa13bb1a1a6ba76b"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=fec35777f9646c162b79e98409179e374374e6e0 vulnerable_head=98164408932ee74369b7ce18aa13bb1a1a6ba76b",
+        "ancestor": "fec35777f9646c162b79e98409179e374374e6e0",
+        "descendant": "98164408932ee74369b7ce18aa13bb1a1a6ba76b"
+      }
+    ]
+  }
+}
