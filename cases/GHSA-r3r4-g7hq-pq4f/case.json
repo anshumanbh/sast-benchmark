@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-r3r4-g7hq-pq4f",
+  "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-r3r4-g7hq-pq4f",
+  "repository": "cometbft/cometbft",
+  "advisory": {
+    "title": "ASA-2025-002: Malicious peer can stall network by disseminating seemingly valid block parts",
+    "severity": "high",
+    "publishedAt": "2025-02-03T00:00:00Z",
+    "description": "CometBFT advisory ASA-2025-002 covers missing validation that Part.Index equals Part.Proof.Index in block-part dissemination. A malicious peer can submit parts with mismatched indices, causing peers to disseminate invalid data and block reception of correct parts, potentially stalling the network. The v0.38.16..v0.38.17 patch (commit 415c0da22) modifies types/part_set.go to verify Part.Index matches Part.Proof.Index. Affects <=v0.38.16 and v1.0.0; fixed in v0.38.17 and v1.0.1.",
+    "cweIds": [
+      "CWE-20"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": "<= 0.38.16",
+        "patchedVersions": "0.38.17"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": "= 1.0.0",
+        "patchedVersions": "1.0.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "513decfc5a646efe1042f3d50a8289d193fbddd1",
+    "introducingCommits": [
+      {
+        "sha": "87e1f76324bc915004538cb3a7d2070d4ce94ae2",
+        "authoredAt": "2015-03-22T19:00:08-07:00",
+        "subject": "tendermint/block -> tendermint/types and tendermint/blockchain"
+      }
+    ],
+    "vulnerableHead": "84f981e934707c40c5e1e2520b3a54a4ba02e295",
+    "notes": "vulnerableHead is the v0.38.16 release commit, the last vulnerable v0.38 release before the v0.38.17 patch. The introducing commit is the original commit that established the tendermint/types tree (now cometbft types) where part_set.go lives."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "types/part_set.go"
+    ],
+    "description": "Scanner should flag missing validation in types/part_set.go that Part.Index equals Part.Proof.Index, allowing a malicious peer to disseminate parts with crafted index/proof mismatches and block reception of legitimate parts."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2025-002 (GHSA-r3r4-g7hq-pq4f) was published on 2025-02-03 with patches in cometbft v0.38.17 and v1.0.1."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.38.16 release commit, the latest tag in the <=0.38.16 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=513decfc5a646efe1042f3d50a8289d193fbddd1 earliest_intro=87e1f76324bc915004538cb3a7d2070d4ce94ae2"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=513decfc5a646efe1042f3d50a8289d193fbddd1 intro=87e1f76324bc915004538cb3a7d2070d4ce94ae2",
+        "ancestor": "513decfc5a646efe1042f3d50a8289d193fbddd1",
+        "descendant": "87e1f76324bc915004538cb3a7d2070d4ce94ae2"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=87e1f76324bc915004538cb3a7d2070d4ce94ae2 vulnerable_head=84f981e934707c40c5e1e2520b3a54a4ba02e295",
+        "ancestor": "87e1f76324bc915004538cb3a7d2070d4ce94ae2",
+        "descendant": "84f981e934707c40c5e1e2520b3a54a4ba02e295"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=513decfc5a646efe1042f3d50a8289d193fbddd1 vulnerable_head=84f981e934707c40c5e1e2520b3a54a4ba02e295",
+        "ancestor": "513decfc5a646efe1042f3d50a8289d193fbddd1",
+        "descendant": "84f981e934707c40c5e1e2520b3a54a4ba02e295"
+      }
+    ]
+  }
+}

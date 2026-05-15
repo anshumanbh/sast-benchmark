@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-p7mv-53f2-4cwj",
+  "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-p7mv-53f2-4cwj",
+  "repository": "cometbft/cometbft",
+  "advisory": {
+    "title": "ASA-2024-011: Vote Extensions — Panic when receiving a Pre-commit with invalid data",
+    "severity": "high",
+    "publishedAt": "2024-11-06T00:00:00Z",
+    "description": "CometBFT advisory ASA-2024-011 covers a panic in vote-extension handling on ABCI 2.0 chains. A peer running modified code can craft a Vote message with an invalid ValidatorIndex; the receiver dereferences the validator set with the bad index without bounds-checking, panicking the consensus reactor. The v0.38.14..v0.38.15 patch (commit 3a023da3a) adds index validation in consensus/state.go and a new error in consensus/errors.go. Affects v0.38.x < v0.38.15 (and unreleased v1.x/main); fixed in v0.38.15.",
+    "cweIds": [
+      "CWE-129"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": ">= 0.38.0, <= 0.38.14",
+        "patchedVersions": "0.38.15"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "50544c50afb60ed94665970508caca168e717221",
+    "introducingCommits": [
+      {
+        "sha": "d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7",
+        "authoredAt": "2014-08-10T16:35:08-07:00",
+        "subject": "saving development state..."
+      }
+    ],
+    "vulnerableHead": "5544864558da838d2dfb1072929e1ee7715b497e",
+    "notes": "vulnerableHead is the v0.38.13 release commit, an unambiguously vulnerable release in the >=0.38.0,<v0.38.15 range. (v0.38.14 was released and retracted due to a non-security regression in cometbft-db; the advisory marks v0.38.15 as the recommended patched version.) The introducing commit is the early consensus-state commit that established consensus/state.go in its current location."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "consensus/state.go",
+      "consensus/errors.go"
+    ],
+    "description": "Scanner should flag the missing ValidatorIndex bounds check in consensus/state.go that lets a peer panic the consensus reactor by submitting a Precommit Vote with a malformed ValidatorIndex on a chain with vote extensions enabled."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2024-011 (GHSA-p7mv-53f2-4cwj) was published on 2024-11-06 with the patch in cometbft v0.38.15."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.38.13 release commit, an unambiguously vulnerable tag in the >=0.38.0,<v0.38.15 range (v0.38.14 was retracted)."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=50544c50afb60ed94665970508caca168e717221 earliest_intro=d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=50544c50afb60ed94665970508caca168e717221 intro=d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7",
+        "ancestor": "50544c50afb60ed94665970508caca168e717221",
+        "descendant": "d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7 vulnerable_head=5544864558da838d2dfb1072929e1ee7715b497e",
+        "ancestor": "d300a67bb1a9740d03b7e9b2265b7c6af6c82ed7",
+        "descendant": "5544864558da838d2dfb1072929e1ee7715b497e"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=50544c50afb60ed94665970508caca168e717221 vulnerable_head=5544864558da838d2dfb1072929e1ee7715b497e",
+        "ancestor": "50544c50afb60ed94665970508caca168e717221",
+        "descendant": "5544864558da838d2dfb1072929e1ee7715b497e"
+      }
+    ]
+  }
+}

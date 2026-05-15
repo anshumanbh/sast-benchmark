@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-79xg-q4qm-7v9w",
+  "advisoryUrl": "https://github.com/CosmWasm/wasmd/security/advisories/GHSA-79xg-q4qm-7v9w",
+  "repository": "CosmWasm/wasmd",
+  "advisory": {
+    "title": "CWA-2025-006: Improper error handling may lead to IBC channel opening despite error",
+    "severity": "high",
+    "publishedAt": "2025-06-10T00:00:00Z",
+    "description": "wasmd advisory CWA-2025-006 covers an improper-error-handling bug in the IBC channel handshake path that could allow an IBC channel to be opened despite the wasm contract returning an error. The patch reworks error handling in x/wasm/keeper/relay.go and x/wasm/keeper/msg_dispatcher.go. Affects 0.60.0 and the 0.51.0–0.55.0 range; fixed in 0.60.1, 0.55.1, 0.54.1, and 0.53.3.",
+    "cweIds": [
+      "CWE-755"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/CosmWasm/wasmd",
+        "vulnerableRange": ">= 0.51.0, <= 0.55.0",
+        "patchedVersions": "0.55.1, 0.54.1, 0.53.3"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/CosmWasm/wasmd",
+        "vulnerableRange": "= 0.60.0",
+        "patchedVersions": "0.60.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+    "introducingCommits": [
+      {
+        "sha": "d9142662c19a151f34ff4a66d69007124051bd28",
+        "authoredAt": "2021-03-19T09:52:01+01:00",
+        "subject": "Remove internal package (#464)"
+      }
+    ],
+    "vulnerableHead": "0ad43c79dcfc080765d0eb1b571a5dee81b798d0",
+    "notes": "vulnerableHead is the v0.60.0 release commit, which CWA-2025-006 lists as vulnerable (patched in v0.60.1). The introducing commit is the first commit that established x/wasm/keeper/relay.go (the IBC relay path) at its current location; the v0.60.0..v0.60.1 patch modifies this file to restructure error handling so a contract error in the channel handshake no longer permits the channel to open."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "x/wasm/keeper/relay.go"
+    ],
+    "description": "Scanner should flag improper error handling in the IBC channel handshake path in x/wasm/keeper/relay.go that allows a channel to be opened despite the wasm contract returning an error."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "CWA-2025-006 (GHSA-79xg-q4qm-7v9w) was published on 2025-06-10 with patches in wasmd v0.60.1, v0.55.1, v0.54.1, and v0.53.3."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.60.0 release commit; the advisory lists v0.60.0 as vulnerable with v0.60.1 patched."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d earliest_intro=d9142662c19a151f34ff4a66d69007124051bd28"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d intro=d9142662c19a151f34ff4a66d69007124051bd28",
+        "ancestor": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+        "descendant": "d9142662c19a151f34ff4a66d69007124051bd28"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=d9142662c19a151f34ff4a66d69007124051bd28 vulnerable_head=0ad43c79dcfc080765d0eb1b571a5dee81b798d0",
+        "ancestor": "d9142662c19a151f34ff4a66d69007124051bd28",
+        "descendant": "0ad43c79dcfc080765d0eb1b571a5dee81b798d0"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d vulnerable_head=0ad43c79dcfc080765d0eb1b571a5dee81b798d0",
+        "ancestor": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+        "descendant": "0ad43c79dcfc080765d0eb1b571a5dee81b798d0"
+      }
+    ]
+  }
+}

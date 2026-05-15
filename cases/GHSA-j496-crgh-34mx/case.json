@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-j496-crgh-34mx",
+  "advisoryUrl": "https://github.com/cosmos/ibc-go/security/advisories/GHSA-j496-crgh-34mx",
+  "repository": "cosmos/ibc-go",
+  "advisory": {
+    "title": "ASA-2024-007: Potential Reentrancy using Timeout Callbacks in ibc-hooks",
+    "severity": "critical",
+    "publishedAt": "2024-04-05T00:00:00Z",
+    "description": "ibc-go advisory ASA-2024-007 covers a reentrancy condition in the IBC core timeout message handler. A malicious CosmWasm contract can recursively invoke MsgTimeout from within its OnTimeout callback before the original packet commitment is deleted, which on ibc-hooks-wrapped ICS-20 chains can result in unauthorized token minting or fund loss from escrow accounts. The fix in v4.6.0, v5.4.0, v6.3.0, v7.4.0, and v8.2.0 deletes the packet commitment before invoking the application callback in modules/core/keeper/msg_server.go.",
+    "cweIds": [
+      "CWE-696",
+      "CWE-841"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/ibc-go/v8",
+        "vulnerableRange": "< 8.2.0",
+        "patchedVersions": "8.2.0"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/ibc-go/v7",
+        "vulnerableRange": "< 7.4.0",
+        "patchedVersions": "7.4.0"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/ibc-go/v6",
+        "vulnerableRange": "< 6.3.0",
+        "patchedVersions": "6.3.0"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/ibc-go/v5",
+        "vulnerableRange": "< 5.4.0",
+        "patchedVersions": "5.4.0"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/ibc-go/v4",
+        "vulnerableRange": "< 4.6.0",
+        "patchedVersions": "4.6.0"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "3f3220762a884f209c4be637d928516ae7983ace",
+    "introducingCommits": [
+      {
+        "sha": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
+        "authoredAt": "2021-03-05T14:26:35+01:00",
+        "subject": "Add \"modules\" top level directory (#14)"
+      }
+    ],
+    "vulnerableHead": "a4ef5360b49ad2118e1d68f25f13935162660e0b",
+    "notes": "vulnerableHead is the v8.1.1 release commit, the last vulnerable v8.x release before the v8.2.0 patch. The v8.1.1..v8.2.0 commit '5e2e9ebc2 Merge pull request from GHSA-j496-crgh-34mx' modifies modules/core/keeper/msg_server.go to delete the packet commitment before invoking application callbacks, breaking the reentrancy window. The introducing commit is the commit that established the modules/ tree where this msg_server.go lives."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "modules/core/keeper/msg_server.go"
+    ],
+    "description": "Scanner should flag the ordering bug in modules/core/keeper/msg_server.go where the IBC timeout handler invokes the application OnTimeout callback before deleting the packet commitment, allowing a malicious contract to recursively replay MsgTimeout and double-spend escrowed funds."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2024-007 (GHSA-j496-crgh-34mx) was published on 2024-04-05 with patches in ibc-go v4.6.0, v5.4.0, v6.3.0, v7.4.0, and v8.2.0."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v8.1.1 release commit, the latest tag in the <8.2.0 vulnerable range for v8.x."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace earliest_intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
+        "ancestor": "3f3220762a884f209c4be637d928516ae7983ace",
+        "descendant": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=fa091bcda3b1dbbf687ff4465f9fd309a4206e67 vulnerable_head=a4ef5360b49ad2118e1d68f25f13935162660e0b",
+        "ancestor": "fa091bcda3b1dbbf687ff4465f9fd309a4206e67",
+        "descendant": "a4ef5360b49ad2118e1d68f25f13935162660e0b"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=3f3220762a884f209c4be637d928516ae7983ace vulnerable_head=a4ef5360b49ad2118e1d68f25f13935162660e0b",
+        "ancestor": "3f3220762a884f209c4be637d928516ae7983ace",
+        "descendant": "a4ef5360b49ad2118e1d68f25f13935162660e0b"
+      }
+    ]
+  }
+}

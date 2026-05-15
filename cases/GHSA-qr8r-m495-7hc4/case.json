@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-qr8r-m495-7hc4",
+  "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-qr8r-m495-7hc4",
+  "repository": "cometbft/cometbft",
+  "advisory": {
+    "title": "ASA-2024-001: Validation of VoteExtensionsEnableHeight can cause chain halt",
+    "severity": "high",
+    "publishedAt": "2024-01-18T00:00:00Z",
+    "description": "CometBFT advisory ASA-2024-001 covers a chain-halt condition in validation of the VoteExtensionsEnableHeight consensus parameter. A governance proposal modifying this parameter on an ABCI 2.0 chain can trip the validator on the new value and panic the node. The v0.38.2..v0.38.3 patch (commit 5fbc97378, 'Merge pull request from GHSA-qr8r-m495-7hc4') strengthens validation in types/params.go. Affects v0.38.0, v0.38.1, v0.38.2; fixed in v0.38.3.",
+    "cweIds": [
+      "CWE-20"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": ">= 0.38.0, <= 0.38.2",
+        "patchedVersions": "0.38.3"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "14abdd57f3f8091d9e5855dc0c6e27f6973284d0",
+    "introducingCommits": [
+      {
+        "sha": "2b6db268cfb1cacfe8fb70347f68a8622c87fb50",
+        "authoredAt": "2017-09-12T15:20:19-04:00",
+        "subject": "genesis json tests and mv ConsensusParams to types"
+      }
+    ],
+    "vulnerableHead": "2aacfbe9832d35942413251ef11394970e5c4942",
+    "notes": "vulnerableHead is the v0.38.2 release commit, the last vulnerable v0.38 release before the v0.38.3 patch. The introducing commit is the early commit that established ConsensusParams in types/params.go, the file the GHSA-qr8r patch updates."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "types/params.go"
+    ],
+    "description": "Scanner should flag insufficient validation of VoteExtensionsEnableHeight in types/params.go where a governance-driven parameter change can panic the node and halt the chain on ABCI 2.0 networks."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2024-001 (GHSA-qr8r-m495-7hc4) was published on 2024-01-18 with the patch in cometbft v0.38.3."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.38.2 release commit, the latest tag in the >=0.38.0,<=0.38.2 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=14abdd57f3f8091d9e5855dc0c6e27f6973284d0 earliest_intro=2b6db268cfb1cacfe8fb70347f68a8622c87fb50"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=14abdd57f3f8091d9e5855dc0c6e27f6973284d0 intro=2b6db268cfb1cacfe8fb70347f68a8622c87fb50",
+        "ancestor": "14abdd57f3f8091d9e5855dc0c6e27f6973284d0",
+        "descendant": "2b6db268cfb1cacfe8fb70347f68a8622c87fb50"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=2b6db268cfb1cacfe8fb70347f68a8622c87fb50 vulnerable_head=2aacfbe9832d35942413251ef11394970e5c4942",
+        "ancestor": "2b6db268cfb1cacfe8fb70347f68a8622c87fb50",
+        "descendant": "2aacfbe9832d35942413251ef11394970e5c4942"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=14abdd57f3f8091d9e5855dc0c6e27f6973284d0 vulnerable_head=2aacfbe9832d35942413251ef11394970e5c4942",
+        "ancestor": "14abdd57f3f8091d9e5855dc0c6e27f6973284d0",
+        "descendant": "2aacfbe9832d35942413251ef11394970e5c4942"
+      }
+    ]
+  }
+}

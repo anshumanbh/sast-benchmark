@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-g8w7-7vgg-x7xg",
+  "advisoryUrl": "https://github.com/CosmWasm/wasmd/security/advisories/GHSA-g8w7-7vgg-x7xg",
+  "repository": "CosmWasm/wasmd",
+  "advisory": {
+    "title": "CWA-2024-005: Stackoverflow in wasmd",
+    "severity": "high",
+    "publishedAt": "2024-08-21T00:00:00Z",
+    "description": "wasmd advisory CWA-2024-005 covers an uncontrolled-recursion / stack-overflow condition in the x/wasm message dispatch path. Deeply nested submessage chains could exhaust the Go stack and crash the node. The fix introduces a recursion depth limit (max call depth) in the handler plugin and keeper configuration. Affects wasmd >= 0.50.0 < 0.53.0 and < 0.46.0; fixed in 0.53.0 and 0.46.0.",
+    "cweIds": [
+      "CWE-674"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/CosmWasm/wasmd",
+        "vulnerableRange": ">= 0.50.0, < 0.53.0",
+        "patchedVersions": "0.53.0"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/CosmWasm/wasmd",
+        "vulnerableRange": "< 0.46.0",
+        "patchedVersions": "0.46.0"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+    "introducingCommits": [
+      {
+        "sha": "d9142662c19a151f34ff4a66d69007124051bd28",
+        "authoredAt": "2021-03-19T09:52:01+01:00",
+        "subject": "Remove internal package (#464)"
+      }
+    ],
+    "vulnerableHead": "1ff818801d4aa5dd6f483571ac7a38660c59c671",
+    "notes": "vulnerableHead is the v0.52.0 release commit, the last vulnerable v0.5x release before the v0.53.0 patch. The introducing commit is the first commit that established x/wasm/keeper/handler_plugin.go (the message dispatch entry point) at its current location; both the v0.46.0 and v0.53.0 patches add a recursion depth limit in this file (handler_plugin.go and keeper.go)."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "x/wasm/keeper/handler_plugin.go",
+      "x/wasm/keeper/keeper.go"
+    ],
+    "description": "Scanner should flag unbounded recursion in x/wasm/keeper/handler_plugin.go and x/wasm/keeper/keeper.go where nested submessage dispatch could trigger a Go stack overflow that halts the node."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "CWA-2024-005 (GHSA-g8w7-7vgg-x7xg) was published on 2024-08-21 with patches in wasmd v0.53.0 and v0.46.0."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.52.0 release commit, the latest tag in the >=0.50.0,<0.53.0 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d earliest_intro=d9142662c19a151f34ff4a66d69007124051bd28"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d intro=d9142662c19a151f34ff4a66d69007124051bd28",
+        "ancestor": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+        "descendant": "d9142662c19a151f34ff4a66d69007124051bd28"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=d9142662c19a151f34ff4a66d69007124051bd28 vulnerable_head=1ff818801d4aa5dd6f483571ac7a38660c59c671",
+        "ancestor": "d9142662c19a151f34ff4a66d69007124051bd28",
+        "descendant": "1ff818801d4aa5dd6f483571ac7a38660c59c671"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=63fe568b32ca9ea82b7bf946093223870054ff6d vulnerable_head=1ff818801d4aa5dd6f483571ac7a38660c59c671",
+        "ancestor": "63fe568b32ca9ea82b7bf946093223870054ff6d",
+        "descendant": "1ff818801d4aa5dd6f483571ac7a38660c59c671"
+      }
+    ]
+  }
+}
