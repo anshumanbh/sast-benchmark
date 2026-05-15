@@ -1,4 +1,4 @@
-# OpenClaw Advisory Benchmark
+# SAST Benchmark
 
 43 real-world security advisories from [OpenClaw](https://github.com/openclaw/openclaw), [Ghost](https://github.com/TryGhost/Ghost), and [Cosmos SDK](https://github.com/cosmos/cosmos-sdk), packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
 
@@ -22,7 +22,7 @@ git checkout <vulnerableHead>
 your-scanner scan .
 
 # 5. Compare results against expectedOutcome
-cat ../openclaw-advisory-benchmark/cases/GHSA-3c6h-g97w-fg78/case.json | jq '.expectedOutcome'
+cat ../sast-benchmark/cases/GHSA-3c6h-g97w-fg78/case.json | jq '.expectedOutcome'
 ```
 
 ## Benchmarking Workflow

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/anshumanbh/openclaw-advisory-benchmark/schema/case.schema.json",
+  "$id": "https://github.com/anshumanbh/sast-benchmark/schema/case.schema.json",
   "title": "Advisory Benchmark Case",
   "description": "Schema for a single advisory benchmark case used to test security scanners against real-world GHSA advisories.",
   "type": "object",

@@ -1,4 +1,4 @@
-# OpenClaw Advisory Benchmark
+# SAST Benchmark
 
 ## What this repo is
 
