@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-8wcc-m6j2-qxvm",
+  "advisoryUrl": "https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-8wcc-m6j2-qxvm",
+  "repository": "cosmos/cosmos-sdk",
+  "advisory": {
+    "title": "ASA-2024-0012, ASA-2024-0013: CosmosSDK transaction decoding may result in a stack overflow or resource exhaustion",
+    "severity": "high",
+    "publishedAt": "2024-12-16T00:00:00Z",
+    "description": "Cosmos SDK joint advisory ASA-2024-0012 / ASA-2024-0013 covers two transaction-decoding bugs. ASA-2024-0012 is an uncontrolled-recursion stack overflow in unknown-protobuf-field detection on deeply nested packets. ASA-2024-0013 is an exponential resource-exhaustion bug in nested UnpackAny processing — wasm contract messages or malicious validator blocks can exhaust CPU and memory, bypassing the max_tx_bytes cap and crashing nodes. The v0.50.10..v0.50.11 patch (commit ba7ac458c9 'Merge commit from fork') limits recursion depth in codec/unknownproto/unknown_fields.go and the unpack any path in codec/types/interface_registry.go and x/tx/decode/unknown.go.",
+    "cweIds": [
+      "CWE-674",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": ">= 0.50.0, <= 0.50.10",
+        "patchedVersions": "0.50.11"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": "<= 0.47.14",
+        "patchedVersions": "0.47.15"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "a4d1f306c0cc9f2b956a79ae1b48b6680fdc973a",
+    "introducingCommits": [
+      {
+        "sha": "b0c73ae994be3e114828863c72dee9b4a9ba46b5",
+        "authoredAt": "2020-07-29T08:31:23-07:00",
+        "subject": "codec: implement protobuf unknown fields checker (#6557)"
+      }
+    ],
+    "vulnerableHead": "6dc6e8b2a882cd6e2c0e7440c816f2390ee87ee3",
+    "notes": "vulnerableHead is the v0.50.10 release commit, the last vulnerable v0.50 release before the v0.50.11 patch. The introducing commit is the original unknown-protobuf-fields checker (#6557), which the v0.50.11 patch (ba7ac458c9) updates with a recursion depth limit. The patch also touches codec/types/interface_registry.go and x/tx/decode/unknown.go for the UnpackAny path."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "codec/unknownproto/unknown_fields.go",
+      "codec/types/interface_registry.go",
+      "x/tx/decode/unknown.go"
+    ],
+    "description": "Scanner should flag unbounded recursion in codec/unknownproto/unknown_fields.go and unbounded UnpackAny depth in codec/types/interface_registry.go and x/tx/decode/unknown.go that allow deeply nested transactions to stack-overflow or exhaust CPU/memory."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2024-0012/0013 (GHSA-8wcc-m6j2-qxvm) was published on 2024-12-16 with patches in cosmos-sdk v0.50.11 and v0.47.15."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.50.10 release commit, the latest tag in the <=0.50.10 vulnerable range on the v0.50 line."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=a4d1f306c0cc9f2b956a79ae1b48b6680fdc973a earliest_intro=b0c73ae994be3e114828863c72dee9b4a9ba46b5"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=a4d1f306c0cc9f2b956a79ae1b48b6680fdc973a intro=b0c73ae994be3e114828863c72dee9b4a9ba46b5",
+        "ancestor": "a4d1f306c0cc9f2b956a79ae1b48b6680fdc973a",
+        "descendant": "b0c73ae994be3e114828863c72dee9b4a9ba46b5"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=b0c73ae994be3e114828863c72dee9b4a9ba46b5 vulnerable_head=6dc6e8b2a882cd6e2c0e7440c816f2390ee87ee3",
+        "ancestor": "b0c73ae994be3e114828863c72dee9b4a9ba46b5",
+        "descendant": "6dc6e8b2a882cd6e2c0e7440c816f2390ee87ee3"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=a4d1f306c0cc9f2b956a79ae1b48b6680fdc973a vulnerable_head=6dc6e8b2a882cd6e2c0e7440c816f2390ee87ee3",
+        "ancestor": "a4d1f306c0cc9f2b956a79ae1b48b6680fdc973a",
+        "descendant": "6dc6e8b2a882cd6e2c0e7440c816f2390ee87ee3"
+      }
+    ]
+  }
+}

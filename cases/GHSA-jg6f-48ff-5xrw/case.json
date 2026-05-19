@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-jg6f-48ff-5xrw",
+  "advisoryUrl": "https://github.com/cosmos/ibc-go/security/advisories/GHSA-jg6f-48ff-5xrw",
+  "repository": "cosmos/ibc-go",
+  "advisory": {
+    "title": "ASA-2025-004: Non-deterministic JSON Unmarshalling of IBC Acknowledgement can result in a chain halt",
+    "severity": "critical",
+    "publishedAt": "2025-02-27T00:00:00Z",
+    "description": "ibc-go advisory ASA-2025-004 covers a non-deterministic JSON unmarshalling bug in IBC acknowledgement processing in the transfer module. Different nodes can derive different acknowledgement bytes from the same packet, producing non-determinism that can halt the chain. Any party that can open an IBC channel can introduce the failing state. The fix in v7.9.2 and v8.6.1 restricts acknowledgement decoding in modules/apps/transfer/ibc_module.go to deterministic parsing.",
+    "cweIds": [
+      "CWE-502",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/ibc-go/v7",
+        "vulnerableRange": ">= 7.0.0, <= 7.9.1",
+        "patchedVersions": "7.9.2"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/ibc-go/v8",
+        "vulnerableRange": ">= 8.0.0, <= 8.6.0",
+        "patchedVersions": "8.6.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+    "introducingCommits": [
+      {
+        "sha": "09646a012aba42575ed8ea66c91811f04aebcae6",
+        "authoredAt": "2021-02-22T15:34:34+01:00",
+        "subject": "Initial Setup + Protobuf files (#2)"
+      }
+    ],
+    "vulnerableHead": "91dda01659676dfc15339a196b0750b6c808af93",
+    "notes": "vulnerableHead is the v8.6.0 release commit, the last vulnerable release on the v8.x line before the v8.6.1 patch. The vulnerable pattern (types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack) in OnAcknowledgementPacket without DisallowUnknownFields / strict decoding) has been present in modules/apps/transfer/ibc_module.go since the initial setup commit 09646a01; confidence is medium because the non-deterministic decode has existed since file inception."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "modules/apps/transfer/ibc_module.go"
+    ],
+    "description": "Scanner should flag non-deterministic JSON unmarshalling of IBC acknowledgements in modules/apps/transfer/ibc_module.go that can produce divergent results across nodes and halt the chain."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "medium",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2025-004 (GHSA-jg6f-48ff-5xrw) was published on 2025-02-27 with patches in ibc-go v7.9.2 and v8.6.1."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v8.6.0 release commit, the latest tag in the >=8.0.0,<=8.6.0 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 earliest_intro=09646a012aba42575ed8ea66c91811f04aebcae6"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 intro=09646a012aba42575ed8ea66c91811f04aebcae6",
+        "ancestor": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+        "descendant": "09646a012aba42575ed8ea66c91811f04aebcae6"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=09646a012aba42575ed8ea66c91811f04aebcae6 vulnerable_head=91dda01659676dfc15339a196b0750b6c808af93",
+        "ancestor": "09646a012aba42575ed8ea66c91811f04aebcae6",
+        "descendant": "91dda01659676dfc15339a196b0750b6c808af93"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7 vulnerable_head=91dda01659676dfc15339a196b0750b6c808af93",
+        "ancestor": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+        "descendant": "91dda01659676dfc15339a196b0750b6c808af93"
+      }
+    ]
+  }
+}

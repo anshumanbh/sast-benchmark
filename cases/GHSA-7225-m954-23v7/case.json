@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-7225-m954-23v7",
+  "advisoryUrl": "https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-7225-m954-23v7",
+  "repository": "cosmos/cosmos-sdk",
+  "advisory": {
+    "title": "ASA-2024-010: cosmossdk.io/math: Mismatched bit-length validation in sdk.Int and sdk.Dec can lead to panic",
+    "severity": "high",
+    "publishedAt": "2024-11-20T00:00:00Z",
+    "description": "Cosmos SDK advisory ASA-2024-010 covers an integer-overflow / mismatched-bit-length validation bug in cosmossdk.io/math. sdk.Int and sdk.Dec use different bit-length limits; cross-using them can trigger a panic. Modules and chains consuming this library (including IBC-Go and tokenfactory) are affected. Fixed in math/v1.4.0 by aligning the bit-length validation across math/dec.go, math/int.go, and math/uint.go. Affects cosmossdk.io/math <=v1.3.0.",
+    "cweIds": [
+      "CWE-190",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "cosmossdk.io/math",
+        "vulnerableRange": "<= 1.3.0",
+        "patchedVersions": "1.4.0"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "7aef065c2f4b0f7c292c9cf5b16d78d14e8c42b6",
+    "introducingCommits": [
+      {
+        "sha": "eee23d95312ae41fa4fe4f6b218926685304590b",
+        "authoredAt": "2022-07-20T17:13:45+02:00",
+        "subject": "refactor: Move sdk.Dec to math package (#12634)"
+      }
+    ],
+    "vulnerableHead": "25b14c3caa2ecdc99840dbb88fdb3a2d8ac02158",
+    "notes": "vulnerableHead is the math/v1.3.0 release commit, the last vulnerable cosmossdk.io/math release before math/v1.4.0. cosmossdk.io/math lives inside the cosmos-sdk monorepo under math/, with its own go.mod and submodule tags (math/v1.x.y). The introducing commit is the refactor that moved sdk.Dec into the math package, which is where the mismatched bit-length validation pattern originated."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "math/dec.go",
+      "math/int.go",
+      "math/uint.go"
+    ],
+    "description": "Scanner should flag mismatched bit-length validation in cosmossdk.io/math (math/dec.go, math/int.go, math/uint.go) that allows cross-type construction to panic."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2024-010 (GHSA-7225-m954-23v7) was published on 2024-11-20 with the patch in cosmossdk.io/math v1.4.0."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the math/v1.3.0 release commit, the latest tag in the <=1.3.0 vulnerable range for cosmossdk.io/math."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=7aef065c2f4b0f7c292c9cf5b16d78d14e8c42b6 earliest_intro=eee23d95312ae41fa4fe4f6b218926685304590b"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=7aef065c2f4b0f7c292c9cf5b16d78d14e8c42b6 intro=eee23d95312ae41fa4fe4f6b218926685304590b",
+        "ancestor": "7aef065c2f4b0f7c292c9cf5b16d78d14e8c42b6",
+        "descendant": "eee23d95312ae41fa4fe4f6b218926685304590b"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=eee23d95312ae41fa4fe4f6b218926685304590b vulnerable_head=25b14c3caa2ecdc99840dbb88fdb3a2d8ac02158",
+        "ancestor": "eee23d95312ae41fa4fe4f6b218926685304590b",
+        "descendant": "25b14c3caa2ecdc99840dbb88fdb3a2d8ac02158"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=7aef065c2f4b0f7c292c9cf5b16d78d14e8c42b6 vulnerable_head=25b14c3caa2ecdc99840dbb88fdb3a2d8ac02158",
+        "ancestor": "7aef065c2f4b0f7c292c9cf5b16d78d14e8c42b6",
+        "descendant": "25b14c3caa2ecdc99840dbb88fdb3a2d8ac02158"
+      }
+    ]
+  }
+}

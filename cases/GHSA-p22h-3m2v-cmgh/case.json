@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-p22h-3m2v-cmgh",
+  "advisoryUrl": "https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-p22h-3m2v-cmgh",
+  "repository": "cosmos/cosmos-sdk",
+  "advisory": {
+    "title": "ISA-2025-005: Integer Overflow in Cosmos SDK",
+    "severity": "high",
+    "publishedAt": "2025-07-08T00:00:00Z",
+    "description": "Cosmos SDK advisory ISA-2025-005 covers an integer overflow in the x/distribution module's validator rewards path. A malicious deposit into the validator rewards pool can trigger an integer overflow that halts the chain. The v0.50.13..v0.50.14 patch is a single-file fix to x/distribution/keeper/msg_server.go. Affects <v0.50.14 and <v0.53.3; fixed in v0.50.14 and v0.53.3.",
+    "cweIds": [
+      "CWE-190",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": ">= 0.50.0, <= 0.50.13",
+        "patchedVersions": "0.50.14"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": ">= 0.53.0, <= 0.53.2",
+        "patchedVersions": "0.53.3"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "1279da53ea62c4676bdcd1eeab32858644cf2cdb",
+    "introducingCommits": [
+      {
+        "sha": "bf7165414da38896444b8a221de921d3c870238f",
+        "authoredAt": "2020-10-15T19:24:16+05:30",
+        "subject": "Refactor x/distribution according to ADR 031 (#7524)"
+      }
+    ],
+    "vulnerableHead": "e265bb9b42308dc70743b6200a70db9aafb70527",
+    "notes": "vulnerableHead is the v0.53.2 release commit, the most recent vulnerable release in the advisory range (>=0.53.0,<=0.53.2 on the v0.53 line) before the v0.53.3 patch. The patch is a single-file modification of x/distribution/keeper/msg_server.go on both the v0.50 and v0.53 release lines. The introducing commit is the refactor that established msg_server.go in its current form for the distribution module."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "x/distribution/keeper/msg_server.go"
+    ],
+    "description": "Scanner should flag the integer-overflow-prone arithmetic in the x/distribution msg_server validator rewards path that allows a malicious deposit to overflow internal accumulators and halt the chain."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ISA-2025-005 (GHSA-p22h-3m2v-cmgh) was published on 2025-07-08 with patches in cosmos-sdk v0.50.14 and v0.53.3."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.53.2 release commit, the latest tag in the >=0.53.0,<=0.53.2 vulnerable range on the v0.53 line (newer than the v0.50 line's last vulnerable tag v0.50.13)."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=1279da53ea62c4676bdcd1eeab32858644cf2cdb earliest_intro=bf7165414da38896444b8a221de921d3c870238f"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=1279da53ea62c4676bdcd1eeab32858644cf2cdb intro=bf7165414da38896444b8a221de921d3c870238f",
+        "ancestor": "1279da53ea62c4676bdcd1eeab32858644cf2cdb",
+        "descendant": "bf7165414da38896444b8a221de921d3c870238f"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=bf7165414da38896444b8a221de921d3c870238f vulnerable_head=e265bb9b42308dc70743b6200a70db9aafb70527",
+        "ancestor": "bf7165414da38896444b8a221de921d3c870238f",
+        "descendant": "e265bb9b42308dc70743b6200a70db9aafb70527"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=1279da53ea62c4676bdcd1eeab32858644cf2cdb vulnerable_head=e265bb9b42308dc70743b6200a70db9aafb70527",
+        "ancestor": "1279da53ea62c4676bdcd1eeab32858644cf2cdb",
+        "descendant": "e265bb9b42308dc70743b6200a70db9aafb70527"
+      }
+    ]
+  }
+}

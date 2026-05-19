@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-x5vx-95h7-rv4p",
+  "advisoryUrl": "https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-x5vx-95h7-rv4p",
+  "repository": "cosmos/cosmos-sdk",
+  "advisory": {
+    "title": "ASA-2025-003: Groups module can halt chain when handling a malicious proposal",
+    "severity": "high",
+    "publishedAt": "2025-02-20T00:00:00Z",
+    "description": "Cosmos SDK advisory ASA-2025-003 covers a divide-by-zero condition in the x/group module that halts the chain when a malicious proposal is processed. Any user with access to the groups module can introduce the failing state. The v0.50.11..v0.50.12 patch modifies x/group/keeper/msg_server.go and x/group/types.go to validate the divisor path. Affects v0.47.0\u2013v0.47.15 and v0.50.0\u2013v0.50.11; fixed in v0.47.16 and v0.50.12.",
+    "cweIds": [
+      "CWE-369",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": ">= 0.47.0, <= 0.47.15",
+        "patchedVersions": "0.47.16"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": ">= 0.50.0, <= 0.50.11",
+        "patchedVersions": "0.50.12"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "fec35777f9646c162b79e98409179e374374e6e0",
+    "introducingCommits": [
+      {
+        "sha": "3495691493087969b2fc00f038000695d69e0104",
+        "authoredAt": "2021-12-10T16:32:11+05:30",
+        "subject": "feat: Add server implementation of Group module (#10570)"
+      }
+    ],
+    "vulnerableHead": "eb1a8e88a4ddf77bc2fe235fc07c57016b7386f0",
+    "notes": "vulnerableHead is the v0.50.11 release commit, the last vulnerable release on the v0.50 line before the v0.50.12 patch. The v0.50.11..v0.50.12 patch (commit 9816440893 'Merge commit from fork') modifies x/group/keeper/msg_server.go and x/group/types.go. The introducing commit is the server implementation of the group module, the same commit referenced by the related GHSA-47ww-ff84-4jrg case."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "x/group/keeper/msg_server.go",
+      "x/group/types.go"
+    ],
+    "description": "Scanner should flag the divide-by-zero pattern in x/group/keeper/msg_server.go and x/group/types.go where a malicious proposal payload can drive a divisor to zero in the tally path and halt the chain."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2025-003 (GHSA-x5vx-95h7-rv4p) was published on 2025-02-20 with patches in cosmos-sdk v0.47.16 and v0.50.12."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.50.11 release commit, the latest tag in the >=0.50.0,<=0.50.11 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=fec35777f9646c162b79e98409179e374374e6e0 earliest_intro=3495691493087969b2fc00f038000695d69e0104"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=fec35777f9646c162b79e98409179e374374e6e0 intro=3495691493087969b2fc00f038000695d69e0104",
+        "ancestor": "fec35777f9646c162b79e98409179e374374e6e0",
+        "descendant": "3495691493087969b2fc00f038000695d69e0104"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=3495691493087969b2fc00f038000695d69e0104 vulnerable_head=eb1a8e88a4ddf77bc2fe235fc07c57016b7386f0",
+        "ancestor": "3495691493087969b2fc00f038000695d69e0104",
+        "descendant": "eb1a8e88a4ddf77bc2fe235fc07c57016b7386f0"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=fec35777f9646c162b79e98409179e374374e6e0 vulnerable_head=eb1a8e88a4ddf77bc2fe235fc07c57016b7386f0",
+        "ancestor": "fec35777f9646c162b79e98409179e374374e6e0",
+        "descendant": "eb1a8e88a4ddf77bc2fe235fc07c57016b7386f0"
+      }
+    ]
+  }
+}

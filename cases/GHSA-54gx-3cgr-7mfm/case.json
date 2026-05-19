@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-54gx-3cgr-7mfm",
+  "advisoryUrl": "https://github.com/cosmos/evm/security/advisories/GHSA-54gx-3cgr-7mfm",
+  "repository": "cosmos/evm",
+  "advisory": {
+    "title": "ASA-2026-002: Cosmos EVM ICS20 precompile allows repeated use of token balances",
+    "severity": "critical",
+    "publishedAt": "2026-03-09T00:00:00Z",
+    "description": "Cosmos EVM ICS20 precompile contains a state-handling flaw across nested EVM execution paths. State updates from recursive precompile calls were not reflected in the outer execution context, allowing a transaction to spend the same token balance multiple times via nested ICS20 precompile calls. The bug was exploited on the Saga network for roughly $7M before mitigation. Fixed in v0.6.0 by reworking state consistency in precompiles/ics20/ics20.go and precompiles/ics20/tx.go.",
+    "cweIds": [
+      "CWE-841",
+      "CWE-863"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/evm",
+        "vulnerableRange": "< 0.6.0",
+        "patchedVersions": "0.6.0"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+    "introducingCommits": [
+      {
+        "sha": "6780dc2d0066b81a97af1d46a500d76506cce165",
+        "authoredAt": "2024-08-23T12:24:38+02:00",
+        "subject": "imp(all): Add EVM, ERC-20, feemarket and precompiles from Evmos (#37)"
+      }
+    ],
+    "vulnerableHead": "e2f6e47c70b77bfb375ae27b7aa24082aabe6884",
+    "notes": "vulnerableHead is the v0.5.1 release commit, the last vulnerable cosmos/evm release before the v0.6.0 patch. The introducing commit is the commit that imported the precompiles from Evmos, which is when precompiles/ics20/ics20.go (containing the affected nested-execution state handling) entered the cosmos/evm tree."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "precompiles/ics20/ics20.go",
+      "precompiles/ics20/tx.go"
+    ],
+    "description": "Scanner should flag incorrect state handling in the ICS20 precompile (precompiles/ics20/ics20.go and tx.go) where nested EVM execution paths fail to commit state updates to the outer context, allowing the same token balance to be spent multiple times in a single transaction."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2026-002 (GHSA-54gx-3cgr-7mfm) was published on 2026-03-09 with the patch in cosmos/evm v0.6.0."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.5.1 release commit, the latest tag in the <0.6.0 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 earliest_intro=6780dc2d0066b81a97af1d46a500d76506cce165"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 intro=6780dc2d0066b81a97af1d46a500d76506cce165",
+        "ancestor": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+        "descendant": "6780dc2d0066b81a97af1d46a500d76506cce165"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=6780dc2d0066b81a97af1d46a500d76506cce165 vulnerable_head=e2f6e47c70b77bfb375ae27b7aa24082aabe6884",
+        "ancestor": "6780dc2d0066b81a97af1d46a500d76506cce165",
+        "descendant": "e2f6e47c70b77bfb375ae27b7aa24082aabe6884"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 vulnerable_head=e2f6e47c70b77bfb375ae27b7aa24082aabe6884",
+        "ancestor": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+        "descendant": "e2f6e47c70b77bfb375ae27b7aa24082aabe6884"
+      }
+    ]
+  }
+}

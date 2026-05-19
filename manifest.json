@@ -1,12 +1,17 @@
 {
-  "name": "openclaw-advisory-benchmark",
+  "name": "sast-benchmark",
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-04-09T20:39:24Z",
+  "generatedAt": "2026-05-15T16:00:00Z",
   "repositories": [
     "openclaw/openclaw",
-    "TryGhost/Ghost"
+    "TryGhost/Ghost",
+    "cosmos/cosmos-sdk",
+    "CosmWasm/wasmd",
+    "cosmos/ibc-go",
+    "cosmos/evm",
+    "cometbft/cometbft"
   ],
-  "caseCount": 41,
+  "caseCount": 61,
   "cases": [
     {
       "id": "GHSA-3c6h-g97w-fg78",
@@ -415,6 +420,206 @@
       "vulnerabilityClass": "sandboxescape",
       "baselineCommit": "ebe57304016aaadf69c0357d49ec1e36df6a5daa",
       "vulnerableHead": "91f7a6b0fd67b703897e6e307762d471ca09333d",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-47ww-ff84-4jrg",
+      "severity": "high",
+      "title": "Cosmos SDK: x/group can halt when erroring in EndBlocker",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "fec35777f9646c162b79e98409179e374374e6e0",
+      "vulnerableHead": "98164408932ee74369b7ce18aa13bb1a1a6ba76b",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-23px-mw2p-46qm",
+      "severity": "medium",
+      "title": "Cosmos-SDK Cosmovisor component may be vulnerable to denial of service",
+      "vulnerabilityClass": "codeexec",
+      "baselineCommit": "8f51c150dea3a259d49a36c7cf2388d8471edecf",
+      "vulnerableHead": "40bb2f4f9abbf30419a9b51d3ff153d215fff2e4",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-79xg-q4qm-7v9w",
+      "severity": "high",
+      "title": "CWA-2025-006: Improper error handling may lead to IBC channel opening despite error",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "c7ba88f81d6391197e5da983cc1cfb7f2a282021",
+      "vulnerableHead": "0ad43c79dcfc080765d0eb1b571a5dee81b798d0",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-g8w7-7vgg-x7xg",
+      "severity": "high",
+      "title": "CWA-2024-005: Stackoverflow in wasmd",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "c67cf14db1c138fedd0e5d2ae90c0cfa2b71b5f1",
+      "vulnerableHead": "1ff818801d4aa5dd6f483571ac7a38660c59c671",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-jg6f-48ff-5xrw",
+      "severity": "critical",
+      "title": "ASA-2025-004: Non-deterministic JSON Unmarshalling of IBC Acknowledgement can result in a chain halt",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+      "vulnerableHead": "91dda01659676dfc15339a196b0750b6c808af93",
+      "verificationStatus": "pass",
+      "confidence": "medium"
+    },
+    {
+      "id": "GHSA-4wf3-5qj9-368v",
+      "severity": "critical",
+      "title": "ISA-2025-001: Non-deterministic JSON Unmarshalling of IBC Acknowledgement can result in a chain halt",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+      "vulnerableHead": "59987d52d959dc5876ffd4f307c9b33a52a43748",
+      "verificationStatus": "pass",
+      "confidence": "medium"
+    },
+    {
+      "id": "GHSA-j496-crgh-34mx",
+      "severity": "critical",
+      "title": "ASA-2024-007: Potential Reentrancy using Timeout Callbacks in ibc-hooks",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
+      "vulnerableHead": "a4ef5360b49ad2118e1d68f25f13935162660e0b",
+      "verificationStatus": "pass",
+      "confidence": "medium"
+    },
+    {
+      "id": "GHSA-54gx-3cgr-7mfm",
+      "severity": "critical",
+      "title": "ASA-2026-002: Cosmos EVM ICS20 precompile allows repeated use of token balances",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+      "vulnerableHead": "e2f6e47c70b77bfb375ae27b7aa24082aabe6884",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-8pfh-j44r-f654",
+      "severity": "critical",
+      "title": "Critical vulnerability affecting Cosmos EVM static and dynamic precompiles",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+      "vulnerableHead": "f0609d9c06e69c83ea9264975c74dd61907e05c5",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-mjfq-3qr2-6g84",
+      "severity": "critical",
+      "title": "ISA-2025-004: Partial Precompile State Writes",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+      "vulnerableHead": "d781e119de10b210801921014c2d2c2e13b51045",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-p22h-3m2v-cmgh",
+      "severity": "high",
+      "title": "ISA-2025-005: Integer Overflow in Cosmos SDK",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "1279da53ea62c4676bdcd1eeab32858644cf2cdb",
+      "vulnerableHead": "e265bb9b42308dc70743b6200a70db9aafb70527",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-x5vx-95h7-rv4p",
+      "severity": "high",
+      "title": "ASA-2025-003: Groups module can halt chain when handling a malicious proposal",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "fec35777f9646c162b79e98409179e374374e6e0",
+      "vulnerableHead": "eb1a8e88a4ddf77bc2fe235fc07c57016b7386f0",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-8wcc-m6j2-qxvm",
+      "severity": "high",
+      "title": "ASA-2024-0012, ASA-2024-0013: CosmosSDK transaction decoding may result in a stack overflow or resource exhaustion",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "a4d1f306c0cc9f2b956a79ae1b48b6680fdc973a",
+      "vulnerableHead": "6dc6e8b2a882cd6e2c0e7440c816f2390ee87ee3",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-95rx-m9m5-m94v",
+      "severity": "high",
+      "title": "ASA-2024-006: ValidateVoteExtensions helper function may allow incorrect voting power assumptions",
+      "vulnerabilityClass": "brokenauthz",
+      "baselineCommit": "166be3766bc313fa11701aa60a913ee219ad087e",
+      "vulnerableHead": "7dbed2fc0c3ed7c285645e21cb1037d8810372ae",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-7225-m954-23v7",
+      "severity": "high",
+      "title": "ASA-2024-010: cosmossdk.io/math: Mismatched bit-length validation in sdk.Int and sdk.Dec can lead to panic",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "7aef065c2f4b0f7c292c9cf5b16d78d14e8c42b6",
+      "vulnerableHead": "25b14c3caa2ecdc99840dbb88fdb3a2d8ac02158",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-c32p-wcqj-j677",
+      "severity": "critical",
+      "title": "CSA-2026-001: Tachyon \u2014 BFT Time inconsistency allows faulty process to arbitrarily increase block time",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
+      "vulnerableHead": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
+      "verificationStatus": "pass",
+      "confidence": "medium"
+    },
+    {
+      "id": "GHSA-hrhf-2vcr-ghch",
+      "severity": "high",
+      "title": "ASA-2025-003: Invalid BitArray handling can lead to network halt",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
+      "vulnerableHead": "5344a6e3bd806ba352b89f600c7f19c139442117",
+      "verificationStatus": "pass",
+      "confidence": "medium"
+    },
+    {
+      "id": "GHSA-r3r4-g7hq-pq4f",
+      "severity": "high",
+      "title": "ASA-2025-002: Malicious peer can stall network by disseminating seemingly valid block parts",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
+      "vulnerableHead": "84f981e934707c40c5e1e2520b3a54a4ba02e295",
+      "verificationStatus": "pass",
+      "confidence": "medium"
+    },
+    {
+      "id": "GHSA-p7mv-53f2-4cwj",
+      "severity": "high",
+      "title": "ASA-2024-011: Vote Extensions \u2014 Panic when receiving a Pre-commit with invalid data",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "aeec999151c294757184f5b221d28cc0486fb06b",
+      "vulnerableHead": "5544864558da838d2dfb1072929e1ee7715b497e",
+      "verificationStatus": "pass",
+      "confidence": "high"
+    },
+    {
+      "id": "GHSA-qr8r-m495-7hc4",
+      "severity": "high",
+      "title": "ASA-2024-001: Validation of VoteExtensionsEnableHeight can cause chain halt",
+      "vulnerabilityClass": "abuse",
+      "baselineCommit": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
+      "vulnerableHead": "2aacfbe9832d35942413251ef11394970e5c4942",
       "verificationStatus": "pass",
       "confidence": "high"
     }

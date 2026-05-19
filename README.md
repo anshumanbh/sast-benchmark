@@ -1,13 +1,15 @@
-# OpenClaw Advisory Benchmark
+# SAST Benchmark
 
-33 real-world security advisories from [OpenClaw](https://github.com/openclaw/openclaw) and [Ghost](https://github.com/TryGhost/Ghost), packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
+61 real-world security advisories from [OpenClaw](https://github.com/openclaw/openclaw), [Ghost](https://github.com/TryGhost/Ghost), and the Cosmos ecosystem ([cosmos-sdk](https://github.com/cosmos/cosmos-sdk), [wasmd](https://github.com/CosmWasm/wasmd), [ibc-go](https://github.com/cosmos/ibc-go), [cosmos/evm](https://github.com/cosmos/evm), [cometbft](https://github.com/cometbft/cometbft)), packaged as a scanner-agnostic benchmark. Each case includes the exact commit timeline — baseline and introducing commit(s) — so any security scanner can test whether it would have detected these vulnerabilities at the point they were introduced.
 
 Detection note: benchmark detection is based on path match + class match. Severity is still recorded as `severityMatch`, but it no longer gates whether a case counts as detected.
 
 ## Quick Start
 
 ```bash
-# 1. Clone the repos you want to benchmark
+# 1. Clone the repos you want to benchmark. The two below are enough to
+#    work through the Quick Start; see "Running the Benchmark" for the full
+#    seven-repo command (OpenClaw, Ghost, and five Cosmos ecosystem repos).
 git clone https://github.com/openclaw/openclaw.git ../openclaw
 git clone https://github.com/TryGhost/Ghost.git ../ghost
 
@@ -22,7 +24,7 @@ git checkout <vulnerableHead>
 your-scanner scan .
 
 # 5. Compare results against expectedOutcome
-cat ../openclaw-advisory-benchmark/cases/GHSA-3c6h-g97w-fg78/case.json | jq '.expectedOutcome'
+cat ../sast-benchmark/cases/GHSA-3c6h-g97w-fg78/case.json | jq '.expectedOutcome'
 ```
 
 ## Benchmarking Workflow
@@ -95,21 +97,37 @@ The runner automates the full loop: checkout each vulnerable commit, run your sc
 
 If the scanner emits parseable SARIF/simple JSON, the benchmark evaluates that output even when the scanner exits non-zero. This accommodates tools that use exit status to signal findings.
 
+The runner loads every case under `cases/` by default. Each case needs a
+local checkout of its source repository, so every example below passes
+`--repo` for all seven repos in the corpus. To scope to a subset
+(e.g. only Ghost cases), add `--filter <GHSA-ID> [<GHSA-ID> ...]` and pass
+only the matching `--repo` flag — see the "Run a subset of cases" example.
+
 ```bash
-# Run with SARIF against both OpenClaw and Ghost cases
+# Run with SARIF against the full corpus
 python3 scripts/run.py \
   --repo openclaw/openclaw=../openclaw \
   --repo TryGhost/Ghost=../ghost \
+  --repo cosmos/cosmos-sdk=../cosmos-sdk \
+  --repo CosmWasm/wasmd=../wasmd \
+  --repo cosmos/ibc-go=../ibc-go \
+  --repo cosmos/evm=../cosmos-evm \
+  --repo cometbft/cometbft=../cometbft \
   --scanner-cmd "semgrep scan --sarif ."
 
 # Run with a custom JSON-producing scanner
 python3 scripts/run.py \
   --repo openclaw/openclaw=../openclaw \
   --repo TryGhost/Ghost=../ghost \
+  --repo cosmos/cosmos-sdk=../cosmos-sdk \
+  --repo CosmWasm/wasmd=../wasmd \
+  --repo cosmos/ibc-go=../ibc-go \
+  --repo cosmos/evm=../cosmos-evm \
+  --repo cometbft/cometbft=../cometbft \
   --scanner-cmd "my-scanner scan --json ." \
   --format simple
 
-# Run a subset of cases
+# Run a subset of cases — only repos referenced by the filtered GHSAs need --repo
 python3 scripts/run.py \
   --repo TryGhost/Ghost=../ghost \
   --scanner-cmd "semgrep scan --sarif ." \
@@ -119,6 +137,11 @@ python3 scripts/run.py \
 python3 scripts/run.py \
   --repo openclaw/openclaw=../openclaw \
   --repo TryGhost/Ghost=../ghost \
+  --repo cosmos/cosmos-sdk=../cosmos-sdk \
+  --repo CosmWasm/wasmd=../wasmd \
+  --repo cosmos/ibc-go=../ibc-go \
+  --repo cosmos/evm=../cosmos-evm \
+  --repo cometbft/cometbft=../cometbft \
   --scanner-cmd "codeql database analyze ." \
   --timeout 600 \
   --output my-results.json
@@ -149,6 +172,11 @@ It runs a setup command at `timeline.baselineCommit`, discards that command's st
 python3 scripts/run.py \
   --repo openclaw/openclaw=../openclaw \
   --repo TryGhost/Ghost=../ghost \
+  --repo cosmos/cosmos-sdk=../cosmos-sdk \
+  --repo CosmWasm/wasmd=../wasmd \
+  --repo cosmos/ibc-go=../ibc-go \
+  --repo cosmos/evm=../cosmos-evm \
+  --repo cometbft/cometbft=../cometbft \
   --scanner-cmd "my-scanner scan --json ." \
   --baseline-cmd "my-scanner index ." \
   --baseline-timeout 600 \
@@ -206,23 +234,36 @@ Each entry in the JSON results payload includes the case `repository` alongside 
 # Structural validation (schema + manifest consistency; requires: pip install jsonschema)
 python3 scripts/validate.py
 
-# Strict metadata validation (offline)
-# If jsonschema is missing, schema checks are skipped with a warning.
-python3 scripts/validate.py --strict
-
 # Semantic validation (commit SHAs resolve, ancestry checks pass in git history)
 # If jsonschema is missing, schema checks are skipped with a warning.
 python3 scripts/validate.py \
   --repo openclaw/openclaw=../openclaw \
-  --repo TryGhost/Ghost=../ghost
-
-# Full validation (strict metadata + semantic git checks)
-# If jsonschema is missing, schema checks are skipped with a warning.
-python3 scripts/validate.py \
-  --repo openclaw/openclaw=../openclaw \
   --repo TryGhost/Ghost=../ghost \
-  --strict
+  --repo cosmos/cosmos-sdk=../cosmos-sdk \
+  --repo CosmWasm/wasmd=../wasmd \
+  --repo cosmos/ibc-go=../ibc-go \
+  --repo cosmos/evm=../cosmos-evm \
+  --repo cometbft/cometbft=../cometbft
 ```
+
+### `--strict` mode
+
+`scripts/validate.py --strict` enforces that every loaded case has
+`verification.status == "pass"` AND `verification.confidence == "high"`.
+The current corpus intentionally contains several `confidence: medium`
+cases (bugs that have existed since the affected file was created — see
+the `timeline.notes` on each), so `--strict` against the full corpus
+will fail.
+
+`validate.py` does not (yet) accept a `--filter` or per-case selector to
+exclude them. To run `--strict` today, either:
+
+- Hand-curate a subset by copying the high-confidence `cases/GHSA-*/`
+  directories into a separate tree and running with
+  `--output-dir <subset-root>`; or
+- Wait for each medium-confidence case to be upgraded to high (i.e.
+  someone identifies a discrete bug-introducing commit instead of the
+  file-creation commit).
 
 ## Outcome Matching Criteria
 

@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-95rx-m9m5-m94v",
+  "advisoryUrl": "https://github.com/cosmos/cosmos-sdk/security/advisories/GHSA-95rx-m9m5-m94v",
+  "repository": "cosmos/cosmos-sdk",
+  "advisory": {
+    "title": "ASA-2024-006: ValidateVoteExtensions helper function may allow incorrect voting power assumptions",
+    "severity": "high",
+    "publishedAt": "2024-03-12T00:00:00Z",
+    "description": "Cosmos SDK advisory ASA-2024-006 covers a missing-validation bug in the default ValidateVoteExtensions helper in baseapp. The helper infers total voting power from VoteExtension data injected by the proposer, allowing a malicious proposer to manipulate validator voting power assumptions in dependent modules. The fix in v0.50.5 (commit 4467110df4 'Merge pull request from GHSA-95rx-m9m5-m94v') validates the ExtendedCommit against the LastCommit so voting power is reconciled against the state machine. Affects v0.50.0\u2013v0.50.4; fixed in v0.50.5.",
+    "cweIds": [
+      "CWE-20",
+      "CWE-863"
+    ],
+    "cvss": {
+      "version": "3.1",
+      "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:H",
+      "score": 7.1
+    },
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/cosmos-sdk",
+        "vulnerableRange": ">= 0.50.0, <= 0.50.4",
+        "patchedVersions": "0.50.5"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "166be3766bc313fa11701aa60a913ee219ad087e",
+    "introducingCommits": [
+      {
+        "sha": "6cee22df52eb0cbb30e351fbb41f66d26c1f8300",
+        "authoredAt": "2023-05-24T12:09:19-04:00",
+        "subject": "feat!: Comet v0.38 Integration (#15519)"
+      }
+    ],
+    "vulnerableHead": "7dbed2fc0c3ed7c285645e21cb1037d8810372ae",
+    "notes": "vulnerableHead is the v0.50.4 release commit, the last vulnerable v0.50 release before the v0.50.5 patch. The introducing commit is the CometBFT v0.38 integration that brought the ABCI++ ExtendedCommit / VoteExtension flow into baseapp/abci_utils.go, where ValidateVoteExtensions lives."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "baseapp/abci_utils.go"
+    ],
+    "description": "Scanner should flag the missing-validation bug in baseapp/abci_utils.go ValidateVoteExtensions where total voting power is inferred from proposer-provided VoteExtension data without cross-checking against the LastCommit / state machine."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2024-006 (GHSA-95rx-m9m5-m94v) was published on 2024-03-12 with the patch in cosmos-sdk v0.50.5; CVSS 7.1 AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:H."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.50.4 release commit, the latest tag in the >=0.50.0,<=0.50.4 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=166be3766bc313fa11701aa60a913ee219ad087e earliest_intro=6cee22df52eb0cbb30e351fbb41f66d26c1f8300"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=166be3766bc313fa11701aa60a913ee219ad087e intro=6cee22df52eb0cbb30e351fbb41f66d26c1f8300",
+        "ancestor": "166be3766bc313fa11701aa60a913ee219ad087e",
+        "descendant": "6cee22df52eb0cbb30e351fbb41f66d26c1f8300"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=6cee22df52eb0cbb30e351fbb41f66d26c1f8300 vulnerable_head=7dbed2fc0c3ed7c285645e21cb1037d8810372ae",
+        "ancestor": "6cee22df52eb0cbb30e351fbb41f66d26c1f8300",
+        "descendant": "7dbed2fc0c3ed7c285645e21cb1037d8810372ae"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=166be3766bc313fa11701aa60a913ee219ad087e vulnerable_head=7dbed2fc0c3ed7c285645e21cb1037d8810372ae",
+        "ancestor": "166be3766bc313fa11701aa60a913ee219ad087e",
+        "descendant": "7dbed2fc0c3ed7c285645e21cb1037d8810372ae"
+      }
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-8pfh-j44r-f654",
+  "advisoryUrl": "https://github.com/cosmos/evm/security/advisories/GHSA-8pfh-j44r-f654",
+  "repository": "cosmos/evm",
+  "advisory": {
+    "title": "Critical vulnerability affecting Cosmos EVM static and dynamic precompiles",
+    "severity": "critical",
+    "publishedAt": "2025-10-21T00:00:00Z",
+    "description": "Cosmos EVM advisory GHSA-8pfh-j44r-f654 covers a critical vulnerability affecting both static and dynamic precompiles. Specific technical details were withheld at disclosure to give chains time to upgrade. Affected versions are v0.3.0, v0.3.1, v0.4.0, and v0.4.1; fixed in v0.3.2, v0.4.2, and v0.5.0.",
+    "cweIds": [
+      "CWE-841",
+      "CWE-863"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/evm",
+        "vulnerableRange": ">= 0.3.0, <= 0.4.1",
+        "patchedVersions": "0.3.2, 0.4.2, 0.5.0"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+    "introducingCommits": [
+      {
+        "sha": "6780dc2d0066b81a97af1d46a500d76506cce165",
+        "authoredAt": "2024-08-23T12:24:38+02:00",
+        "subject": "imp(all): Add EVM, ERC-20, feemarket and precompiles from Evmos (#37)"
+      }
+    ],
+    "vulnerableHead": "f0609d9c06e69c83ea9264975c74dd61907e05c5",
+    "notes": "vulnerableHead is the v0.4.1 release commit, the last vulnerable release on the v0.4.x line before the v0.4.2 patch. The v0.4.1..v0.4.2 silent security commit 'Merge commit from fork' (fe790fb8) modifies the precompile handler files (precompiles/common/precompile.go, precompiles/{distribution,gov,ics20,slashing,staking}/*.go, evmd/precompiles.go, x/vm/keeper/static_precompiles.go, x/vm/statedb/statedb.go). The introducing commit is when the precompiles tree was imported from Evmos."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "precompiles/common/precompile.go",
+      "x/vm/keeper/static_precompiles.go",
+      "x/vm/statedb/statedb.go"
+    ],
+    "description": "Scanner should flag broken authorization or state-handling logic in cosmos/evm precompile entry points (precompiles/common/precompile.go and the static_precompiles / statedb wiring) that GHSA-8pfh-j44r-f654 fixed via a silent patch landed in v0.3.2/v0.4.2/v0.5.0."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "GHSA-8pfh-j44r-f654 was published on 2025-10-21 with patches in cosmos/evm v0.3.2, v0.4.2, and v0.5.0."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.4.1 release commit, the latest tag in the vulnerable range that includes v0.3.0, v0.3.1, v0.4.0, v0.4.1."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 earliest_intro=6780dc2d0066b81a97af1d46a500d76506cce165"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 intro=6780dc2d0066b81a97af1d46a500d76506cce165",
+        "ancestor": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+        "descendant": "6780dc2d0066b81a97af1d46a500d76506cce165"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=6780dc2d0066b81a97af1d46a500d76506cce165 vulnerable_head=f0609d9c06e69c83ea9264975c74dd61907e05c5",
+        "ancestor": "6780dc2d0066b81a97af1d46a500d76506cce165",
+        "descendant": "f0609d9c06e69c83ea9264975c74dd61907e05c5"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 vulnerable_head=f0609d9c06e69c83ea9264975c74dd61907e05c5",
+        "ancestor": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+        "descendant": "f0609d9c06e69c83ea9264975c74dd61907e05c5"
+      }
+    ]
+  }
+}

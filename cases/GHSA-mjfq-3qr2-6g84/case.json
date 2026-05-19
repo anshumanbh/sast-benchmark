@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-mjfq-3qr2-6g84",
+  "advisoryUrl": "https://github.com/cosmos/evm/security/advisories/GHSA-mjfq-3qr2-6g84",
+  "repository": "cosmos/evm",
+  "advisory": {
+    "title": "ISA-2025-004: Partial Precompile State Writes",
+    "severity": "critical",
+    "publishedAt": "2025-05-13T00:00:00Z",
+    "description": "Cosmos EVM advisory ISA-2025-004 covers a partial-state-write bug across precompiles. An attacker can set a low EVM call gas limit that lets a precompile execute partway, write state, and then error out without reverting the partial state. This allows unauthorized fund transfers in distribution precompiles and triggers indeterministic validator execution. Affects Cosmos EVM v0.1.0 (the only released line at disclosure) and Evmos >v13.0.0. The fix per the advisory touches the EVM statedb, the journal, the common precompile dispatcher, and the individual precompile Run functions.",
+    "cweIds": [
+      "CWE-841",
+      "CWE-863"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cosmos/evm",
+        "vulnerableRange": "= 0.1.0"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/evmos/evmos",
+        "vulnerableRange": "> 13.0.0"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+    "introducingCommits": [
+      {
+        "sha": "6780dc2d0066b81a97af1d46a500d76506cce165",
+        "authoredAt": "2024-08-23T12:24:38+02:00",
+        "subject": "imp(all): Add EVM, ERC-20, feemarket and precompiles from Evmos (#37)"
+      }
+    ],
+    "vulnerableHead": "d781e119de10b210801921014c2d2c2e13b51045",
+    "notes": "vulnerableHead is the v0.1.0 release commit, the single Cosmos EVM release that the advisory lists as affected. The advisory says the issue lives in x/evm/statedb.go, x/evm/statedb/journal.go, precompiles/common/precompile.go, and the individual precompile Run functions. In the cosmos/evm tree the EVM statedb lives under x/vm/statedb/ (renamed during the Evmos\u2192cosmos-evm fork). The introducing commit is when the precompile and EVM statedb tree was imported from Evmos."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "brokenauthz",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "precompiles/common/precompile.go",
+      "x/vm/statedb/statedb.go",
+      "x/vm/statedb/journal.go"
+    ],
+    "description": "Scanner should flag the partial-state-write pattern in cosmos/evm precompiles: state writes performed inside precompile Run functions (via precompiles/common/precompile.go and the x/vm/statedb wiring) are not reverted when the precompile errors out under a constrained call gas limit."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ISA-2025-004 (GHSA-mjfq-3qr2-6g84) was published on 2025-05-13 affecting cosmos/evm v0.1.0 and evmos >v13.0.0."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.1.0 release commit, the only cosmos/evm tag the advisory lists as vulnerable."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 earliest_intro=6780dc2d0066b81a97af1d46a500d76506cce165"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 intro=6780dc2d0066b81a97af1d46a500d76506cce165",
+        "ancestor": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+        "descendant": "6780dc2d0066b81a97af1d46a500d76506cce165"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=6780dc2d0066b81a97af1d46a500d76506cce165 vulnerable_head=d781e119de10b210801921014c2d2c2e13b51045",
+        "ancestor": "6780dc2d0066b81a97af1d46a500d76506cce165",
+        "descendant": "d781e119de10b210801921014c2d2c2e13b51045"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=7f3d35ab708316f18192e3cdfb8d0b6cf4341342 vulnerable_head=d781e119de10b210801921014c2d2c2e13b51045",
+        "ancestor": "7f3d35ab708316f18192e3cdfb8d0b6cf4341342",
+        "descendant": "d781e119de10b210801921014c2d2c2e13b51045"
+      }
+    ]
+  }
+}

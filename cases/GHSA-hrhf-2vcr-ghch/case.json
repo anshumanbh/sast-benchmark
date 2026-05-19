@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-hrhf-2vcr-ghch",
+  "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-hrhf-2vcr-ghch",
+  "repository": "cometbft/cometbft",
+  "advisory": {
+    "title": "ASA-2025-003: Invalid BitArray handling can lead to network halt",
+    "severity": "high",
+    "publishedAt": "2025-10-14T00:00:00Z",
+    "description": "CometBFT advisory ASA-2025-003 covers insufficient validation of BitArray payloads received from peers. Messages with mismatched Elems and Bits values can be processed and gossiped before local validation rejects them, propagating an invalid state and cascading node panics. The v0.38.18..v0.38.19 patch (commit be5677c3e) adds a ValidateBasic for BitArray and protective guards on BitArray methods in libs/bits/bit_array.go, plus message validation in consensus/reactor.go. Affects <=v0.38.18 and <=v0.37.15; fixed in v0.38.19 and v0.37.16.",
+    "cweIds": [
+      "CWE-20",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": "<= 0.38.18",
+        "patchedVersions": "0.38.19"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": "<= 0.37.15",
+        "patchedVersions": "0.37.16"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
+    "introducingCommits": [
+      {
+        "sha": "f6cde44febface61b3d5bc777a549636350b82ff",
+        "authoredAt": "2024-04-24T14:49:08+08:00",
+        "subject": "perf(internal/bits): Significantly speedup bitArray.PickRandom (backport #2841) (#2886)"
+      }
+    ],
+    "vulnerableHead": "5344a6e3bd806ba352b89f600c7f19c139442117",
+    "notes": "vulnerableHead is the v0.38.18 release commit, the last vulnerable v0.38 release before the v0.38.19 patch. The introducing commit f6cde44f (\"perf(internal/bits): Significantly speedup bitArray.PickRandom\", 2024-04-24) reworked getNumTrueIndices / getNthTrueIndex in libs/bits/bit_array.go and broadened the surface where a Bits / len(Elems) mismatch can panic; confidence is medium because the underlying missing ValidateBasic on BitArray has been present since the file was created."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "libs/bits/bit_array.go",
+      "consensus/reactor.go"
+    ],
+    "description": "Scanner should flag insufficient validation on BitArray messages in libs/bits/bit_array.go and consensus/reactor.go \u2014 a peer can deliver a BitArray where len(Elems) does not match Bits, causing panics on BitArray methods that propagate through the network."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "medium",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2025-003 (GHSA-hrhf-2vcr-ghch) was published on 2025-10-14 with patches in cometbft v0.38.19 and v0.37.16."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.38.18 release commit, the latest tag in the <=0.38.18 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=a9e045ba38db01a0fbc81eeabca6516d3f603ad5 earliest_intro=f6cde44febface61b3d5bc777a549636350b82ff"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=a9e045ba38db01a0fbc81eeabca6516d3f603ad5 intro=f6cde44febface61b3d5bc777a549636350b82ff",
+        "ancestor": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
+        "descendant": "f6cde44febface61b3d5bc777a549636350b82ff"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=f6cde44febface61b3d5bc777a549636350b82ff vulnerable_head=5344a6e3bd806ba352b89f600c7f19c139442117",
+        "ancestor": "f6cde44febface61b3d5bc777a549636350b82ff",
+        "descendant": "5344a6e3bd806ba352b89f600c7f19c139442117"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=a9e045ba38db01a0fbc81eeabca6516d3f603ad5 vulnerable_head=5344a6e3bd806ba352b89f600c7f19c139442117",
+        "ancestor": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
+        "descendant": "5344a6e3bd806ba352b89f600c7f19c139442117"
+      }
+    ]
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-r3r4-g7hq-pq4f",
+  "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-r3r4-g7hq-pq4f",
+  "repository": "cometbft/cometbft",
+  "advisory": {
+    "title": "ASA-2025-002: Malicious peer can stall network by disseminating seemingly valid block parts",
+    "severity": "high",
+    "publishedAt": "2025-02-03T00:00:00Z",
+    "description": "CometBFT advisory ASA-2025-002 covers missing validation that Part.Index equals Part.Proof.Index in block-part dissemination. A malicious peer can submit parts with mismatched indices, causing peers to disseminate invalid data and block reception of correct parts, potentially stalling the network. The v0.38.16..v0.38.17 patch (commit 415c0da22) modifies types/part_set.go to verify Part.Index matches Part.Proof.Index. Affects <=v0.38.16 and v1.0.0; fixed in v0.38.17 and v1.0.1.",
+    "cweIds": [
+      "CWE-20",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": "<= 0.38.16",
+        "patchedVersions": "0.38.17"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": "= 1.0.0",
+        "patchedVersions": "1.0.1"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
+    "introducingCommits": [
+      {
+        "sha": "fb91ef7462b421349a56c32733724d920fce3ad4",
+        "authoredAt": "2018-11-01T07:07:18+01:00",
+        "subject": "validate reactor messages (#2711)"
+      }
+    ],
+    "vulnerableHead": "84f981e934707c40c5e1e2520b3a54a4ba02e295",
+    "notes": "vulnerableHead is the v0.38.16 release commit, the last vulnerable v0.38 release before the v0.38.17 patch. The introducing commit fb91ef74 (\"validate reactor messages\", 2018-11-01) added Part.ValidateBasic in types/part_set.go \u2014 the function the v0.38.17 patch extends with the missing `int64(part.Index) != part.Proof.Index` equality check; confidence is medium because the missing check has been absent since ValidateBasic was first written."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "types/part_set.go"
+    ],
+    "description": "Scanner should flag missing validation in types/part_set.go that Part.Index equals Part.Proof.Index, allowing a malicious peer to disseminate parts with crafted index/proof mismatches and block reception of legitimate parts."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "medium",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2025-002 (GHSA-r3r4-g7hq-pq4f) was published on 2025-02-03 with patches in cometbft v0.38.17 and v1.0.1."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.38.16 release commit, the latest tag in the <=0.38.16 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=a22c962e28053f9f51d71d3394e0c62bf551fb99 earliest_intro=fb91ef7462b421349a56c32733724d920fce3ad4"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=a22c962e28053f9f51d71d3394e0c62bf551fb99 intro=fb91ef7462b421349a56c32733724d920fce3ad4",
+        "ancestor": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
+        "descendant": "fb91ef7462b421349a56c32733724d920fce3ad4"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=fb91ef7462b421349a56c32733724d920fce3ad4 vulnerable_head=84f981e934707c40c5e1e2520b3a54a4ba02e295",
+        "ancestor": "fb91ef7462b421349a56c32733724d920fce3ad4",
+        "descendant": "84f981e934707c40c5e1e2520b3a54a4ba02e295"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=a22c962e28053f9f51d71d3394e0c62bf551fb99 vulnerable_head=84f981e934707c40c5e1e2520b3a54a4ba02e295",
+        "ancestor": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
+        "descendant": "84f981e934707c40c5e1e2520b3a54a4ba02e295"
+      }
+    ]
+  }
+}

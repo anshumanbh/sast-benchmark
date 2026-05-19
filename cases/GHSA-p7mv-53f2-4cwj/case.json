@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-p7mv-53f2-4cwj",
+  "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-p7mv-53f2-4cwj",
+  "repository": "cometbft/cometbft",
+  "advisory": {
+    "title": "ASA-2024-011: Vote Extensions \u2014 Panic when receiving a Pre-commit with invalid data",
+    "severity": "high",
+    "publishedAt": "2024-11-06T00:00:00Z",
+    "description": "CometBFT advisory ASA-2024-011 covers a panic in vote-extension handling on ABCI 2.0 chains. A peer running modified code can craft a Vote message with an invalid ValidatorIndex; the receiver dereferences the validator set with the bad index without bounds-checking, panicking the consensus reactor. The v0.38.14..v0.38.15 patch (commit 3a023da3a) adds index validation in consensus/state.go and a new error in consensus/errors.go. Affects v0.38.x < v0.38.15 (and unreleased v1.x/main); fixed in v0.38.15.",
+    "cweIds": [
+      "CWE-129",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": ">= 0.38.0, <= 0.38.14",
+        "patchedVersions": "0.38.15"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "aeec999151c294757184f5b221d28cc0486fb06b",
+    "introducingCommits": [
+      {
+        "sha": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
+        "authoredAt": "2022-12-09T22:30:37+01:00",
+        "subject": "Vote extensions: Add consensus param for extension activation logic (#9862)"
+      }
+    ],
+    "vulnerableHead": "5544864558da838d2dfb1072929e1ee7715b497e",
+    "notes": "vulnerableHead is the v0.38.13 release commit, an unambiguously vulnerable release in the >=0.38.0,<v0.38.15 range. (v0.38.14 was released and retracted due to a non-security regression in cometbft-db; the advisory marks v0.38.15 as the recommended patched version.) The introducing commit 03bdcad3 is the cherry-pick that added vote-extension handling to consensus/state.go, including the `_, val := cs.state.Validators.GetByIndex(vote.ValidatorIndex)` call followed by an unguarded val.PubKey dereference inside addVote \u2014 the precise pattern patched in v0.38.15 (commit 3a023da3a)."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "consensus/state.go"
+    ],
+    "description": "Scanner should flag the missing ValidatorIndex bounds check in consensus/state.go that lets a peer panic the consensus reactor by submitting a Precommit Vote with a malformed ValidatorIndex on a chain with vote extensions enabled."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "high",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "ASA-2024-011 (GHSA-p7mv-53f2-4cwj) was published on 2024-11-06 with the patch in cometbft v0.38.15."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.38.13 release commit, an unambiguously vulnerable tag in the >=0.38.0,<v0.38.15 range (v0.38.14 was retracted)."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=aeec999151c294757184f5b221d28cc0486fb06b earliest_intro=03bdcad31e9ef8ced3683d602116f2cf30f032d8"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=aeec999151c294757184f5b221d28cc0486fb06b intro=03bdcad31e9ef8ced3683d602116f2cf30f032d8",
+        "ancestor": "aeec999151c294757184f5b221d28cc0486fb06b",
+        "descendant": "03bdcad31e9ef8ced3683d602116f2cf30f032d8"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=03bdcad31e9ef8ced3683d602116f2cf30f032d8 vulnerable_head=5544864558da838d2dfb1072929e1ee7715b497e",
+        "ancestor": "03bdcad31e9ef8ced3683d602116f2cf30f032d8",
+        "descendant": "5544864558da838d2dfb1072929e1ee7715b497e"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=aeec999151c294757184f5b221d28cc0486fb06b vulnerable_head=5544864558da838d2dfb1072929e1ee7715b497e",
+        "ancestor": "aeec999151c294757184f5b221d28cc0486fb06b",
+        "descendant": "5544864558da838d2dfb1072929e1ee7715b497e"
+      }
+    ]
+  }
+}

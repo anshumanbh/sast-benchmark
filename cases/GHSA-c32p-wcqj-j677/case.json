@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "GHSA-c32p-wcqj-j677",
+  "advisoryUrl": "https://github.com/cometbft/cometbft/security/advisories/GHSA-c32p-wcqj-j677",
+  "repository": "cometbft/cometbft",
+  "advisory": {
+    "title": "CSA-2026-001: Tachyon \u2014 BFT Time inconsistency allows faulty process to arbitrarily increase block time",
+    "severity": "critical",
+    "publishedAt": "2026-01-23T15:00:00Z",
+    "description": "CometBFT consensus-level advisory CSA-2026-001 ('Tachyon') covers an inconsistency between commit-signature verification and block-time derivation in BFT Time. The bug breaks the guarantee that a faulty process cannot arbitrarily increase the Time value of a block. Validators and any protocol consuming block timestamps are affected. The v0.38.20..v0.38.21 patch (commit c56d64ec5) modifies state/validation.go, state/state.go, state/execution.go, and types/validation.go. Affects <=v0.38.20 and <=v0.37.17; fixed in v0.38.21 and v0.37.18.",
+    "cweIds": [
+      "CWE-345",
+      "CWE-400"
+    ],
+    "affectedPackages": [
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": "<= 0.38.20",
+        "patchedVersions": "0.38.21"
+      },
+      {
+        "ecosystem": "go",
+        "name": "github.com/cometbft/cometbft",
+        "vulnerableRange": "<= 0.37.17",
+        "patchedVersions": "0.37.18"
+      }
+    ]
+  },
+  "timeline": {
+    "baselineCommit": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
+    "introducingCommits": [
+      {
+        "sha": "7b88172f41faa88107880774c338a953df7f6686",
+        "authoredAt": "2018-09-01T01:33:51+02:00",
+        "subject": "Implement BFT time (#2203)"
+      }
+    ],
+    "vulnerableHead": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
+    "notes": "vulnerableHead is the v0.38.20 release commit, the last vulnerable v0.38 release before the v0.38.21 Tachyon patch (commit c56d64ec5). The introducing commit 7b88172f (\"Implement BFT time\", 2018-09-01) added the MedianTime derivation in state/state.go whose silent-skip behaviour for unknown validators is at the heart of the divergence Tachyon patches; confidence is medium because the inconsistency between commit-signature lookup and BFT-time derivation has been present since BFT time was introduced \u2014 there is no discrete regression."
+  },
+  "expectedOutcome": {
+    "vulnerabilityClass": "abuse",
+    "minimumSeverity": "high",
+    "expectedPaths": [
+      "state/validation.go",
+      "state/state.go",
+      "types/validation.go"
+    ],
+    "description": "Scanner should flag the BFT Time / commit-signature verification mismatch in cometbft state and types validation code (state/validation.go, state/state.go, types/validation.go) that lets a faulty proposer arbitrarily advance block time."
+  },
+  "verification": {
+    "status": "pass",
+    "confidence": "medium",
+    "checks": [
+      {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "CSA-2026-001 'Tachyon' (GHSA-c32p-wcqj-j677) was published on 2026-01-23 with patches in cometbft v0.38.21 and v0.37.18."
+      },
+      {
+        "name": "vulnerable_head_in_advisory_range",
+        "pass": true,
+        "details": "vulnerableHead is the v0.38.20 release commit, the latest tag in the <=0.38.20 vulnerable range."
+      },
+      {
+        "name": "baseline_is_parent_of_earliest_intro",
+        "pass": true,
+        "details": "baseline=ffe91ae9e38bba64c5ffc41871626f0a2b1fb051 earliest_intro=7b88172f41faa88107880774c338a953df7f6686"
+      },
+      {
+        "name": "baseline_ancestor_of_intro",
+        "pass": true,
+        "details": "baseline=ffe91ae9e38bba64c5ffc41871626f0a2b1fb051 intro=7b88172f41faa88107880774c338a953df7f6686",
+        "ancestor": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
+        "descendant": "7b88172f41faa88107880774c338a953df7f6686"
+      },
+      {
+        "name": "intro_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "intro=7b88172f41faa88107880774c338a953df7f6686 vulnerable_head=c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
+        "ancestor": "7b88172f41faa88107880774c338a953df7f6686",
+        "descendant": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8"
+      },
+      {
+        "name": "baseline_ancestor_of_vulnerable_head",
+        "pass": true,
+        "details": "baseline=ffe91ae9e38bba64c5ffc41871626f0a2b1fb051 vulnerable_head=c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
+        "ancestor": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
+        "descendant": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8"
+      }
+    ]
+  }
+}
