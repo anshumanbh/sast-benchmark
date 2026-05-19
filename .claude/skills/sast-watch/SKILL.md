@@ -32,9 +32,56 @@ fi
 
 # Derive paths used by the pending-RCA retry below (and by Steps 1, 2, 8).
 SLUG="${REPO/\//__}"
+BASE_BRANCH="main"
 PENDING_RCA_DIR="${CLAUDE_SKILL_DIR}/pending-rca"
 PENDING_RCA_BODY="$PENDING_RCA_DIR/${SLUG}.md"
-PENDING_RCA_PR="$PENDING_RCA_DIR/${SLUG}.pr"
+PENDING_RCA_BRANCH="$PENDING_RCA_DIR/${SLUG}.branch"
+# Legacy format from an earlier implementation that persisted a PR number.
+# Every place that removes the body file must also remove this, otherwise a
+# stale .pr from a previously failed legacy retry would redirect a future
+# branch-format RCA to the wrong PR.
+PENDING_RCA_PR_LEGACY="$PENDING_RCA_DIR/${SLUG}.pr"
+
+# resolve_clone_path probes sibling directories for a clone whose origin URL
+# matches a manifest repo. Defined here (not inside Step 6) because Steps 5
+# and 8 also need $CLONE — the watched repo's local checkout path.
+resolve_clone_path() {
+  local repo="$1"
+  local owner="${repo%%/*}"
+  local name="${repo#*/}"
+  local owner_lc name_lc
+  owner_lc=$(printf '%s' "$owner" | tr '[:upper:]' '[:lower:]')
+  name_lc=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')
+  local candidates=(
+    "../$name_lc"
+    "../${owner_lc}-${name_lc}"
+    "../$(printf '%s' "$repo" | tr '/' '-' | tr '[:upper:]' '[:lower:]')"
+    "../$name"
+    "../$repo"
+  )
+  for candidate in "${candidates[@]}"; do
+    [ -d "$candidate/.git" ] || continue
+    local url url_lc
+    url=$(git -C "$candidate" config --get remote.origin.url 2>/dev/null) || continue
+    url_lc=$(printf '%s' "$url" | tr '[:upper:]' '[:lower:]')
+    case "$url_lc" in
+      *":$owner_lc/$name_lc"|*":$owner_lc/$name_lc.git"|*"/$owner_lc/$name_lc"|*"/$owner_lc/$name_lc.git")
+        printf '%s' "$candidate"; return 0 ;;
+    esac
+  done
+  return 1
+}
+
+# Resolve $CLONE for the watched $REPO BEFORE Step 5 (per-advisory work)
+# needs it for timeline derivation and BEFORE Step 6 puts $REPO=$CLONE into
+# REPO_FLAGS. An unset $CLONE would make REPO_FLAGS "$REPO=" — validate.py
+# rejects that as an invalid mapping, and Step 8's sv-agent would get an
+# empty --repo. Abort early with a clear message rather than letting that
+# cascade into less-obvious errors deeper in the pipeline.
+CLONE=$(resolve_clone_path "$REPO") \
+  || { echo "could not locate local clone for watched repo '$REPO'"; \
+       echo "clone it as a sibling directory (e.g. ../$(printf '%s' "${REPO#*/}" | tr '[:upper:]' '[:lower:]')) and re-run"; \
+       exit 2; }
 
 # Retry any pending RCA push left over from a prior run that failed Step 8.
 # The case+state commit was already pushed by that prior run, so without this
@@ -42,16 +89,48 @@ PENDING_RCA_PR="$PENDING_RCA_DIR/${SLUG}.pr"
 # mean the PR body never receives the detection/RCA blocks. We do this BEFORE
 # Step 1's branch handling because `gh pr edit <pr-number>` operates on the
 # PR directly and doesn't care what local branch is checked out.
-if [ -f "$PENDING_RCA_BODY" ] && [ -f "$PENDING_RCA_PR" ]; then
-  pending_pr=$(cat "$PENDING_RCA_PR")
-  echo "retrying pending RCA push to PR #$pending_pr from prior run"
-  if gh pr edit "$pending_pr" --body-file "$PENDING_RCA_BODY"; then
-    rm -f "$PENDING_RCA_BODY" "$PENDING_RCA_PR"
-    echo "pending RCA pushed successfully"
+
+# Try branch-format FIRST; fall back to legacy ${SLUG}.pr only if no
+# ${SLUG}.branch file exists. A leftover legacy file from a failed earlier
+# retry must never override a current branch-format body — Step 8 may have
+# rewritten ${SLUG}.md with new content destined for a different PR.
+
+if [ -f "$PENDING_RCA_BODY" ] && [ -f "$PENDING_RCA_BRANCH" ]; then
+  # Current format: branch name persisted to ${SLUG}.branch — re-resolve the
+  # PR for that branch each time. This is more resilient than storing a PR
+  # number, because if Step 8 couldn't even resolve the PR, we still managed
+  # to persist the body and a branch label, and recovery is possible whenever
+  # gh comes back online.
+  pending_branch=$(cat "$PENDING_RCA_BRANCH")
+  # Use --state all so we can still update the body if the PR was merged or
+  # closed between the original failed push and now. gh pr edit accepts a
+  # merged/closed PR number and edits its body just fine; restricting to
+  # --state open would strand the RCA body forever after merge.
+  pending_pr=$(gh pr list --head "$pending_branch" --base "$BASE_BRANCH" \
+                          --state all --json number --jq '.[0].number // empty' 2>/dev/null || true)
+  if [ -n "$pending_pr" ]; then
+    echo "retrying pending RCA push to PR #$pending_pr (branch '$pending_branch') from prior run"
+    if gh pr edit "$pending_pr" --body-file "$PENDING_RCA_BODY"; then
+      rm -f "$PENDING_RCA_BODY" "$PENDING_RCA_BRANCH" "$PENDING_RCA_PR_LEGACY"
+      echo "pending RCA pushed successfully"
+    else
+      echo "WARNING: pending RCA push still failing; will retry on next watcher fire"
+      # Do not abort — letting new advisories accumulate is worse than missing
+      # an RCA on an already-merged-or-mergeable PR.
+    fi
   else
-    echo "WARNING: pending RCA push still failing; will retry on next watcher fire"
-    # Do not abort — letting new advisories accumulate is worse than missing
-    # an RCA on an already-merged-or-mergeable PR.
+    echo "WARNING: pending RCA body exists for branch '$pending_branch' but no PR (open/merged/closed) found; leaving files in place"
+  fi
+elif [ -f "$PENDING_RCA_BODY" ] && [ -f "$PENDING_RCA_PR_LEGACY" ]; then
+  # Legacy fallback: only consulted when no ${SLUG}.branch exists. Prior
+  # implementations persisted a PR number to ${SLUG}.pr instead.
+  legacy_pr=$(cat "$PENDING_RCA_PR_LEGACY")
+  echo "retrying legacy-format pending RCA push to PR #$legacy_pr from prior run"
+  if gh pr edit "$legacy_pr" --body-file "$PENDING_RCA_BODY"; then
+    rm -f "$PENDING_RCA_BODY" "$PENDING_RCA_PR_LEGACY"
+    echo "legacy pending RCA pushed successfully"
+  else
+    echo "WARNING: legacy pending RCA push still failing; leaving files in place"
   fi
 fi
 ```
@@ -63,10 +142,9 @@ Pick `python3.11` (the version the repo's tests use). Replace with `python3` onl
 The same-day branch may already exist from a partial earlier run or an earlier batch of advisories on the same UTC day. It may also exist **only on the remote** — e.g. a different machine ran the watcher earlier today and pushed, but this checkout never pulled the branch. **Check it out before doing anything that reads or writes files** — otherwise Step 5's case writes and `manifest.json` edits will conflict with the branch's committed changes, and the state file the filter reads in Step 2 will be the stale `main` copy instead of the branch's up-to-date copy. Without the origin-side check, Step 7 would create the branch from `main` and `git push -u` would fail every run because the remote already has divergent history.
 
 ```bash
-# $SLUG was set in Step 0; reuse it here.
+# $SLUG and $BASE_BRANCH were set in Step 0; reuse them here.
 TODAY=$(date -u +%Y-%m-%d)
 BRANCH="sast-watch/${TODAY}-${SLUG}"
-BASE_BRANCH="main"
 
 # Capture the branch the watcher was launched from. launchd jobs share this
 # checkout across targets, so every exit path must restore it — otherwise a
@@ -250,6 +328,62 @@ NEW_COUNT=$(jq 'length' /tmp/new_advisories.json)
 ```bash
 if [ "$NEW_COUNT" = "0" ]; then
   echo "no new advisories for $REPO"
+  # Before declaring success, detect an orphaned branch: a prior run may
+  # have pushed the case+state commit but died before gh pr create succeeded
+  # (process killed, OOM, shutdown). In that case the GHSA is in $STATE on
+  # the branch — so the filter dropped it — yet no PR exists. Without this
+  # check the watcher would exit success forever and the advisory would
+  # never get a PR.
+  #
+  # The check is "no PR of ANY state AND branch tip not in base", not just
+  # "no open PR". If a PR was merged or closed, the branch is already
+  # handled — GitHub may have left the head ref in place (auto-delete off).
+  # Likewise, if the branch tip is already an ancestor of origin/$BASE_BRANCH,
+  # the work landed via a merge and the branch isn't really orphaned.
+  if [ "$BRANCH_EXISTED_BEFORE" = "1" ]; then
+    # Lookup with retry: a transient gh/API failure must NOT be treated as
+    # "no PR" — that would mis-diagnose an existing branch with a real open
+    # PR as orphaned and abort.
+    any_pr_state=""
+    lookup_ok=0
+    for attempt in 1 2 3; do
+      if any_pr_state=$(gh pr list --head "$BRANCH" --base "$BASE_BRANCH" --state all \
+                                   --json state --jq '.[0].state // empty' 2>&1); then
+        lookup_ok=1
+        break
+      fi
+      echo "gh pr list attempt $attempt/3 (orphan check for '$BRANCH') failed; retrying in $((attempt * 2))s"
+      sleep $((attempt * 2))
+    done
+    if [ "$lookup_ok" = "0" ]; then
+      echo "gh pr list failed after 3 attempts; cannot determine PR state for '$BRANCH'"
+      echo "  aborting to avoid mis-diagnosing as orphaned; next run will retry"
+      restore_original_branch
+      exit 1
+    fi
+    case "$any_pr_state" in
+      OPEN|MERGED|CLOSED)
+        : # PR exists in some state — branch is handled, not orphaned.
+        ;;
+      *)
+        # No PR of any state found. Check if branch tip is already merged
+        # into base (manual merge without a PR — uncommon but possible).
+        branch_tip=$(git rev-parse "$BRANCH" 2>/dev/null || echo "")
+        if [ -n "$branch_tip" ] \
+           && git merge-base --is-ancestor "$branch_tip" "origin/$BASE_BRANCH" 2>/dev/null; then
+          : # branch already in base — not orphaned.
+        else
+          echo "ERROR: branch '$BRANCH' exists with pushed state but has no PR (open/closed/merged)"
+          echo "  and its tip is not in origin/$BASE_BRANCH"
+          echo "  this suggests a prior run was killed between 'git push' and PR creation"
+          echo "  investigate and recover manually, e.g.:"
+          echo "    gh pr create --base $BASE_BRANCH --head $BRANCH --title '...' --body-file ..."
+          restore_original_branch
+          exit 1
+        fi
+        ;;
+    esac
+  fi
   restore_original_branch
   echo "NEW_ADVISORIES_COUNT=0"
   exit 0
@@ -384,35 +518,8 @@ cleanup_working_tree() {
   restore_original_branch
 }
 
-# Resolve each manifest repo to a local clone by probing several path
-# conventions and verifying the candidate's origin URL matches. A plain
-# lowercase-basename heuristic breaks irregular layouts (e.g. cosmos/evm
-# → ../cosmos-evm, not ../evm), causing validate.py to abort even when the
-# expected clone exists.
-resolve_clone_path() {
-  local repo="$1"
-  local owner="${repo%%/*}"
-  local name="${repo#*/}"
-  local candidates=(
-    "../$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]')"
-    "../$(printf '%s' "$owner-$name" | tr '[:upper:]' '[:lower:]')"
-    "../$(printf '%s' "$repo" | tr '/' '-' | tr '[:upper:]' '[:lower:]')"
-    "../$name"
-    "../$repo"
-  )
-  for candidate in "${candidates[@]}"; do
-    [ -d "$candidate/.git" ] || continue
-    local url
-    url=$(git -C "$candidate" config --get remote.origin.url 2>/dev/null) || continue
-    # Match owner/name regardless of https vs ssh and optional .git suffix.
-    case "$url" in
-      *":$owner/$name"|*":$owner/$name.git"|*"/$owner/$name"|*"/$owner/$name.git")
-        printf '%s' "$candidate"; return 0 ;;
-    esac
-  done
-  return 1
-}
-
+# $CLONE was resolved in Step 0 via resolve_clone_path; reuse it here.
+# For every other manifest repo, probe sibling directories the same way.
 REPO_FLAGS=("--repo" "$REPO=$CLONE")
 while IFS= read -r r; do
   [ "$r" = "$REPO" ] && continue
@@ -593,22 +700,51 @@ For misses, the RCA should answer concretely:
 
 After writing all per-case blocks, replace the PR body in place. The state+case commit is already pushed at this point, so the next watcher run's Step 4 filter will drop these GHSAs — meaning if this `gh pr edit` fails and we exit, the RCA never reaches the PR. To avoid that:
 
-1. Persist the body and target PR number to `$PENDING_RCA_BODY` / `$PENDING_RCA_PR` (the same paths Step 0's retry block reads from).
-2. Retry the push inline up to three times with exponential backoff (handles transient `gh`/network errors).
-3. On total failure, leave the persisted files in place and exit non-zero — Step 0 of the next run will retry the push before fetching new advisories.
+1. **Persist the body and the branch name BEFORE any `gh` calls.** A transient `gh pr view` / `gh pr list` failure could otherwise exit before anything is persisted, leaving the next run with nothing to retry.
+2. Resolve the PR number from the branch (with retry).
+3. Retry the body push inline up to three times with exponential backoff (handles transient `gh`/network errors).
+4. On total failure, leave the persisted files in place, restore the original branch (so the shared launchd checkout isn't stranded on the watch branch), and exit non-zero — Step 0 of the next run will resolve the PR by branch and retry.
 
 ```bash
+# Persist body + branch FIRST so any subsequent gh failure still leaves a
+# recoverable artifact for Step 0 of the next run.
+#
+# Also remove any stale legacy ${SLUG}.pr from a prior failed-legacy retry:
+# without this, the next run's Step 0 would still see ${SLUG}.pr alongside
+# the new body. Even though Step 0 now prefers .branch over .pr, deleting
+# the stale file removes the ambiguity entirely.
 mkdir -p "$PENDING_RCA_DIR"
-PR_NUMBER=$(gh pr view --json number --jq '.number') \
-  || { echo "could not resolve PR number for current branch; aborting"; exit 1; }
-printf '%s\n' "$PR_NUMBER" > "$PENDING_RCA_PR"
 cp /tmp/pr-body.md "$PENDING_RCA_BODY"
+printf '%s\n' "$BRANCH" > "$PENDING_RCA_BRANCH"
+rm -f "$PENDING_RCA_PR_LEGACY"
 
+# Resolve the PR for $BRANCH (retry transient failures). Use --state all so
+# we still find and update the body if the PR was merged or closed during
+# the sv-agent run — gh pr edit accepts a non-open PR number.
+PR_NUMBER=""
+for attempt in 1 2 3; do
+  PR_NUMBER=$(gh pr list --head "$BRANCH" --base "$BASE_BRANCH" --state all \
+                         --json number --jq '.[0].number // empty' 2>/dev/null || true)
+  [ -n "$PR_NUMBER" ] && break
+  echo "gh pr list attempt $attempt/3 (resolving PR for '$BRANCH') failed or empty; retrying in $((attempt * 2))s"
+  sleep $((attempt * 2))
+done
+
+if [ -z "$PR_NUMBER" ]; then
+  echo "could not resolve open PR for branch '$BRANCH' after 3 attempts"
+  echo "  body persisted to:   $PENDING_RCA_BODY"
+  echo "  branch persisted to: $PENDING_RCA_BRANCH"
+  echo "  next watcher run's Step 0 will retry resolving the PR and pushing"
+  restore_original_branch
+  exit 1
+fi
+
+# Push the body with retry.
 RCA_OK=0
 for attempt in 1 2 3; do
   if gh pr edit "$PR_NUMBER" --body-file "$PENDING_RCA_BODY"; then
     RCA_OK=1
-    rm -f "$PENDING_RCA_BODY" "$PENDING_RCA_PR"
+    rm -f "$PENDING_RCA_BODY" "$PENDING_RCA_BRANCH" "$PENDING_RCA_PR_LEGACY"
     break
   fi
   echo "gh pr edit attempt $attempt/3 failed; retrying in $((attempt * 2))s"
@@ -616,10 +752,11 @@ for attempt in 1 2 3; do
 done
 
 if [ "$RCA_OK" = "0" ]; then
-  echo "gh pr edit (final RCA push) failed after 3 attempts"
-  echo "  body persisted to: $PENDING_RCA_BODY"
-  echo "  target PR: #$(cat "$PENDING_RCA_PR")"
-  echo "  next watcher run will retry this push before fetching new advisories"
+  echo "gh pr edit (final RCA push to PR #$PR_NUMBER) failed after 3 attempts"
+  echo "  body persisted to:   $PENDING_RCA_BODY"
+  echo "  branch persisted to: $PENDING_RCA_BRANCH"
+  echo "  next watcher run's Step 0 will retry pushing"
+  restore_original_branch
   exit 1
 fi
 ```
