@@ -15,7 +15,11 @@ CWE_TO_VULN_CLASS: dict[str, list[str]] = {
     # commandinjection
     "CWE-78": ["commandinjection"],
     "CWE-77": ["commandinjection"],
-    "CWE-20": ["commandinjection", "codeexec"],
+    # CWE-20 (Improper Input Validation) is intentionally broad: existing
+    # OpenClaw/Ghost cases use it for injection/codeexec, while the new
+    # Cosmos cases use it for chain-halt-from-malformed-input (abuse) and
+    # for incorrect signer-set/vote validation (brokenauthz).
+    "CWE-20": ["commandinjection", "codeexec", "abuse", "brokenauthz"],
     "CWE-441": ["commandinjection"],
     "CWE-184": ["commandinjection"],
     "CWE-367": ["commandinjection"],

@@ -43,10 +43,11 @@
     "vulnerabilityClass": "abuse",
     "minimumSeverity": "high",
     "expectedPaths": [
+      "x/wasm/keeper/msg_dispatcher.go",
       "x/wasm/keeper/handler_plugin.go",
       "x/wasm/keeper/keeper.go"
     ],
-    "description": "Scanner should flag unbounded recursion in x/wasm/keeper/handler_plugin.go and x/wasm/keeper/keeper.go where nested submessage dispatch could trigger a Go stack overflow that halts the node."
+    "description": "Scanner should flag unbounded recursion in MessageDispatcher.DispatchSubmessages (x/wasm/keeper/msg_dispatcher.go) — the call path that re-enters contract execution without a depth cap — and/or the fix-site files (handler_plugin.go, keeper.go) where the patched releases wrap the dispatcher with callDepthMessageHandler/checkAndIncreaseCallDepth. A finding on any of these three paths counts as path-correct."
   },
   "verification": {
     "status": "pass",
