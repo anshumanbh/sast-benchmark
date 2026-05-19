@@ -50,6 +50,11 @@ CWE_TO_VULN_CLASS: dict[str, list[str]] = {
     "CWE-693": ["sandboxescape"],
     # abuse
     "CWE-400": ["abuse"],
+    # Improper handling of exceptional conditions — used by GHSA-47ww-ff84-4jrg
+    # (x/group EndBlocker panic that halts the chain) and similar DoS-from-
+    # unhandled-error advisories. A scanner reporting CWE-755 on a chain-halt
+    # bug should count as detecting the abuse class.
+    "CWE-755": ["abuse"],
     # xss
     "CWE-79": ["xss"],
 }

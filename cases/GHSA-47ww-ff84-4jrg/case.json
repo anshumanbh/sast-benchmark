@@ -9,7 +9,8 @@
     "publishedAt": "2025-03-12T19:28:42Z",
     "description": "Cosmos SDK chains in unpatched releases that use the x/group module can halt when malicious proposals trigger an error in the module's end blocker. Any set of users that can interact with the groups module can introduce the failing state. This advisory maps to HackerOne report 3018307, which was reported to the Cosmos Bug Bounty Program on February 28, 2025 and resolved via GHSA-47ww-ff84-4jrg.",
     "cweIds": [
-      "CWE-755"
+      "CWE-755",
+      "CWE-400"
     ],
     "affectedPackages": [
       {

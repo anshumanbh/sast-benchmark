@@ -37,8 +37,7 @@
     "vulnerabilityClass": "abuse",
     "minimumSeverity": "high",
     "expectedPaths": [
-      "consensus/state.go",
-      "consensus/errors.go"
+      "consensus/state.go"
     ],
     "description": "Scanner should flag the missing ValidatorIndex bounds check in consensus/state.go that lets a peer panic the consensus reactor by submitting a Precommit Vote with a malformed ValidatorIndex on a chain with vote extensions enabled."
   },

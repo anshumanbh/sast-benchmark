@@ -52,6 +52,11 @@
     "confidence": "high",
     "checks": [
       {
+        "name": "advisory_published",
+        "pass": true,
+        "details": "GHSA-23px-mw2p-46qm was published on 2023-09-06 against the cosmos/cosmos-sdk repository, covering Cosmovisor versions before v1.0.0 (distributed with Cosmos SDK before 0.46)."
+      },
+      {
         "name": "hackerone_report_maps_to_advisory",
         "pass": true,
         "details": "HackerOne report 2094056 is titled RCE and DoS in Cosmovisor, and GHSA-23px-mw2p-46qm is the Cosmos SDK repository advisory for Cosmovisor denial of service and potential RCE reported to the Cosmos Bug Bounty Program."
