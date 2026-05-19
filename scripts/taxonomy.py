@@ -55,6 +55,19 @@ CWE_TO_VULN_CLASS: dict[str, list[str]] = {
     # unhandled-error advisories. A scanner reporting CWE-755 on a chain-halt
     # bug should count as detecting the abuse class.
     "CWE-755": ["abuse"],
+    # Specific abuse-class CWEs used by the Cosmos advisories. Each is a
+    # more precise classification than the umbrella CWE-400, and a scanner
+    # reporting only the specific advisory CWE should still satisfy the
+    # abuse class match.
+    "CWE-129": ["abuse"],   # Improper validation of array index (panic-on-bad-index)
+    "CWE-190": ["abuse"],   # Integer overflow (DoS via overflow)
+    "CWE-345": ["abuse"],   # Insufficient verification of data authenticity (BFT time inconsistency)
+    "CWE-369": ["abuse"],   # Divide by zero (panic)
+    "CWE-502": ["abuse"],   # Deserialization of untrusted data (non-deterministic unmarshal → halt)
+    "CWE-674": ["abuse"],   # Uncontrolled recursion (stack overflow)
+    # Specific brokenauthz-class CWEs used by the Cosmos advisories.
+    "CWE-696": ["brokenauthz"],  # Incorrect behavior order (callback ordering / reentrancy window)
+    "CWE-841": ["brokenauthz"],  # Improper enforcement of behavioral workflow (state transition skip)
     # xss
     "CWE-79": ["xss"],
 }

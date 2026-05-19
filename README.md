@@ -234,10 +234,6 @@ Each entry in the JSON results payload includes the case `repository` alongside 
 # Structural validation (schema + manifest consistency; requires: pip install jsonschema)
 python3 scripts/validate.py
 
-# Strict metadata validation (offline)
-# If jsonschema is missing, schema checks are skipped with a warning.
-python3 scripts/validate.py --strict
-
 # Semantic validation (commit SHAs resolve, ancestry checks pass in git history)
 # If jsonschema is missing, schema checks are skipped with a warning.
 python3 scripts/validate.py \
@@ -248,22 +244,26 @@ python3 scripts/validate.py \
   --repo cosmos/ibc-go=../ibc-go \
   --repo cosmos/evm=../cosmos-evm \
   --repo cometbft/cometbft=../cometbft
-
-# Full validation (strict metadata + semantic git checks)
-# Note: --strict requires verification.confidence == "high" on every loaded
-# case. The corpus currently contains several intentionally medium-confidence
-# cases (since-inception bugs); --strict will fail unless those are excluded
-# via --filter or the corpus is pruned.
-python3 scripts/validate.py \
-  --repo openclaw/openclaw=../openclaw \
-  --repo TryGhost/Ghost=../ghost \
-  --repo cosmos/cosmos-sdk=../cosmos-sdk \
-  --repo CosmWasm/wasmd=../wasmd \
-  --repo cosmos/ibc-go=../ibc-go \
-  --repo cosmos/evm=../cosmos-evm \
-  --repo cometbft/cometbft=../cometbft \
-  --strict
 ```
+
+### `--strict` mode
+
+`scripts/validate.py --strict` enforces that every loaded case has
+`verification.status == "pass"` AND `verification.confidence == "high"`.
+The current corpus intentionally contains several `confidence: medium`
+cases (bugs that have existed since the affected file was created — see
+the `timeline.notes` on each), so `--strict` against the full corpus
+will fail.
+
+`validate.py` does not (yet) accept a `--filter` or per-case selector to
+exclude them. To run `--strict` today, either:
+
+- Hand-curate a subset by copying the high-confidence `cases/GHSA-*/`
+  directories into a separate tree and running with
+  `--output-dir <subset-root>`; or
+- Wait for each medium-confidence case to be upgraded to high (i.e.
+  someone identifies a discrete bug-introducing commit instead of the
+  file-creation commit).
 
 ## Outcome Matching Criteria
 
