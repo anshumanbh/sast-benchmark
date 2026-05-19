@@ -57,7 +57,7 @@ cat > "$PLIST" <<EOF
   <array>
     <string>/bin/bash</string>
     <string>-lc</string>
-    <string>cd "${REPO_ROOT}" && "${CLAUDE_BIN}" -p "/sast-watch ${REPO}" --permission-mode acceptEdits --output-format text</string>
+    <string>cd "${REPO_ROOT}" &amp;&amp; "${CLAUDE_BIN}" -p "/sast-watch ${REPO}" --permission-mode acceptEdits --output-format text</string>
   </array>
   <key>StartInterval</key>
   <integer>86400</integer>
