@@ -214,7 +214,7 @@
             "properties": {
               "name": {
                 "type": "string",
-                "description": "Name of the verification check."
+                "description": "Name of the verification check. Strict mode recognizes the three structured ancestry checks and the documented content-evidence check introducing_commit_contains_vulnerable_pattern."
               },
               "pass": {
                 "type": "boolean",
@@ -222,7 +222,7 @@
               },
               "details": {
                 "type": "string",
-                "description": "Details or explanation of the check result."
+                "description": "Details or explanation of the check result. For introducing_commit_contains_vulnerable_pattern, strict mode expects this text to reference a timeline.introducingCommits SHA."
               },
               "ancestor": {
                 "type": "string",

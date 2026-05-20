@@ -37,7 +37,7 @@
       }
     ],
     "vulnerableHead": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
-    "notes": "vulnerableHead is the v0.38.20 release commit, the last vulnerable v0.38 release before the v0.38.21 Tachyon patch (commit c56d64ec5). The introducing commit 7b88172f (\"Implement BFT time\", 2018-09-01) added the MedianTime derivation in state/state.go whose silent-skip behaviour for unknown validators is at the heart of the divergence Tachyon patches; confidence is medium because the inconsistency between commit-signature lookup and BFT-time derivation has been present since BFT time was introduced \u2014 there is no discrete regression."
+    "notes": "vulnerableHead is the v0.38.20 release commit, the last vulnerable v0.38 release before the v0.38.21 Tachyon patch (commit c56d64ec5). The introducing commit 7b88172f (\"Implement BFT time\", 2018-09-01) added the MedianTime derivation in state/state.go. The Tachyon patch changes MedianTime from silently skipping commit signatures whose validator address is missing from the validator set to returning an error, and also hardens validator-address matching in commit verification. Confidence is high because the baseline is the parent of the BFT Time implementation commit and the patch hardens the same block-time validation path."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -51,7 +51,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "advisory_published",
@@ -62,6 +62,11 @@
         "name": "vulnerable_head_in_advisory_range",
         "pass": true,
         "details": "vulnerableHead is the v0.38.20 release commit, the latest tag in the <=0.38.20 vulnerable range."
+      },
+      {
+        "name": "introducing_commit_contains_vulnerable_pattern",
+        "pass": true,
+        "details": "git show 7b88172f adds MedianTime and the block Time validation that compares block.Time against MedianTime(block.LastCommit, state.LastValidators). The c56d64ec5 Tachyon patch hardens that same path by making MedianTime error when a non-absent commit signature references a validator not found in the validator set."
       },
       {
         "name": "baseline_is_parent_of_earliest_intro",

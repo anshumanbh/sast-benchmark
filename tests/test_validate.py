@@ -514,6 +514,67 @@ class TestStrictValidation:
 
         assert validate_case_strict(case) == []
 
+    def test_introducing_pattern_check_must_reference_intro(self):
+        case = _minimal_case(
+            {
+                "verification": {
+                    "checks": [
+                        {
+                            "name": "introducing_commit_contains_vulnerable_pattern",
+                            "pass": True,
+                            "details": "git show ccccccc adds the vulnerable pattern",
+                        },
+                        _ancestry_check(
+                            "baseline_ancestor_of_intro", "a" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "intro_ancestor_of_vulnerable_head", "b" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "baseline_ancestor_of_vulnerable_head",
+                            "a" * 40,
+                            "b" * 40,
+                        ),
+                    ]
+                },
+            }
+        )
+
+        errors = validate_case_strict(case)
+
+        assert any(
+            "must reference a timeline.introducingCommits SHA" in error.message
+            for error in errors
+        )
+
+    def test_introducing_pattern_check_accepts_intro_reference(self):
+        case = _minimal_case(
+            {
+                "verification": {
+                    "checks": [
+                        {
+                            "name": "introducing_commit_contains_vulnerable_pattern",
+                            "pass": True,
+                            "details": "git show bbbbbbb adds the vulnerable pattern",
+                        },
+                        _ancestry_check(
+                            "baseline_ancestor_of_intro", "a" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "intro_ancestor_of_vulnerable_head", "b" * 40, "b" * 40
+                        ),
+                        _ancestry_check(
+                            "baseline_ancestor_of_vulnerable_head",
+                            "a" * 40,
+                            "b" * 40,
+                        ),
+                    ]
+                },
+            }
+        )
+
+        assert validate_case_strict(case) == []
+
     def test_structured_ancestry_fields_are_required(self):
         case = _minimal_case(
             {

@@ -37,7 +37,7 @@
       }
     ],
     "vulnerableHead": "84f981e934707c40c5e1e2520b3a54a4ba02e295",
-    "notes": "vulnerableHead is the v0.38.16 release commit, the last vulnerable v0.38 release before the v0.38.17 patch. The introducing commit fb91ef74 (\"validate reactor messages\", 2018-11-01) added Part.ValidateBasic in types/part_set.go \u2014 the function the v0.38.17 patch extends with the missing `int64(part.Index) != part.Proof.Index` equality check; confidence is medium because the missing check has been absent since ValidateBasic was first written."
+    "notes": "vulnerableHead is the v0.38.16 release commit, the last vulnerable v0.38 release before the v0.38.17 patch. The introducing commit fb91ef74 (\"validate reactor messages\", 2018-11-01) added Part.ValidateBasic in types/part_set.go without checking that Part.Index equals Part.Proof.Index; the v0.38.17 patch extends that same function with the missing equality check. Confidence is high because the baseline is the parent of the incomplete validation implementation and the patch targets exactly that validation gap."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -49,7 +49,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "advisory_published",
@@ -60,6 +60,11 @@
         "name": "vulnerable_head_in_advisory_range",
         "pass": true,
         "details": "vulnerableHead is the v0.38.16 release commit, the latest tag in the <=0.38.16 vulnerable range."
+      },
+      {
+        "name": "introducing_commit_contains_vulnerable_pattern",
+        "pass": true,
+        "details": "git show fb91ef74 adds Part.ValidateBasic with checks for negative Index and oversized Bytes but no Part.Index == Part.Proof.Index check; the v0.38.17 patch adds that missing validation."
       },
       {
         "name": "baseline_is_parent_of_earliest_intro",

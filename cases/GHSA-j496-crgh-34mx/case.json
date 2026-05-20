@@ -56,7 +56,7 @@
       }
     ],
     "vulnerableHead": "a4ef5360b49ad2118e1d68f25f13935162660e0b",
-    "notes": "vulnerableHead is the v8.1.1 release commit, the last vulnerable v8.x release before the v8.2.0 patch. The v8.1.1..v8.2.0 commit 5e2e9ebc2 (Merge pull request from GHSA-j496-crgh-34mx) modifies modules/core/keeper/msg_server.go to delete the packet commitment before invoking application callbacks, breaking the reentrancy window. The vulnerable ordering (cbs.OnTimeoutPacket invoked before k.ChannelKeeper.TimeoutExecuted) has been present in both Timeout and TimeoutOnClose since the initial setup commit 09646a01; confidence is medium because the reentrancy window has existed since file inception."
+    "notes": "vulnerableHead is the v8.1.1 release commit, the last vulnerable v8.x release before the v8.2.0 patch. The v8.1.1..v8.2.0 commit 5e2e9ebc2 (Merge pull request from GHSA-j496-crgh-34mx) modifies modules/core/keeper/msg_server.go to delete the packet commitment before invoking application callbacks, breaking the reentrancy window. The vulnerable ordering (cbs.OnTimeoutPacket invoked before k.ChannelKeeper.TimeoutExecuted) entered the repository in initial setup commit 09646a01 and later moved under modules/core/keeper/msg_server.go. This is a feature-inception introducer: the baseline is the parent of the first implementation commit, the parent lacks the affected timeout handler ordering, and the patch reverses that exact ordering. Under the corpus confidence criteria, that is high-confidence timeline evidence even though the bug was not introduced by a later regression."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "brokenauthz",
@@ -68,7 +68,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "advisory_published",
@@ -79,6 +79,11 @@
         "name": "vulnerable_head_in_advisory_range",
         "pass": true,
         "details": "vulnerableHead is the v8.1.1 release commit, the latest tag in the <8.2.0 vulnerable range for v8.x."
+      },
+      {
+        "name": "introducing_commit_contains_vulnerable_pattern",
+        "pass": true,
+        "details": "git show 09646a01 adds Timeout and TimeoutOnClose handlers that invoke cbs.OnTimeoutPacket before TimeoutExecuted deletes the packet commitment; that ordering is later carried into modules/core/keeper/msg_server.go."
       },
       {
         "name": "baseline_is_parent_of_earliest_intro",

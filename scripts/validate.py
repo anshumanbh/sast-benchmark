@@ -54,6 +54,7 @@ REQUIRED_ANCESTRY_CHECK_NAMES = (
     "intro_ancestor_of_vulnerable_head",
     "baseline_ancestor_of_vulnerable_head",
 )
+INTRODUCING_PATTERN_CHECK_NAME = "introducing_commit_contains_vulnerable_pattern"
 
 
 def _case_id(case: Any, fallback: str = "unknown") -> str:
@@ -772,6 +773,29 @@ def validate_case_strict(case: Any) -> list[ValidationError]:
             )
             continue
         introducing_shas.append(sha)
+
+    for index, check in enumerate(checks):
+        check_obj = _json_object(check)
+        if check_obj is None:
+            continue
+
+        if check_obj.get("name") != INTRODUCING_PATTERN_CHECK_NAME:
+            continue
+
+        details = check_obj.get("details")
+        if not isinstance(details, str):
+            continue
+
+        if not any(intro_sha[:7] in details for intro_sha in introducing_shas):
+            errors.append(
+                ValidationError(
+                    case_id,
+                    "strict",
+                    f"verification.checks[{index}].details for "
+                    f"'{INTRODUCING_PATTERN_CHECK_NAME}' must reference a "
+                    "timeline.introducingCommits SHA",
+                )
+            )
 
     ancestry_pairs = {
         name: Counter()
