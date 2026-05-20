@@ -37,7 +37,7 @@
       }
     ],
     "vulnerableHead": "59987d52d959dc5876ffd4f307c9b33a52a43748",
-    "notes": "vulnerableHead is the v8.6.1 release commit, the last vulnerable release before v8.7.0 (the ISA-2025-001 patched version). v8.6.1 already contains the ASA-2025-004 transfer-module fix but still has the non-deterministic acknowledgement-decoding path in modules/core/04-channel/keeper/packet.go. The vulnerable pattern (AcknowledgePacket accepting `acknowledgement []byte` and forwarding it to VerifyPacketAcknowledgement without a marshal-equality check) has been present since the initial setup commit 09646a01 (\"Initial Setup + Protobuf files (#2)\"); confidence is medium because there is no discrete bug-introducing commit \u2014 the missing validation has existed since the file was created."
+    "notes": "vulnerableHead is the v8.6.1 release commit, the last vulnerable release before v8.7.0 (the ISA-2025-001 patched version). v8.6.1 already contains the ASA-2025-004 transfer-module fix but still has the non-deterministic acknowledgement-decoding path in modules/core/04-channel/keeper/packet.go. The vulnerable pattern (AcknowledgePacket accepting `acknowledgement []byte` and forwarding it to VerifyPacketAcknowledgement without a marshal-equality check) entered the repository in initial setup commit 09646a01 (\"Initial Setup + Protobuf files (#2)\") and later moved under modules/core/04-channel/keeper/packet.go. This is a feature-inception introducer: the baseline is the parent of the first implementation commit, the parent lacks the affected core acknowledgement path, and the v8.7.0 patch hardens that same path. Under the corpus confidence criteria, that is high-confidence timeline evidence even though the bug was not introduced by a later regression."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -49,7 +49,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "advisory_published",
@@ -60,6 +60,11 @@
         "name": "vulnerable_head_in_advisory_range",
         "pass": true,
         "details": "vulnerableHead is the v8.6.1 release commit, the latest tag in the <8.7.0 vulnerable range for v8.x."
+      },
+      {
+        "name": "introducing_commit_contains_vulnerable_pattern",
+        "pass": true,
+        "details": "git show 09646a01 adds core AcknowledgePacket accepting raw acknowledgement bytes and forwarding them to VerifyPacketAcknowledgement without canonical marshal/equality validation; that code is later moved to modules/core/04-channel/keeper/packet.go."
       },
       {
         "name": "baseline_is_parent_of_earliest_intro",

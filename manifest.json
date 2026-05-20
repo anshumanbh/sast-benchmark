@@ -471,7 +471,7 @@
       "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
       "vulnerableHead": "91dda01659676dfc15339a196b0750b6c808af93",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-4wf3-5qj9-368v",
@@ -481,7 +481,7 @@
       "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
       "vulnerableHead": "59987d52d959dc5876ffd4f307c9b33a52a43748",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-j496-crgh-34mx",
@@ -491,7 +491,7 @@
       "baselineCommit": "40f46bf2d6e0d26da19cd7d7bb260a7198abbcf7",
       "vulnerableHead": "a4ef5360b49ad2118e1d68f25f13935162660e0b",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-54gx-3cgr-7mfm",
@@ -581,7 +581,7 @@
       "baselineCommit": "ffe91ae9e38bba64c5ffc41871626f0a2b1fb051",
       "vulnerableHead": "c96f26503c041bb39fdc93297e3b2fd6d10ba9d8",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-hrhf-2vcr-ghch",
@@ -591,7 +591,7 @@
       "baselineCommit": "a9e045ba38db01a0fbc81eeabca6516d3f603ad5",
       "vulnerableHead": "5344a6e3bd806ba352b89f600c7f19c139442117",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-r3r4-g7hq-pq4f",
@@ -601,7 +601,7 @@
       "baselineCommit": "a22c962e28053f9f51d71d3394e0c62bf551fb99",
       "vulnerableHead": "84f981e934707c40c5e1e2520b3a54a4ba02e295",
       "verificationStatus": "pass",
-      "confidence": "medium"
+      "confidence": "high"
     },
     {
       "id": "GHSA-p7mv-53f2-4cwj",

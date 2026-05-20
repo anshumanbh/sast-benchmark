@@ -37,7 +37,7 @@
       }
     ],
     "vulnerableHead": "5344a6e3bd806ba352b89f600c7f19c139442117",
-    "notes": "vulnerableHead is the v0.38.18 release commit, the last vulnerable v0.38 release before the v0.38.19 patch. The introducing commit f6cde44f (\"perf(internal/bits): Significantly speedup bitArray.PickRandom\", 2024-04-24) reworked getNumTrueIndices / getNthTrueIndex in libs/bits/bit_array.go and broadened the surface where a Bits / len(Elems) mismatch can panic; confidence is medium because the underlying missing ValidateBasic on BitArray has been present since the file was created."
+    "notes": "vulnerableHead is the v0.38.18 release commit, the last vulnerable v0.38 release before the v0.38.19 patch. The introducing commit f6cde44f (\"perf(internal/bits): Significantly speedup bitArray.PickRandom\", 2024-04-24) reworked getNumTrueIndices / getNthTrueIndex in libs/bits/bit_array.go and broadened the surface where a Bits / len(Elems) mismatch can panic. Confidence is high because f6cde44f is a discrete reachable-surface regression on the advisory path, while the patch adds BitArray validation and guards for the same invalid-shape state."
   },
   "expectedOutcome": {
     "vulnerabilityClass": "abuse",
@@ -50,7 +50,7 @@
   },
   "verification": {
     "status": "pass",
-    "confidence": "medium",
+    "confidence": "high",
     "checks": [
       {
         "name": "advisory_published",
@@ -61,6 +61,11 @@
         "name": "vulnerable_head_in_advisory_range",
         "pass": true,
         "details": "vulnerableHead is the v0.38.18 release commit, the latest tag in the <=0.38.18 vulnerable range."
+      },
+      {
+        "name": "introducing_commit_contains_vulnerable_pattern",
+        "pass": true,
+        "details": "git show f6cde44f rewrites PickRandom to use getNumTrueIndices/getNthTrueIndex over len(Elems), making invalid Bits/Elems states a concrete panic surface that the v0.38.19 patch guards and validates."
       },
       {
         "name": "baseline_is_parent_of_earliest_intro",

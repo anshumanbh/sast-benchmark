@@ -59,6 +59,15 @@ For `--strict` validation, the required ancestry checks in `verification.checks`
 
 Those checks should carry machine-readable `ancestor` and `descendant` SHAs.
 
+High confidence means the case has evidence mapping the advisory to the
+first commit that introduced the affected implementation. That can be a
+later regression, or a feature/file-inception commit when the parent
+lacks the vulnerable path and the patch hardens that same path. The
+documented content-evidence check for that claim is
+`introducing_commit_contains_vulnerable_pattern`; in strict mode, its
+`details` must reference one of the case's `timeline.introducingCommits`
+SHAs.
+
 ## Manifest
 
 `manifest.json` is the checked-in summary index for the benchmark. Each entry in `manifest.cases` should include:
@@ -250,20 +259,11 @@ python3 scripts/validate.py \
 
 `scripts/validate.py --strict` enforces that every loaded case has
 `verification.status == "pass"` AND `verification.confidence == "high"`.
-The current corpus intentionally contains several `confidence: medium`
-cases (bugs that have existed since the affected file was created — see
-the `timeline.notes` on each), so `--strict` against the full corpus
-will fail.
-
-`validate.py` does not (yet) accept a `--filter` or per-case selector to
-exclude them. To run `--strict` today, either:
-
-- Hand-curate a subset by copying the high-confidence `cases/GHSA-*/`
-  directories into a separate tree and running with
-  `--output-dir <subset-root>`; or
-- Wait for each medium-confidence case to be upgraded to high (i.e.
-  someone identifies a discrete bug-introducing commit instead of the
-  file-creation commit).
+The current corpus is expected to pass strict mode when the relevant
+upstream repositories are supplied with `--repo`. Strict mode also
+checks the three ancestry relationships and validates any
+`introducing_commit_contains_vulnerable_pattern` content-evidence check
+against the case's introducing commits.
 
 ## Outcome Matching Criteria
 
