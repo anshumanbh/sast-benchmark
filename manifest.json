@@ -207,7 +207,7 @@
       "id": "GHSA-gv46-4xfq-jv58",
       "severity": "critical",
       "title": "Remote Code Execution via Node Invoke Approval Bypass in Gateway",
-      "vulnerabilityClass": "commandinjection",
+      "vulnerabilityClass": "brokenauthz",
       "baselineCommit": "b347d5d9ccbb8ccf008c887fc03cdc3410710afd",
       "vulnerableHead": "2f8206862a684d14f7ca92e9fe0dbce627c5d82b",
       "verificationStatus": "pass",
