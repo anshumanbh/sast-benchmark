@@ -40,14 +40,12 @@
     "notes": "Advisory text lists non-resolving full SHAs for the initial gateway fixes, but the local public history contains a matching remediation train on the vulnerable path: 318379cdba1804eb840896f6ebd4dd6dd0fb53cb, a7af646fdfc5cff077c04a7abb7c9e7a9c0b9f70, c15946274ed62cce3846f0feea723bc83404b462, 0af76f5f0e93540efbdf054895216c398692afcd, followed by cb3290fca32593956638f161d9776266b90ab891 and 01b3226ecbea6f5aa2a433237dae87d181d8790f before tag v2026.2.14 (b5ab92eef4e4f6099c98817e0917c99ec9e03045). The introducing commit 2f8206862a684d14f7ca92e9fe0dbce627c5d82b forwards raw node.invoke params to the node host, whose runner trusts params.approved === true; the parent baseline still used socket-mediated approvals and lacks this bypass."
   },
   "expectedOutcome": {
-    "vulnerabilityClass": "commandinjection",
+    "vulnerabilityClass": "brokenauthz",
     "minimumSeverity": "high",
     "expectedPaths": [
-      "src/gateway/node-invoke-system-run-approval.ts",
-      "src/gateway/node-invoke-sanitize.ts",
-      "src/gateway/server-methods/nodes.ts"
+      "src/node-host/runner.ts"
     ],
-    "description": "Scanner should detect commandinjection when scanning vulnerableHead."
+    "description": "Detect a High-severity approval-control bypass (brokenauthz) with code-execution impact, rooted at the node-host approval-authority defect where caller-controlled params.approved is trusted. Gateway node.invoke forwarding is causal context. At vulnerableHead, an authenticated operator can reach the local node execution lane under an allowlist policy requiring approval; approved:true bypasses the required-approval and allowlist-miss guards and can persist an allowlist entry before caller-derived argv reaches execution. security=deny and macOS companion enforcement are qualified controls, not demonstrated bypasses. Preserve the emitted class, severity and causal root; an execution sink alone does not establish the approval defect."
   },
   "verification": {
     "status": "pass",
